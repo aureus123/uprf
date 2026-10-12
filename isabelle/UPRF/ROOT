@@ -1,0 +1,16 @@
+session UPRF = "Recursion-Theory-I" +
+  description "Formalization of D. E. Severin, Unary primitive recursive functions (JSL 2008)"
+  options [timeout = 600]
+  sessions "HOL-Library"
+  theories
+    UPRF_Sec2_Notation
+    UPRF_Basis
+    UPRF_Aux
+    UPRF_Sec3_Preliminaries
+    UPRF_Sec6
+    UPRF_Robinson
+    UPRF_Sec6_Thm67
+    UPRF_Sec6_Thm68
+    UPRF_Sec6_Rem69
+    UPRF_Ext_a
+    UPRF_Ext_Vb

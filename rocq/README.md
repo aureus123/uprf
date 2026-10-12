@@ -1,0 +1,67 @@
+# Rocq + MathComp/ssreflect formalization
+
+Formalization of Section 6 of D. E. Severin, *Unary primitive recursive functions*
+(J. Symbolic Logic 73(4), 2008), including R. M. Robinson's theorem and Lemma 3.3.
+
+**Naming:**
+- `funX` is the function X of the paper, and `opX` an operator;
+- `exprX` is the expression that the paper writes as `X ≡ …`;
+- `X_expr` / `exprX_val` / `X_in` are the lemmas saying, respectively, what an expression
+  computes, its value at a point, and membership in the closure.
+
+## Requirements
+
+- **Rocq 9.3** (the Rocq Prover): <https://rocq-prover.org>.
+- **MathComp 2.6** (`rocq-mathcomp-ssreflect`).
+- **mczify** (`coq-mathcomp-zify`), so that `lia` and `nia` work on ssreflect's natural numbers.
+
+## Installation and build
+
+With opam (<https://opam.ocaml.org>):
+
+```sh
+opam switch create uprf ocaml-base-compiler.5.3.0     # optional: a dedicated switch
+eval $(opam env --switch=uprf)
+opam repo add rocq-released https://rocq-prover.org/opam/released
+opam install rocq-prover rocq-mathcomp-ssreflect coq-mathcomp-zify
+```
+
+Then build (about 30 s):
+
+```sh
+./build.sh
+```
+
+## Files
+
+| File | Lines | Content |
+|---|---|---|
+| `theories/Basic.v` | 221 | Section 2 functions and operators; Cantor A, V, K, L, J; bases; `Clos` (inductive); Prim(ℕ,ℕ) (`PrimNN`, inductive); `suitable`; simulation and soundness lemmas; arithmetic facts |
+| `theories/Prim.v` | 175 | the functions and operators of the paper are primitive recursive (bootstrapping +, ∸, ×, the equality test, √, E, Hf, iteration) |
+| `theories/Sec6.v` | 365 | the basis ⟨1, E, F⁺, FG, F^□⟩, first functions, Definition 6.1, Lemmas 6.2–6.6 |
+| `theories/Robinson.v` | 262 | `PrimNN_sub_C6`; Robinson's basis generates the closure |
+| `theories/Thm67.v` | 80 | `Theorem_6_7`, `Robinson_1947_sec7_thm3`, `Lemma_3_3`, `Theorem_6_7_via_L33` |
+| `theories/Thm68.v` | 225 | `Theorem_6_8` |
+| `theories/Rem69.v` | 193 | `Remark_6_9_I`, `_II`, `_III` |
+
+## Status
+
+Complete, with no `Admitted`. The only axiom used is functional extensionality (checked with
+`Print Assumptions`).
+
+## Notes
+
+- **Prim(ℕ,ℕ) is defined here.** Neither the Rocq standard library nor MathComp has primitive
+  recursive functions. `PrimNN` is therefore defined as the standard characterization of the
+  unary primitive recursive functions through Cantor's pairing: $`0`$, $`S`$, $`K`$, $`L`$,
+  closed under composition, pairing $`J(F,G)`$ and the unary recursion operator.
+  - Robinson's theorem is then an induction on `PrimNN`.
+  - The soundness direction needs the bootstrapping in `Prim.v`.
+- **Pitfalls:**
+  - `\o` associates to the left.
+  - ssreflect's `//` and `/=`, applied to goals that mention √ or the Cantor functions, make
+    Rocq try to compute and effectively hang. Use explicit `rewrite /f` + `cbv beta`, and pass
+    side conditions as arguments.
+  - `have := lemma` pushes the fact onto the goal; use `have ? := lemma` to put it in the
+    context.
+  - `have ... by tac1; tac2` makes `tac2` part of the `by`.

@@ -20,15 +20,10 @@ text \<open>Lemma 3.3: the basis \<open>\<langle>S, Sq, O, Hf, Rt, F + G, F - G,
 lemma Lemma_3_3:
   assumes d_diff: "is_difference d" and d_PR: "d \<in> PrimRec2"
   shows "suitable (basis_L33 d)"
-proof (rule suitable_by_simulation[OF Robinson_1947_sec7_thm3])
+proof -
   let ?B = "basis_L33 d"
-  have S: "funS \<in> clos ?B" by (rule clos_init) (simp add: basis_L33_def)
-  have Sq: "funSq \<in> clos ?B" by (rule clos_init) (simp add: basis_L33_def)
-  have Rt: "funRt \<in> clos ?B" by (rule clos_init) (simp add: basis_L33_def)
-  have I: "funI \<in> clos ?B"
-    using clos_unop[of opBox ?B funS] S by (simp add: basis_L33_def funI_eq_box_S)
-  have SqRt: "funSq \<circ> funRt \<in> clos ?B"
-    using clos_binop[of "(\<circ>)" ?B funSq funRt] Sq Rt by (simp add: basis_L33_def)
+  have diff: "opDiff d F G \<in> clos ?B" if "F \<in> clos ?B" "G \<in> clos ?B" for F G
+    using clos_binop[of "opDiff d" ?B F G] that by (simp add: basis_L33_sel)
   have "funE = opDiff d funI (funSq \<circ> funRt)"
   proof
     fix x
@@ -37,36 +32,20 @@ proof (rule suitable_by_simulation[OF Robinson_1947_sec7_thm3])
       using d_diff by (simp add: opDiff_apply funI_def funSq_def funE_alt is_difference_def)
   qed
   moreover have "opDiff d funI (funSq \<circ> funRt) \<in> clos ?B"
-    using clos_binop[of "opDiff d" ?B funI "funSq \<circ> funRt"] I SqRt by (simp add: basis_L33_def)
+    by (subst funI_eq_box_S[symmetric]) (clos_solve add: diff)
   ultimately have E: "funE \<in> clos ?B" by simp
-  show "inits basis_Robinson \<subseteq> clos ?B"
-    using S E by (simp add: basis_Robinson_def)
-  show "applyU u F \<in> clos ?B" if "u \<in> unops basis_Robinson" "F \<in> clos ?B" for u F
-    using that clos_unop_app[of u ?B F] by (simp add: basis_Robinson_def basis_L33_def)
-  show "applyB b F G \<in> clos ?B" if "b \<in> binops basis_Robinson" "F \<in> clos ?B" "G \<in> clos ?B" for b F G
-    using that clos_binop_app[of b ?B F G] by (auto simp: basis_Robinson_def basis_L33_def)
-  show "clos ?B \<subseteq> PrimNN"
-    by (rule clos_sound)
-       (auto simp: basis_L33_def opDiff_def applyU_def applyB_def
-             funS_PR funSq_PR funO_PR funHf_PR funRt_PR d_PR
-             intro: opBox_PR opPlus_PR comp_PR opPointwise_PR)
+  have diff_PR: "opDiff d F G \<in> PrimNN" if "F \<in> PrimNN" "G \<in> PrimNN" for F G
+    using opPointwise_PR[OF d_PR that] by (simp add: opDiff_def)
+  show ?thesis by (simulate S: Robinson_1947_sec7_thm3 add: E prim: diff_PR)
 qed
 
 subsection \<open>Theorem 6.7\<close>
 
 theorem Theorem_6_7: "suitable basis_6"
-proof (rule suitable_by_simulation[OF Lemma_3_3[OF dE_difference dE_PR]])
-  show "inits (basis_L33 dE) \<subseteq> C6"
-    by (auto simp: basis_L33_def S_in Sq_in O_in Hf_in Rt_in)
-  show "applyU u F \<in> C6" if "u \<in> unops (basis_L33 dE)" "F \<in> C6" for u F
-    using that C6_box by (simp add: basis_L33_def applyU_def)
-  show "applyB b F G \<in> C6" if "b \<in> binops (basis_L33 dE)" "F \<in> C6" "G \<in> C6" for b F G
-    using that C6_comp exprPlus_in[of F G] exprMinus_in[of F G]
-    by (auto simp: basis_L33_def applyB_def exprPlus_eq exprMinus_eq)
-  show "C6 \<subseteq> PrimNN"
-    by (rule clos_sound)
-       (auto simp: basis_6_def applyU_def applyB_def cst_PR funE_PR
-             intro: opPlusI_PR opBox_PR comp_PR pr_comp1_1)
+proof -
+  have diff: "opDiff dE F G \<in> C6" if "F \<in> C6" "G \<in> C6" for F G
+    using exprMinus_in[OF that] by (simp add: exprMinus_eq)
+  show ?thesis by (simulate S: Lemma_3_3[OF dE_difference dE_PR] add: diff)
 qed
 
 end

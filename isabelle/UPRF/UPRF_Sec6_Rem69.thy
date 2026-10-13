@@ -37,18 +37,8 @@ definition basis_69_I :: basis where
 
 abbreviation CI :: "ufun set" where "CI \<equiv> clos basis_69_I"
 
-lemma CI_E: "funE \<in> CI"
-  by (rule clos_init) (simp add: basis_69_I_def)
-
-lemma CI_plusI: "F \<in> CI \<Longrightarrow> opPlusI F \<in> CI"
-  and CI_box1: "F \<in> CI \<Longrightarrow> opBoxA 1 F \<in> CI"
-  using clos_unop[of opPlusI basis_69_I F] clos_unop[of "opBoxA 1" basis_69_I F]
-  by (simp_all add: basis_69_I_def)
-
-lemma CI_comp: "F \<in> CI \<Longrightarrow> G \<in> CI \<Longrightarrow> F \<circ> G \<in> CI"
-  using clos_binop[of "(\<circ>)" basis_69_I F G] by (simp add: basis_69_I_def)
-
-lemmas CI_intros = CI_E CI_plusI CI_box1 CI_comp
+lemmas basis_69_I_sel [clos_defs] =
+  basis.sel[of "{funE}" "{opPlusI, opBoxA 1}" "{(\<circ>)}", folded basis_69_I_def]
 
 text \<open>\<open>O \<equiv> E\<^sup>\<box>\<^sup>(\<^sup>1\<^sup>)\<close>, \<open>\<overline>0 \<equiv> E O\<close>, \<open>\<overline>1 \<equiv> O \<overline>0\<close>.\<close>
 lemma O_expr_I: "opBoxA 1 funE = funO"
@@ -119,31 +109,21 @@ proof -
   finally show ?thesis .
 qed
 
-lemma O_in_I: "funO \<in> CI" by (metis O_expr_I CI_intros)
-lemma zero_in_I: "cst 0 \<in> CI" by (metis zero_expr_I O_in_I CI_intros)
-lemma one_in_I: "cst 1 \<in> CI" by (metis one_expr_I O_in_I zero_in_I CI_intros)
-lemma S_in_I: "funS \<in> CI" by (metis S_expr one_in_I CI_intros)
-lemma D_in_I: "funD \<in> CI" by (metis D_expr zero_in_I CI_intros)
-lemma Q_in_I: "funQ \<in> CI" by (metis Q_expr O_in_I CI_intros)
-lemma G_in_I: "funG \<in> CI" by (metis G_expr_I D_in_I Q_in_I S_in_I CI_intros)
-lemma Phat_in_I: "exprPhat_I \<in> CI"
-  unfolding exprPhat_I_def by (intro CI_intros S_in_I G_in_I)
+lemma O_in_I [clos_rules]: "funO \<in> CI" by (subst O_expr_I[symmetric]) clos_solve
+lemma zero_in_I [clos_rules]: "cst 0 \<in> CI" by (subst zero_expr_I[symmetric]) clos_solve
+lemma one_in_I [clos_rules]: "cst 1 \<in> CI" by (subst one_expr_I[symmetric]) clos_solve
+lemma S_in_I [clos_rules]: "funS \<in> CI" by (subst S_expr[symmetric]) clos_solve
+lemma D_in_I [clos_rules]: "funD \<in> CI" by (subst D_expr[symmetric]) clos_solve
+lemma Q_in_I [clos_rules]: "funQ \<in> CI" by (subst Q_expr[symmetric]) clos_solve
+lemma G_in_I [clos_rules]: "funG \<in> CI" by (subst G_expr_I[symmetric]) clos_solve
+lemma Phat_in_I [clos_rules]: "exprPhat_I \<in> CI"
+  unfolding exprPhat_I_def by clos_solve
 
-lemma box_in_I: "F \<in> CI \<Longrightarrow> opBox F \<in> CI"
-  using box_from_box1[of exprPhat_I F, OF Phat_I_Suc] by (metis Phat_in_I S_in_I CI_intros)
+lemma box_in_I [clos_rules]: "F \<in> CI \<Longrightarrow> opBox F \<in> CI"
+  by (subst box_from_box1[of exprPhat_I F, OF Phat_I_Suc, symmetric]) clos_solve
 
 theorem Remark_6_9_I: "suitable basis_69_I"
-proof (rule suitable_by_simulation[OF Theorem_6_7])
-  show "inits basis_6 \<subseteq> CI" using one_in_I CI_E by (simp add: basis_6_def)
-  show "applyU u F \<in> CI" if "u \<in> unops basis_6" "F \<in> CI" for u F
-    using that CI_plusI box_in_I by (auto simp: basis_6_def applyU_def)
-  show "applyB b F G \<in> CI" if "b \<in> binops basis_6" "F \<in> CI" "G \<in> CI" for b F G
-    using that CI_comp[of F G] by (simp add: basis_6_def applyB_def comp_def)
-  show "CI \<subseteq> PrimNN"
-    by (rule clos_sound)
-       (auto simp: basis_69_I_def applyU_def applyB_def funE_PR
-             intro: opPlusI_PR opBoxA_PR comp_PR pr_comp1_1)
-qed
+  by (simulate S: Theorem_6_7)
 
 subsection \<open>(II) The basis \<open>\<langle>K, F\<^sup>+, FG, F\<^sup>\<box>\<^sup>(\<^sup>1\<^sup>)\<rangle>\<close>\<close>
 
@@ -152,18 +132,8 @@ definition basis_69_II :: basis where
 
 abbreviation CII :: "ufun set" where "CII \<equiv> clos basis_69_II"
 
-lemma CII_K: "funK \<in> CII"
-  by (rule clos_init) (simp add: basis_69_II_def)
-
-lemma CII_plusI: "F \<in> CII \<Longrightarrow> opPlusI F \<in> CII"
-  and CII_box1: "F \<in> CII \<Longrightarrow> opBoxA 1 F \<in> CII"
-  using clos_unop[of opPlusI basis_69_II F] clos_unop[of "opBoxA 1" basis_69_II F]
-  by (simp_all add: basis_69_II_def)
-
-lemma CII_comp: "F \<in> CII \<Longrightarrow> G \<in> CII \<Longrightarrow> F \<circ> G \<in> CII"
-  using clos_binop[of "(\<circ>)" basis_69_II F G] by (simp add: basis_69_II_def)
-
-lemmas CII_intros = CII_K CII_plusI CII_box1 CII_comp
+lemmas basis_69_II_sel [clos_defs] =
+  basis.sel[of "{funK}" "{opPlusI, opBoxA 1}" "{(\<circ>)}", folded basis_69_II_def]
 
 text \<open>\<open>O \<equiv> K\<^sup>\<box>\<^sup>(\<^sup>1\<^sup>)\<close>, \<open>\<overline>0 \<equiv> K O\<close>, \<open>\<overline>1 \<equiv> O \<overline>0\<close>.\<close>
 lemma O_expr_II: "opBoxA 1 funK = funO"
@@ -220,29 +190,19 @@ proof -
   finally show ?thesis .
 qed
 
-lemma O_in_II: "funO \<in> CII" by (metis O_expr_II CII_intros)
-lemma zero_in_II: "cst 0 \<in> CII" by (metis zero_expr_II O_in_II CII_intros)
-lemma one_in_II: "cst 1 \<in> CII" by (metis one_expr_I O_in_II zero_in_II CII_intros)
-lemma S_in_II: "funS \<in> CII" by (metis S_expr one_in_II CII_intros)
-lemma H_in_II: "funH \<in> CII" by (metis H_expr_II S_in_II CII_intros)
-lemma Phat_in_II: "exprPhat_II \<in> CII"
-  unfolding exprPhat_II_def by (intro CII_intros S_in_II H_in_II)
+lemma O_in_II [clos_rules]: "funO \<in> CII" by (subst O_expr_II[symmetric]) clos_solve
+lemma zero_in_II [clos_rules]: "cst 0 \<in> CII" by (subst zero_expr_II[symmetric]) clos_solve
+lemma one_in_II [clos_rules]: "cst 1 \<in> CII" by (subst one_expr_I[symmetric]) clos_solve
+lemma S_in_II [clos_rules]: "funS \<in> CII" by (subst S_expr[symmetric]) clos_solve
+lemma H_in_II [clos_rules]: "funH \<in> CII" by (subst H_expr_II[symmetric]) clos_solve
+lemma Phat_in_II [clos_rules]: "exprPhat_II \<in> CII"
+  unfolding exprPhat_II_def by clos_solve
 
-lemma box_in_II: "F \<in> CII \<Longrightarrow> opBox F \<in> CII"
-  using box_from_box1[of exprPhat_II F, OF Phat_II_Suc] by (metis Phat_in_II S_in_II CII_intros)
+lemma box_in_II [clos_rules]: "F \<in> CII \<Longrightarrow> opBox F \<in> CII"
+  by (subst box_from_box1[of exprPhat_II F, OF Phat_II_Suc, symmetric]) clos_solve
 
 theorem Remark_6_9_II: "suitable basis_69_II"
-proof (rule suitable_by_simulation[OF Theorem_6_8_K])
-  show "inits basis_6K \<subseteq> CII" using one_in_II CII_K by (simp add: basis_6K_def)
-  show "applyU u F \<in> CII" if "u \<in> unops basis_6K" "F \<in> CII" for u F
-    using that CII_plusI box_in_II by (auto simp: basis_6K_def applyU_def)
-  show "applyB b F G \<in> CII" if "b \<in> binops basis_6K" "F \<in> CII" "G \<in> CII" for b F G
-    using that CII_comp[of F G] by (simp add: basis_6K_def applyB_def comp_def)
-  show "CII \<subseteq> PrimNN"
-    by (rule clos_sound)
-       (auto simp: basis_69_II_def applyU_def applyB_def funK_PR
-             intro: opPlusI_PR opBoxA_PR comp_PR pr_comp1_1)
-qed
+  by (simulate S: Theorem_6_8_K)
 
 subsection \<open>(III) The basis \<open>\<langle>L, F\<^sup>+, FG, F\<^sup>\<box>\<^sup>(\<^sup>1\<^sup>)\<rangle>\<close>\<close>
 
@@ -251,18 +211,8 @@ definition basis_69_III :: basis where
 
 abbreviation CIII :: "ufun set" where "CIII \<equiv> clos basis_69_III"
 
-lemma CIII_L: "funL \<in> CIII"
-  by (rule clos_init) (simp add: basis_69_III_def)
-
-lemma CIII_plusI: "F \<in> CIII \<Longrightarrow> opPlusI F \<in> CIII"
-  and CIII_box1: "F \<in> CIII \<Longrightarrow> opBoxA 1 F \<in> CIII"
-  using clos_unop[of opPlusI basis_69_III F] clos_unop[of "opBoxA 1" basis_69_III F]
-  by (simp_all add: basis_69_III_def)
-
-lemma CIII_comp: "F \<in> CIII \<Longrightarrow> G \<in> CIII \<Longrightarrow> F \<circ> G \<in> CIII"
-  using clos_binop[of "(\<circ>)" basis_69_III F G] by (simp add: basis_69_III_def)
-
-lemmas CIII_intros = CIII_L CIII_plusI CIII_box1 CIII_comp
+lemmas basis_69_III_sel [clos_defs] =
+  basis.sel[of "{funL}" "{opPlusI, opBoxA 1}" "{(\<circ>)}", folded basis_69_III_def]
 
 text \<open>\<open>\<overline>1 \<equiv> L\<^sup>\<box>\<^sup>(\<^sup>1\<^sup>)\<close> (since \<open>L(1) = 1\<close>) and \<open>K \<equiv> L \<overline>1\<^sup>+ ((\<overline>1\<^sup>+)\<^sup>+ L)\<^sup>+\<close>.\<close>
 lemma funL_1: "funL 1 = 1"
@@ -276,20 +226,10 @@ proof
   fix n show "opBoxA 1 funL n = cst 1 n" by (induct n) (simp_all add: cst_def funL_1)
 qed
 
-lemma one_in_III: "cst 1 \<in> CIII" by (metis one_expr_III CIII_intros)
-lemma K_in_III: "funK \<in> CIII" by (metis K_expr_L one_in_III CIII_intros)
+lemma one_in_III [clos_rules]: "cst 1 \<in> CIII" by (subst one_expr_III[symmetric]) clos_solve
+lemma K_in_III [clos_rules]: "funK \<in> CIII" by (subst K_expr_L[symmetric]) clos_solve
 
 theorem Remark_6_9_III: "suitable basis_69_III"
-proof (rule suitable_by_simulation[OF Remark_6_9_II])
-  show "inits basis_69_II \<subseteq> CIII" using K_in_III by (simp add: basis_69_II_def)
-  show "applyU u F \<in> CIII" if "u \<in> unops basis_69_II" "F \<in> CIII" for u F
-    using that CIII_plusI CIII_box1 by (auto simp: basis_69_II_def applyU_def)
-  show "applyB b F G \<in> CIII" if "b \<in> binops basis_69_II" "F \<in> CIII" "G \<in> CIII" for b F G
-    using that CIII_comp[of F G] by (simp add: basis_69_II_def applyB_def comp_def)
-  show "CIII \<subseteq> PrimNN"
-    by (rule clos_sound)
-       (auto simp: basis_69_III_def applyU_def applyB_def funL_PR
-             intro: opPlusI_PR opBoxA_PR comp_PR pr_comp1_1)
-qed
+  by (simulate S: Remark_6_9_II)
 
 end

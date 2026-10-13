@@ -7,20 +7,20 @@
   of the basis) and `X_expr` / `exprX_val` state that it computes X.
 -/
 import UPRF.Basic
+import UPRF.Tactics
 
 namespace UPRF
 
-def basis6 : Basis := ⟨{cst 1, funE}, {opPlusI, opBox}, {(· ∘ ·)}⟩
+@[clos_defs] def basis6 : Basis := ⟨{cst 1, funE}, {opPlusI, opBox}, {(· ∘ ·)}⟩
 
 /-- clos 𝓕 -/
 abbrev C6 (F : UFun) : Prop := Clos basis6 F
 
-lemma C6_one : C6 (cst 1) := .init (by simp [basis6])
-lemma C6_E : C6 funE := .init (by simp [basis6])
-lemma C6_plusI {F} (h : C6 F) : C6 (opPlusI F) := .unop (u := opPlusI) (by simp [basis6]) h
-lemma C6_box {F} (h : C6 F) : C6 (opBox F) := .unop (u := opBox) (by simp [basis6]) h
-lemma C6_comp {F G} (hF : C6 F) (hG : C6 G) : C6 (F ∘ G) :=
-  .binop (b := (· ∘ ·)) (by simp [basis6]) hF hG
+lemma C6_one : C6 (cst 1) := by clos_solve
+lemma C6_E : C6 funE := by clos_solve
+lemma C6_plusI {F} (h : C6 F) : C6 (opPlusI F) := by clos_solve
+lemma C6_box {F} (h : C6 F) : C6 (opBox F) := by clos_solve
+lemma C6_comp {F G} (hF : C6 F) (hG : C6 G) : C6 (F ∘ G) := by clos_solve
 
 /-! ## First functions in clos 𝓕 -/
 
@@ -105,18 +105,26 @@ lemma Sq_expr : opBox (funS ∘ funR) = funSq := by
   | zero => rfl
   | succ n ih => simp only [opBox_succ, ih, Function.comp, funS, funR, funSq, funRt_sq]; ring
 
-lemma S_in : C6 funS := S_expr ▸ C6_plusI C6_one
-lemma Sgn_in : C6 funSgn := Sgn_expr ▸ C6_box C6_one
-lemma zero_in : C6 (cst 0) := zero_expr ▸ C6_comp C6_E C6_one
-lemma D_in : C6 funD := D_expr ▸ C6_plusI (C6_plusI zero_in)
-lemma M3_in : C6 funM3 := M3_expr ▸ C6_plusI D_in
-lemma O_in : C6 funO := O_expr ▸ C6_comp C6_E (C6_comp D_in (C6_comp S_in Sgn_in))
-lemma Q_in : C6 funQ := Q_expr ▸ C6_comp O_in C6_E
-lemma Mod3_in : C6 funMod3 := Mod3_expr ▸ C6_box (C6_comp C6_E (C6_comp S_in S_in))
-lemma R_in : C6 funR :=
-  R_expr ▸ C6_box (C6_comp (C6_plusI (C6_comp D_in (C6_comp Q_in (C6_comp S_in
-    (C6_comp S_in S_in))))) S_in)
-lemma Sq_in : C6 funSq := Sq_expr ▸ C6_box (C6_comp S_in R_in)
+lemma S_in : C6 funS := by rw [← S_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply S_in)
+lemma Sgn_in : C6 funSgn := by rw [← Sgn_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply Sgn_in)
+lemma zero_in : C6 (cst 0) := by rw [← zero_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply zero_in)
+lemma D_in : C6 funD := by rw [← D_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply D_in)
+lemma M3_in : C6 funM3 := by rw [← M3_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply M3_in)
+lemma O_in : C6 funO := by rw [← O_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply O_in)
+lemma Q_in : C6 funQ := by rw [← Q_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply Q_in)
+lemma Mod3_in : C6 funMod3 := by rw [← Mod3_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply Mod3_in)
+lemma R_in : C6 funR := by rw [← R_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply R_in)
+lemma Sq_in : C6 funSq := by rw [← Sq_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply Sq_in)
 
 /-! ## Definition 6.1 (meaningful when F(x) ≥ x, G(x) ≥ x and, for ⊖, F(x) ≥ G(x)²) -/
 
@@ -130,9 +138,9 @@ def opOtimes (F G : UFun) : UFun := fun x => F x * G x
 def exprMinusI (F : UFun) : UFun :=
   funE ∘ funS ∘ opPlusI (funM3 ∘ F ∘ funE) ∘ opPlusI (funSq ∘ opPlusI F)
 
-lemma exprMinusI_in {F} (h : C6 F) : C6 (exprMinusI F) :=
-  C6_comp C6_E (C6_comp S_in (C6_comp (C6_plusI (C6_comp M3_in (C6_comp h C6_E)))
-    (C6_plusI (C6_comp Sq_in (C6_plusI h)))))
+lemma exprMinusI_in {F} (h : C6 F) : C6 (exprMinusI F) := by
+  unfold exprMinusI; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply exprMinusI_in)
 
 /-- pointwise correctness: only F(x) ≥ x at the point x is needed -/
 lemma exprMinusI_val {F : UFun} {x : ℕ} (h : x ≤ F x) : exprMinusI F x = F x - x := by
@@ -165,22 +173,26 @@ lemma Rt_expr : exprRt = funRt := by
 
 theorem Lemma_6_3 : C6 funHf ∧ C6 funRt := by
   have Hf : C6 funHf :=
-    Hf_expr ▸ exprMinusI_in (C6_box (C6_comp S_in (C6_plusI Mod3_in)))
-  exact ⟨Hf, Rt_expr ▸ C6_comp Hf (exprMinusI_in R_in)⟩
+    by rw [← Hf_expr]; unfold exprHf; clos_solve
+  exact ⟨Hf, by rw [← Rt_expr]; unfold exprRt; clos_solve⟩
 
 lemma Hf_in : C6 funHf := Lemma_6_3.1
 lemma Rt_in : C6 funRt := Lemma_6_3.2
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply Hf_in)
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply Rt_in)
 
 /-! ## Lemma 6.4: F ⊕ G ≡ (F⁻ E)⁺ (Sq G)⁺ and F ⊖ G ≡ (F⁺ E)⁻ (Sq G)⁺ -/
 
 def exprOplus (F G : UFun) : UFun := opPlusI (exprMinusI F ∘ funE) ∘ opPlusI (funSq ∘ G)
 def exprOminus (F G : UFun) : UFun := exprMinusI (opPlusI F ∘ funE) ∘ opPlusI (funSq ∘ G)
 
-lemma exprOplus_in {F G} (hF : C6 F) (hG : C6 G) : C6 (exprOplus F G) :=
-  C6_comp (C6_plusI (C6_comp (exprMinusI_in hF) C6_E)) (C6_plusI (C6_comp Sq_in hG))
+lemma exprOplus_in {F G} (hF : C6 F) (hG : C6 G) : C6 (exprOplus F G) := by
+  unfold exprOplus; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply exprOplus_in)
 
-lemma exprOminus_in {F G} (hF : C6 F) (hG : C6 G) : C6 (exprOminus F G) :=
-  C6_comp (exprMinusI_in (C6_comp (C6_plusI hF) C6_E)) (C6_plusI (C6_comp Sq_in hG))
+lemma exprOminus_in {F G} (hF : C6 F) (hG : C6 G) : C6 (exprOminus F G) := by
+  unfold exprOminus; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply exprOminus_in)
 
 lemma E_SqG {G : UFun} {x : ℕ} (h : x ≤ G x) : funE (G x * G x + x) = x :=
   funE_sq_add (by omega)
@@ -209,7 +221,8 @@ theorem Lemma_6_4 {F G : UFun} (hF : C6 F) (hG : C6 G) (hFx : ∀ x, x ≤ F x)
 
 def exprPhat : UFun := exprOminus (opPlusI (opPlusI (opPlusI funSq))) funS
 
-lemma Phat_in : C6 exprPhat := exprOminus_in (C6_plusI (C6_plusI (C6_plusI Sq_in))) S_in
+lemma Phat_in : C6 exprPhat := by unfold exprPhat; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply Phat_in)
 
 lemma Phat_succ (x : ℕ) : exprPhat (x + 1) = x := by
   rw [exprPhat, exprOminus_val (by simp [funS]) (by simp [opPlusI, funSq, funS]; nlinarith)]
@@ -224,11 +237,9 @@ def exprOtimes (F G : UFun) : UFun :=
       exprOminus (exprOplus (funSq ∘ funS ∘ funSq ∘ F) G) (funSq ∘ F)) (funSq ∘ G))
     (funSq ∘ F)
 
-lemma exprOtimes_in {F G} (hF : C6 F) (hG : C6 G) : C6 (exprOtimes F G) :=
-  C6_comp Rt_in (exprOminus_in (C6_comp Hf_in (C6_comp Hf_in (exprOminus_in
-    (C6_comp Sq_in (C6_comp Phat_in (exprOminus_in (exprOplus_in
-      (C6_comp Sq_in (C6_comp S_in (C6_comp Sq_in hF))) hG) (C6_comp Sq_in hF))))
-    (C6_comp Sq_in hG)))) (C6_comp Sq_in hF))
+lemma exprOtimes_in {F G} (hF : C6 F) (hG : C6 G) : C6 (exprOtimes F G) := by
+  unfold exprOtimes; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply exprOtimes_in)
 
 lemma le_mul_self' (n : ℕ) : n ≤ n * n := Nat.le_mul_self n
 
@@ -296,13 +307,13 @@ def exprPlus (F G : UFun) : UFun :=
 def exprMinus (F G : UFun) : UFun :=
   funE ∘ funS ∘ exprPlus (exprPlus (funSq ∘ exprPlus F G) (funM3 ∘ F)) G
 
-lemma exprPlus_in {F G} (hF : C6 F) (hG : C6 G) : C6 (exprPlus F G) :=
-  exprMinusI_in (exprMinusI_in (C6_comp Rt_in (exprOplus_in (exprOplus_in
-    (C6_comp D_in (exprOtimes_in (C6_plusI hF) (C6_plusI hG))) (C6_plusI hF)) (C6_plusI hG))))
+lemma exprPlus_in {F G} (hF : C6 F) (hG : C6 G) : C6 (exprPlus F G) := by
+  unfold exprPlus; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply exprPlus_in)
 
-lemma exprMinus_in {F G} (hF : C6 F) (hG : C6 G) : C6 (exprMinus F G) :=
-  C6_comp C6_E (C6_comp S_in (exprPlus_in (exprPlus_in (C6_comp Sq_in (exprPlus_in hF hG))
-    (C6_comp M3_in hF)) hG))
+lemma exprMinus_in {F G} (hF : C6 F) (hG : C6 G) : C6 (exprMinus F G) := by
+  unfold exprMinus; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply exprMinus_in)
 
 lemma exprPlus_val (F G : UFun) (x : ℕ) : exprPlus F G x = F x + G x := by
   set a := F x + x with ha

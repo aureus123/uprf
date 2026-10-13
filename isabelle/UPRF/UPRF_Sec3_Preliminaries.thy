@@ -9,7 +9,7 @@
 *)
 
 theory UPRF_Sec3_Preliminaries
-  imports UPRF_Aux
+  imports UPRF_Methods
 begin
 
 section \<open>Section 3: Preliminaries\<close>
@@ -24,10 +24,11 @@ text \<open>Robinson [15, \S7, Theorem 3]: all one-argument primitive recursive 
 definition basis_Robinson :: basis where
   "basis_Robinson = Basis {funS, funE} {opBox} {opPlus, (\<circ>)}"
 
+lemmas basis_Robinson_sel [clos_defs] =
+  basis.sel[of "{funS, funE}" "{opBox}" "{opPlus, (\<circ>)}", folded basis_Robinson_def]
+
 lemma Robinson_sound: "clos basis_Robinson \<subseteq> PrimNN"
-  by (rule clos_sound)
-     (auto simp: basis_Robinson_def applyU_def applyB_def funS_PR funE_PR
-           intro: opBox_PR opPlus_PR comp_PR)
+  by clos_sound_m
 
 subsection \<open>Difference functions\<close>
 
@@ -47,6 +48,9 @@ subsection \<open>The basis of Lemma 3.3\<close>
 
 definition basis_L33 :: "(nat \<Rightarrow> nat \<Rightarrow> nat) \<Rightarrow> basis" where
   "basis_L33 d = Basis {funS, funSq, funO, funHf, funRt} {opBox} {opPlus, opDiff d, (\<circ>)}"
+
+lemmas basis_L33_sel [clos_defs] = basis.sel[of "{funS, funSq, funO, funHf, funRt}" "{opBox}"
+  "{opPlus, opDiff d, (\<circ>)}", folded basis_L33_def] for d
 
 text \<open>\<open>I \<equiv> S\<^sup>\<box>\<close>.\<close>
 lemma funI_eq_box_S: "opBox funS = funI"

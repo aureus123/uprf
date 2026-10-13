@@ -2,19 +2,16 @@
 
 From Stdlib Require Import PeanoNat FunctionalExtensionality.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat div zify.
-From UPRF Require Import Basic Prim Sec6 Robinson.
+From Ltac2 Require Import Ltac2.
+From UPRF Require Import Basic Prim Tactics Sec6 Robinson.
+Set Default Proof Mode "Classic".
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Lemma C6_sound F : C6 F -> PrimNN F.
-Proof.
-apply: clos_sound.
-- by move=> ? [->|->]; [exact: pr_cst | exact: pr_E].
-- by move=> u ? [->|->]; [exact: pr_opPlusI | exact: pr_opBox].
-- by move=> b ? ? ->; exact: pr_comp.
-Qed.
+Proof. by move: F; sound. Qed.
 
 (* Theorem 6.7: F = <1, E, F^+, FG, F^box> is suitable *)
 Theorem Theorem_6_7 : suitable basis6.
@@ -41,24 +38,13 @@ Definition basisL33 (d : nat -> nat -> nat) : basis :=
    E == I - Sq Rt. *)
 Theorem Lemma_3_3 d : is_difference d -> PrimNN2 d -> suitable (basisL33 d).
 Proof.
-move=> hd hdP; apply: (suitable_by_simulation Robinson_1947_sec7_thm3).
-- have S : Clos (basisL33 d) funS by apply: clos_init; left.
-  have Sq : Clos (basisL33 d) funSq by apply: clos_init; right; left.
-  have Rt : Clos (basisL33 d) funRt by apply: clos_init; do 4 right.
-  have I : Clos (basisL33 d) funI by rewrite -funI_eq_box_S; apply: clos_unop.
-  have SqRt : Clos (basisL33 d) (funSq \o funRt) by apply: (clos_binop (b := comp)) => //;
-    do 2 right.
-  have E : opDiff d funI (funSq \o funRt) = funE.
+move=> hd hdP.
+have E : Clos (basisL33 d) funE.
+  have <- : opDiff d funI (funSq \o funRt) = funE.
     by apply: functional_extensionality => x; rewrite /opDiff hd //; apply: funRt_sq_le.
-  move=> F [->|->] //; rewrite -E; apply: (clos_binop (b := opDiff d)) => //; by right; left.
-- by move=> u F -> hF; apply: clos_unop.
-- move=> b F G [->|->] hF hG; apply: clos_binop => //; [left | do 2 right] => //.
-- apply: clos_sound.
-  + by move=> F [->|[->|[->|[->|->]]]];
-      [exact: pr_succ | exact: pr_Sq | exact: pr_O | exact: pr_Hf | exact: pr_Rt].
-  + by move=> u F -> ; exact: pr_opBox.
-  + move=> b F G [->|[->|->]] hF hG; [exact: pr_opPlus | | exact: pr_comp].
-    exact: pr_app2 hdP hF hG.
+  by rewrite -funI_eq_box_S; clos_solve.
+simulate Robinson_1947_sec7_thm3.
+by move=> *; apply: pr_app2.
 Qed.
 
 (* The proof of the paper: the basis of Lemma 3.3 (with the difference function dE of
@@ -71,10 +57,6 @@ have hdP : PrimNN2 dE.
   apply: pr_plus (pr_cst 1) => /=; apply: pr_plus pr_snd.
   apply: pr_plus (pr_mult (pr_cst 3) pr_fst).
   exact: pr_mult (pr_plus pr_fst pr_snd) (pr_plus pr_fst pr_snd).
-apply: (suitable_by_simulation (Lemma_3_3 hd hdP)) => //; last exact: C6_sound.
-- by move=> F [->|[->|[->|[->|->]]]]; [exact: S_in | exact: Sq_in | exact: O_in | exact: Hf_in
-    | exact: Rt_in].
-- by move=> u F ->; exact: C6_box.
-- move=> b F G [->|[->|->]] hF hG; [exact: plus_in | | exact: C6_comp].
-  exact: diffE_in.
+have diff_in : forall F G, C6 F -> C6 G -> C6 (opDiff dE F G) by move=> *; exact: diffE_in.
+by simulate (Lemma_3_3 hd hdP).
 Qed.

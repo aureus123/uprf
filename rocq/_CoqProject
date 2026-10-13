@@ -2,6 +2,7 @@
 -arg -w -arg -notation-overridden,-rewrite-rw,-deprecated
 theories/Basic.v
 theories/Prim.v
+theories/Tactics.v
 theories/Sec6.v
 theories/Robinson.v
 theories/Thm67.v

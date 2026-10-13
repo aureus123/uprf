@@ -43,6 +43,7 @@ described in the main [README](../README.md).
 | `UPRF_Sec2_Notation` | §2: the functions `funS`, `funE`, `funRt`, `funK`, …; `cst n` (the constant n̄); the operators `opBox` (F^□), `opBoxA a` (F^□(a)), `opPlus`, … |
 | `UPRF_Basis` | bases, `clos`, Definition 3.2 `suitable`, simulation and soundness lemmas |
 | `UPRF_Aux` | facts used silently by the paper (√, E, Cantor pairing); primitive recursiveness of all functions and operators |
+| `UPRF_Methods` | Eisbach proof methods `clos_solve`, `clos_sound_m`, `clos_subset_m`, `simulate` (see below) |
 | `UPRF_Sec3_Preliminaries` | §3: Robinson's basis and its soundness, difference functions, the basis of Lemma 3.3 |
 | `UPRF_Sec6` | `opPlusI` (F⁺), the first constructions of §6, Definition 6.1, Lemmas 6.2–6.6 |
 | `UPRF_Robinson` | Robinson's theorem (`Robinson_1947_sec7_thm3`) |
@@ -56,6 +57,36 @@ described in the main [README](../README.md).
 - the function X of the paper is `funX`, and an operator is `opX`;
 - when the paper defines `X ≡ …`, the expression is `exprX` (or a lemma `X_expr`), and a
   lemma `…_val` states what it computes.
+
+## Proof methods (Eisbach)
+
+Three mechanisms recur in every theorem. `UPRF_Methods` captures them as Eisbach methods,
+driven by three named-theorem collections:
+- `clos_defs`: the selector equations of each basis, e.g. `inits basis_6 = {cst 1, funE}`,
+  obtained from `basis.sel` folded with the basis definition;
+- `clos_rules`: generic closure rules, one per operator, plus the membership lemmas
+  (`S_in`, `exprMinusI_in`, …);
+- `prim_intros`: the primitive recursiveness lemmas.
+
+The methods:
+- **`clos_solve`** proves `F ∈ clos B`. It is recursive and backtracks. At each step it tries,
+  in order:
+  1. an assumption;
+  2. a basis side condition solved by `simp` with `clos_defs`;
+  3. a rule from `clos_rules` (or from `add:`);
+  4. an initial function of the basis.
+
+  Each generic rule fixes its operator (for example `F ∈ clos B ⟹
+  opPlusI ∈ unops B ⟹ opPlusI F ∈ clos B`), so unification stays first
+  order.
+- **`clos_sound_m`** proves `clos B ⊆ PrimNN`.
+- **`clos_subset_m`** proves `clos B₁ ⊆ clos B₂`.
+- **`simulate S`** proves `suitable B` from a suitable basis `S`. It applies
+  `suitable_by_simulation`, splits the bases with `simp only` (so the functions are not
+  normalized), and closes every case with the methods above.
+
+With them, every suitability theorem of Theorem 6.8, Remark 6.9 and the extensions is
+`by (simulate S: …)`, and a membership lemma is `by (subst X_expr[symmetric]) clos_solve`.
 
 ## Status
 

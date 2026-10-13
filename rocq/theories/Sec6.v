@@ -6,7 +6,9 @@
 
 From Stdlib Require Import PeanoNat FunctionalExtensionality.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat div zify.
-From UPRF Require Import Basic.
+From Ltac2 Require Import Ltac2.
+From UPRF Require Import Basic Prim Tactics.
+Set Default Proof Mode "Classic".
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -103,29 +105,24 @@ apply: functional_extensionality => n; elim: n => [//|n ih].
 by rewrite opBoxS ih /= /funS /funR /funSq funRt_sq; lia.
 Qed.
 
-(* membership in clos F, decomposing the expression *)
-Ltac c6step := match goal with
-  | H : C6 ?X |- C6 ?X => exact: H
-  | |- C6 (cst 1) => exact: C6_one
-  | |- C6 funE => exact: C6_E
-  | |- C6 (comp _ _) => apply: C6_comp
-  | |- C6 (opPlusI _) => apply: C6_plusI
-  | |- C6 (opBox _) => apply: C6_box
-  end.
-Ltac c6 := repeat c6step.
-
-Lemma S_in : C6 funS. Proof. by rewrite -S_expr; c6. Qed.
-Lemma Sgn_in : C6 funSgn. Proof. by rewrite -Sgn_expr; c6. Qed.
-Lemma zero_in : C6 (cst 0). Proof. by rewrite -zero_expr; c6. Qed.
-Lemma D_in : C6 funD. Proof. by rewrite -D_expr; have ? := zero_in; c6. Qed.
-Lemma M3_in : C6 funM3. Proof. by rewrite -M3_expr; have ? := D_in; c6. Qed.
-Lemma O_in : C6 funO.
-Proof. by rewrite -O_expr; have ? := D_in; have ? := S_in; have ? := Sgn_in; c6. Qed.
-Lemma Q_in : C6 funQ. Proof. by rewrite -Q_expr; have ? := O_in; c6. Qed.
-Lemma Mod3_in : C6 funMod3. Proof. by rewrite -Mod3_expr; have ? := S_in; c6. Qed.
-Lemma R_in : C6 funR.
-Proof. by rewrite -R_expr; have ? := D_in; have ? := Q_in; have ? := S_in; c6. Qed.
-Lemma Sq_in : C6 funSq. Proof. by rewrite -Sq_expr; have ? := S_in; have ? := R_in; c6. Qed.
+(* membership in clos F: clos_solve (Tactics.v) decomposes the expression; the lemmas
+   proved so far are registered as hints *)
+Lemma S_in : C6 funS. Proof. by rewrite -S_expr; clos_solve. Qed.
+Lemma Sgn_in : C6 funSgn. Proof. by rewrite -Sgn_expr; clos_solve. Qed.
+Lemma zero_in : C6 (cst 0). Proof. by rewrite -zero_expr; clos_solve. Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(S_in) :: constr:(Sgn_in) :: constr:(zero_in) :: prev ().
+Lemma D_in : C6 funD. Proof. by rewrite -D_expr; clos_solve. Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(D_in) :: prev ().
+Lemma M3_in : C6 funM3. Proof. by rewrite -M3_expr; clos_solve. Qed.
+Lemma O_in : C6 funO. Proof. by rewrite -O_expr; clos_solve. Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(M3_in) :: constr:(O_in) :: prev ().
+Lemma Q_in : C6 funQ. Proof. by rewrite -Q_expr; clos_solve. Qed.
+Lemma Mod3_in : C6 funMod3. Proof. by rewrite -Mod3_expr; clos_solve. Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(Q_in) :: constr:(Mod3_in) :: prev ().
+Lemma R_in : C6 funR. Proof. by rewrite -R_expr; clos_solve. Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(R_in) :: prev ().
+Lemma Sq_in : C6 funSq. Proof. by rewrite -Sq_expr; clos_solve. Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(Sq_in) :: prev ().
 
 (** * Definition 6.1 (meaningful when F(x) >= x, G(x) >= x and, for (-), F(x) >= G(x)^2) *)
 
@@ -140,7 +137,8 @@ Definition exprMinusI (F : ufun) : ufun :=
   funE \o funS \o opPlusI (funM3 \o F \o funE) \o opPlusI (funSq \o opPlusI F).
 
 Lemma exprMinusI_in F : C6 F -> C6 (exprMinusI F).
-Proof. by move=> h; have ? := S_in; have ? := M3_in; have ? := Sq_in; rewrite /exprMinusI; c6. Qed.
+Proof. by move=> h; rewrite /exprMinusI; clos_solve. Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(exprMinusI_in) :: prev ().
 
 (* pointwise correctness: only F(x) >= x at the point x is needed *)
 Lemma exprMinusI_val F x : x <= F x -> exprMinusI F x = F x - x.
@@ -180,12 +178,13 @@ Qed.
 
 Theorem Lemma_6_3 : C6 funHf /\ C6 funRt.
 Proof.
-have Hf : C6 funHf by rewrite -Hf_expr; apply: exprMinusI_in; have ? := S_in; have ? := Mod3_in; c6.
-split=> //; rewrite -Rt_expr /exprRt; have ? := exprMinusI_in R_in; c6.
+have Hf : C6 funHf by rewrite -Hf_expr /exprHf; clos_solve.
+by split=> //; rewrite -Rt_expr /exprRt; clos_solve.
 Qed.
 
 Lemma Hf_in : C6 funHf. Proof. by case: Lemma_6_3. Qed.
 Lemma Rt_in : C6 funRt. Proof. by case: Lemma_6_3. Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(Hf_in) :: constr:(Rt_in) :: prev ().
 
 (** * Lemma 6.4: F (+) G == (F^- E)^+ (Sq G)^+ and F (-) G == (F^+ E)^- (Sq G)^+ *)
 
@@ -193,13 +192,13 @@ Definition exprOplus (F G : ufun) : ufun := opPlusI (exprMinusI F \o funE) \o op
 Definition exprOminus (F G : ufun) : ufun := exprMinusI (opPlusI F \o funE) \o opPlusI (funSq \o G).
 
 Lemma exprOplus_in F G : C6 F -> C6 G -> C6 (exprOplus F G).
-Proof. by move=> hF hG; have ? := exprMinusI_in hF; have ? := Sq_in; rewrite /exprOplus; c6. Qed.
+Proof. by move=> hF hG; rewrite /exprOplus; clos_solve. Qed.
 
 Lemma exprOminus_in F G : C6 F -> C6 G -> C6 (exprOminus F G).
 Proof.
-move=> hF hG; have ? : C6 (exprMinusI (opPlusI F \o funE)) by apply: exprMinusI_in; c6.
-by have ? := Sq_in; rewrite /exprOminus; c6.
+by move=> hF hG; rewrite /exprOminus; clos_solve.
 Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(exprOplus_in) :: constr:(exprOminus_in) :: prev ().
 
 Lemma E_SqG (G : ufun) x : x <= G x -> funE (G x * G x + x) = x.
 Proof. by move=> h; rewrite funE_sq_add //; lia. Qed.
@@ -232,7 +231,8 @@ Qed.
 Definition exprPhat : ufun := exprOminus (opPlusI (opPlusI (opPlusI funSq))) funS.
 
 Lemma Phat_in : C6 exprPhat.
-Proof. by apply: exprOminus_in; [have ? := Sq_in; c6 | exact: S_in]. Qed.
+Proof. by rewrite /exprPhat; clos_solve. Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(Phat_in) :: prev ().
 
 Lemma Phat_succ x : exprPhat x.+1 = x.
 Proof.
@@ -246,13 +246,8 @@ Definition exprOtimes (F G : ufun) : ufun :=
     (funSq \o F).
 
 Lemma exprOtimes_in F G : C6 F -> C6 G -> C6 (exprOtimes F G).
-Proof.
-move=> hF hG; have ? := Rt_in; have ? := Hf_in; have ? := Sq_in; have ? := S_in; have ? := Phat_in.
-rewrite /exprOtimes => *.
-repeat (c6step || match goal with
-  | |- C6 (exprOminus _ _) => apply: exprOminus_in
-  | |- C6 (exprOplus _ _) => apply: exprOplus_in end).
-Qed.
+Proof. by move=> hF hG; rewrite /exprOtimes; clos_solve. Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(exprOtimes_in) :: prev ().
 
 Lemma exprOtimes_val F G x : x <= F x -> x <= G x -> exprOtimes F G x = F x * G x.
 Proof.
@@ -304,19 +299,12 @@ Definition exprMinus (F G : ufun) : ufun :=
   funE \o funS \o exprPlus (exprPlus (funSq \o exprPlus F G) (funM3 \o F)) G.
 
 Lemma exprPlus_in F G : C6 F -> C6 G -> C6 (exprPlus F G).
-Proof.
-move=> hF hG; have ? := exprOtimes_in (C6_plusI hF) (C6_plusI hG); have ? := D_in; have ? := Rt_in.
-rewrite /exprPlus => *.
-repeat (c6step || match goal with
-  | |- C6 (exprMinusI _) => apply: exprMinusI_in
-  | |- C6 (exprOplus _ _) => apply: exprOplus_in end).
-Qed.
+Proof. by move=> hF hG; rewrite /exprPlus; clos_solve. Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(exprPlus_in) :: prev ().
 
 Lemma exprMinus_in F G : C6 F -> C6 G -> C6 (exprMinus F G).
-Proof.
-move=> hF hG; have ? := S_in; have ? := Sq_in; have ? := M3_in; rewrite /exprMinus => *.
-repeat (c6step || match goal with |- C6 (exprPlus _ _) => apply: exprPlus_in end).
-Qed.
+Proof. by move=> hF hG; rewrite /exprMinus; clos_solve. Qed.
+Ltac2 Set clos_hints as prev := fun () => constr:(exprMinus_in) :: prev ().
 
 Lemma exprPlus_val F G x : exprPlus F G x = F x + G x.
 Proof.

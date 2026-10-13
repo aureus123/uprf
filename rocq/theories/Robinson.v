@@ -8,7 +8,9 @@
 
 From Stdlib Require Import PeanoNat FunctionalExtensionality.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat div zify.
-From UPRF Require Import Basic Prim Sec6.
+From Ltac2 Require Import Ltac2.
+From UPRF Require Import Basic Prim Tactics Sec6.
+Set Default Proof Mode "Classic".
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -19,7 +21,7 @@ Unset Printing Implicit Defensive.
 Lemma funI_eq_box_S : opBox funS = funI.
 Proof. by apply: functional_extensionality; elim=> // n ih; rewrite opBoxS ih. Qed.
 
-Lemma I_in : C6 funI. Proof. by rewrite -funI_eq_box_S; have ? := S_in; c6. Qed.
+Lemma I_in : C6 funI. Proof. by rewrite -funI_eq_box_S; clos_solve. Qed.
 
 Lemma plus_in F G : C6 F -> C6 G -> C6 (opPlus F G).
 Proof. by move=> hF hG; case: (Lemma_6_6 hF hG). Qed.
@@ -30,13 +32,15 @@ Proof. by move=> hF hG; case: (Lemma_6_6 hF hG). Qed.
 Lemma minus_le_in F G : C6 F -> C6 G -> (forall x, G x <= F x) -> C6 (opMinus F G).
 Proof. by move=> hF hG; case: (Lemma_6_6 hF hG). Qed.
 
+Ltac2 Set clos_hints as prev := fun () =>
+  constr:(I_in) :: constr:(plus_in) :: constr:(diffE_in) :: prev ().
+
 (* product without restrictions: FG = Hf((F + G)^2 - (F^2 + G^2)) *)
 Lemma times_in F G : C6 F -> C6 G -> C6 (opOtimes F G).
 Proof.
 move=> hF hG.
 have hX : C6 (opMinus (funSq \o opPlus F G) (opPlus (funSq \o F) (funSq \o G))).
-  apply: minus_le_in; first by have ? := Sq_in; have ? := plus_in hF hG; c6.
-    by apply: plus_in; have ? := Sq_in; c6.
+  apply: minus_le_in; [clos_solve | clos_solve |].
   by move=> x; rewrite /opPlus /funSq /=; move: (F x) (G x) => a b; nia.
 apply: C6_eq (C6_comp Hf_in hX); apply: functional_extensionality => x.
 rewrite /opMinus /opPlus /funSq /funHf /opOtimes /=.
@@ -65,8 +69,7 @@ Proof. by case: n => // n _; rewrite Phat_succ subn1. Qed.
 
 Lemma V_in : C6 funV.
 Proof.
-have ? := Hf_in; have ? := Phat_in; have ? := Rt_in; have ? := S_in; have ? := D_in.
-have h : C6 (funHf \o exprPhat \o funRt \o funS \o funD \o funD \o funD) by c6.
+have h : C6 (funHf \o exprPhat \o funRt \o funS \o funD \o funD \o funD) by clos_solve.
 apply: C6_eq h; apply: functional_extensionality => x.
 have pos : 0 < funRt (8 * x + 1).
   by have := funRt_lt (8 * x + 1); case: (funRt _) => //=; lia.
@@ -98,6 +101,10 @@ move=> hF hG; apply: C6_eq (plus_in (C6_comp A_in (plus_in hF hG)) hF).
 by apply: functional_extensionality.
 Qed.
 
+Ltac2 Set clos_hints as prev := fun () =>
+  constr:(times_in) :: constr:(cond_in) :: constr:(A_in) :: constr:(V_in) :: constr:(K_in)
+  :: constr:(L_in) :: constr:(J_in) :: prev ().
+
 (** * Recursion from iteration *)
 
 Section Rec.
@@ -114,27 +121,8 @@ Definition stepT : ufun :=
          (h \o opJ (opJ (funL \o funK) funL) (funL \o exprPhat \o funK \o funK)))
     (opJ (opJ (funS \o funK \o funK) (cst 0)) (g \o funL \o funK \o funK)).
 
-Lemma stepT_test : C6 (exprMinus (funK \o funK) (funL \o funK)).
-Proof. exact: exprMinus_in (C6_comp K_in K_in) (C6_comp L_in K_in). Qed.
-
-Lemma stepT_next : C6 h ->
-  C6 (opJ (opJ (funK \o funK) (funS \o funL \o funK))
-          (h \o opJ (opJ (funL \o funK) funL) (funL \o exprPhat \o funK \o funK))).
-Proof.
-move=> hh; apply: J_in; first exact: J_in (C6_comp K_in K_in) (C6_comp (C6_comp S_in L_in) K_in).
-apply: C6_comp hh _; apply: J_in; first exact: J_in (C6_comp L_in K_in) L_in.
-exact: C6_comp (C6_comp (C6_comp L_in Phat_in) K_in) K_in.
-Qed.
-
-Lemma stepT_row : C6 g ->
-  C6 (opJ (opJ (funS \o funK \o funK) (cst 0)) (g \o funL \o funK \o funK)).
-Proof.
-move=> hg; apply: J_in; first exact: J_in (C6_comp (C6_comp S_in K_in) K_in) zero_in.
-exact: C6_comp (C6_comp (C6_comp hg L_in) K_in) K_in.
-Qed.
-
 Lemma stepT_in : C6 g -> C6 h -> C6 stepT.
-Proof. by move=> hg hh; apply: cond_in stepT_test (stepT_next hh) (stepT_row hg). Qed.
+Proof. by move=> hg hh; rewrite /stepT; clos_solve. Qed.
 
 Lemma stepT_val N y v : y <= N ->
   stepT (funJ (funJ N y) v) =
@@ -203,9 +191,7 @@ Qed.
 
 Lemma unaryRec_in : C6 g -> C6 h -> C6 (unaryRec g h).
 Proof.
-move=> hg hh; rewrite unaryRec_expr.
-exact: C6_comp (C6_comp L_in (C6_box (stepT_in hg hh)))
-  (plus_in (C6_comp A_in S_in) K_in).
+by move=> hg hh; rewrite unaryRec_expr; have ? := stepT_in hg hh; clos_solve.
 Qed.
 
 End Rec.
@@ -231,32 +217,16 @@ Definition basisRobinson : basis :=
         (fun b => b = opPlus \/ b = comp).
 
 Lemma Robinson_sound F : Clos basisRobinson F -> PrimNN F.
-Proof.
-apply: clos_sound => [? [->|->]|? ? ->|? ? ? [->|->]]; auto using pr_succ, pr_E, pr_opBox,
-  pr_opPlus, pr_comp.
-Qed.
+Proof. by move: F; sound. Qed.
 
 Lemma C6_sub_CR F : C6 F -> Clos basisRobinson F.
 Proof.
-have S : Clos basisRobinson funS by apply: clos_init; left.
-have E : Clos basisRobinson funE by apply: clos_init; right.
-have box : forall F, Clos basisRobinson F -> Clos basisRobinson (opBox F)
-  by move=> ? ?; apply: clos_unop.
-have plus : forall F G, Clos basisRobinson F -> Clos basisRobinson G ->
-    Clos basisRobinson (opPlus F G) by move=> ? ? ? ?; apply: (clos_binop (b := opPlus)); [left|..].
-have comp : forall F G, Clos basisRobinson F -> Clos basisRobinson G ->
-    Clos basisRobinson (F \o G) by move=> ? ? ? ?; apply: (clos_binop (b := comp)); [right|..].
-have I : Clos basisRobinson funI by rewrite -funI_eq_box_S; apply: box.
 have boxE : opBox funE = cst 0.
-  apply: functional_extensionality; elim=> // n ih; rewrite opBoxS ih.
-  by case: funE_small.
-have one : funS \o opBox funE = cst 1.
-  by rewrite boxE; apply: functional_extensionality.
-apply: clos_subset.
-- move=> F' [->|->]; last exact: E.
-  by rewrite -one; apply: comp S (box _ E).
-- move=> u F' [->|->] hF'; last exact: box _ hF'.
-  have -> : opPlusI F' = opPlus F' funI by [].
-  exact: plus _ _ hF' I.
-- by move=> b F' G' -> hF' hG'; apply: comp.
+  by apply: functional_extensionality; elim=> // n ih; rewrite opBoxS ih; case: funE_small.
+have one : Clos basisRobinson (cst 1).
+  have <- : funS \o opBox funE = cst 1 by rewrite boxE; apply: functional_extensionality.
+  by clos_solve.
+have I : Clos basisRobinson funI by rewrite -funI_eq_box_S; clos_solve.
+apply: (@clos_subset basis6 basisRobinson) => [? [->|->] | ? F' [->|->] ? | ? ? ? -> ? ?]; try clos_solve.
+by rewrite (_ : opPlusI F' = opPlus F' funI) //; clos_solve.
 Qed.

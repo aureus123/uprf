@@ -26,7 +26,7 @@ opam repo add rocq-released https://rocq-prover.org/opam/released
 opam install rocq-prover rocq-mathcomp-ssreflect coq-mathcomp-zify
 ```
 
-Then build (about 30 s):
+Then build (about 35 s):
 
 ```sh
 ./build.sh
@@ -38,16 +38,43 @@ Then build (about 30 s):
 |---|---|---|
 | `theories/Basic.v` | 221 | Section 2 functions and operators; Cantor A, V, K, L, J; bases; `Clos` (inductive); Prim(ℕ,ℕ) (`PrimNN`, inductive); `suitable`; simulation and soundness lemmas; arithmetic facts |
 | `theories/Prim.v` | 175 | the functions and operators of the paper are primitive recursive (bootstrapping +, ∸, ×, the equality test, √, E, Hf, iteration) |
-| `theories/Sec6.v` | 365 | the basis ⟨1, E, F⁺, FG, F^□⟩, first functions, Definition 6.1, Lemmas 6.2–6.6 |
-| `theories/Robinson.v` | 262 | `PrimNN_sub_C6`; Robinson's basis generates the closure |
-| `theories/Thm67.v` | 80 | `Theorem_6_7`, `Robinson_1947_sec7_thm3`, `Lemma_3_3`, `Theorem_6_7_via_L33` |
-| `theories/Thm68.v` | 225 | `Theorem_6_8` |
-| `theories/Rem69.v` | 193 | `Remark_6_9_I`, `_II`, `_III` |
+| `theories/Tactics.v` | 160 | Ltac2 automation: `clos_solve`, `sound`, `simulate` (see below) |
+| `theories/Sec6.v` | 353 | the basis ⟨1, E, F⁺, FG, F^□⟩, first functions, Definition 6.1, Lemmas 6.2–6.6 |
+| `theories/Robinson.v` | 232 | `PrimNN_sub_C6`; Robinson's basis generates the closure |
+| `theories/Thm67.v` | 62 | `Theorem_6_7`, `Robinson_1947_sec7_thm3`, `Lemma_3_3`, `Theorem_6_7_via_L33` |
+| `theories/Thm68.v` | 192 | `Theorem_6_8` |
+| `theories/Rem69.v` | 161 | `Remark_6_9_I`, `_II`, `_III` |
 
 ## Status
 
 Complete, with no `Admitted`. The only axiom used is functional extensionality (checked with
 `Print Assumptions`).
+
+## Proof automation (`Tactics.v`, Ltac2)
+
+Three mechanisms recur throughout the proofs. Each one is a generic Ltac2 tactic, callable
+from ssreflect scripts through a Ltac1 wrapper.
+
+- **`clos_solve`** proves a membership `Clos B F` for any basis `B`. It decomposes `F` by its
+  syntactic head and tries, in order:
+  1. a hypothesis;
+  2. a hypothesis or registered lemma used as a rule (for example `exprMinusI_in`);
+  3. an initial function of `B`;
+  4. a binary operator of `B`;
+  5. a unary operator of `B`.
+
+  Membership in the basis is decided by syntactic comparison, so no conversion between
+  function terms is attempted (such conversions can be very slow here). Lemmas are registered
+  with `Ltac2 Set clos_hints as prev := fun () => constr:(lemma) :: prev ()`.
+- **`sound`** proves the soundness of a closure: `clos_sound`, a case analysis of the basis,
+  and the hint database `prim`. It leaves open the cases it cannot solve.
+- **`simulate S`** proves `suitable B` from a suitable basis `S`. It applies
+  `suitable_by_simulation`, solves every case with `clos_solve`, and closes soundness with
+  `sound`.
+
+With them, most membership lemmas and all simulation proofs take one line. For example,
+Remark 6.9 (III) is `by simulate Remark_6_9_II` once `K` and `1` are known to be in the
+closure.
 
 ## Notes
 

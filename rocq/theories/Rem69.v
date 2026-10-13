@@ -6,7 +6,9 @@
 
 From Stdlib Require Import PeanoNat FunctionalExtensionality.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat div zify.
-From UPRF Require Import Basic Prim Sec6 Robinson Thm67 Thm68.
+From Ltac2 Require Import Ltac2.
+From UPRF Require Import Basic Prim Tactics Sec6 Robinson Thm67 Thm68.
+Set Default Proof Mode "Classic".
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -29,30 +31,15 @@ Section Basis69.
 Variable G : ufun.
 Notation C := (Clos (basis69 G)).
 
-Lemma CB_G : C G. Proof. by apply: clos_init. Qed.
-Lemma CB_plusI F : C F -> C (opPlusI F). Proof. by apply: clos_unop; left. Qed.
-Lemma CB_box1 F : C F -> C (opBoxA 1 F). Proof. by apply: clos_unop; right. Qed.
-Lemma CB_comp F H : C F -> C H -> C (F \o H).
-Proof. by move=> hF hH; apply: (clos_binop (b := comp)). Qed.
-
 (* <G, F^+, FG, F^box(1)> is suitable when it generates 1 and a predecessor P^, the basis
    <1, G, F^+, FG, F^box> is suitable and G is primitive recursive *)
 Lemma suitable69 P : suitable (basis1 G) -> PrimNN G -> (forall x, P x.+1 = x) -> C P ->
   C (cst 1) -> suitable (basis69 G).
 Proof.
-move=> S hG hP hPin one; have hS : C funS by rewrite -S_expr; apply: CB_plusI.
-apply: (suitable_by_simulation S).
-- by move=> F [->|->]; [exact: one | exact: CB_G].
-- move=> u F [->|->] hF; first exact: CB_plusI.
-  have e := box_from_box1 F hP.
-  have h1 : C (opBoxA 1 (funS \o F \o P)).
-    by apply: CB_box1; exact: CB_comp (CB_comp hS hF) hPin.
-  by rewrite -e; exact: CB_comp hPin h1.
-- by move=> b F H ->; exact: CB_comp.
-- apply: clos_sound.
-  + by move=> F ->.
-  + by move=> u F [->|->]; [exact: pr_opPlusI | exact: pr_opBoxA].
-  + by move=> b F H ->; exact: pr_comp.
+move=> S hG hP hPin one; have hS : C funS by rewrite -S_expr; clos_solve.
+have box : forall F, C F -> C (opBox F).
+  by move=> F hF; rewrite -(box_from_box1 F hP); clos_solve.
+by simulate S.
 Qed.
 
 End Basis69.
@@ -72,8 +59,8 @@ Lemma one_expr_O : funO \o cst 0 = cst 1. Proof. by []. Qed.
 
 Lemma one_in69 G : G 0 = 0 -> G 1 = 0 -> Clos (basis69 G) (cst 1).
 Proof.
-move=> h0 h1; have O : Clos (basis69 G) funO by rewrite -(O_expr_box1 h0 h1); apply: CB_box1 (CB_G G).
-by rewrite -one_expr_O -(zero_expr_O h0 h1); apply: CB_comp O (CB_comp (CB_G G) O).
+move=> h0 h1; have O : Clos (basis69 G) funO by rewrite -(O_expr_box1 h0 h1); clos_solve.
+by rewrite -one_expr_O -(zero_expr_O h0 h1); clos_solve.
 Qed.
 
 (** * (I) <E, F^+, FG, F^box(1)> *)
@@ -106,22 +93,15 @@ Qed.
 Theorem Remark_6_9_I : suitable (basis69 funE).
 Proof.
 case: funE_small => h0 h1 _ _ _.
-have one := one_in69 h0 h1; have E := CB_G funE.
-have S : Clos (basis69 funE) funS by rewrite -S_expr; apply: CB_plusI.
-have O : Clos (basis69 funE) funO by rewrite -(O_expr_box1 h0 h1); apply: CB_box1.
-have zero : Clos (basis69 funE) (cst 0) by rewrite -(zero_expr_O h0 h1); apply: CB_comp.
-have D : Clos (basis69 funE) funD by rewrite -D_expr; do 2 apply: CB_plusI.
-have Q : Clos (basis69 funE) funQ by rewrite -Q_expr; apply: CB_comp.
-have G : Clos (basis69 funE) funG.
-  rewrite -G_expr; do 2 apply: CB_box1.
-  exact: CB_comp (CB_plusI (CB_comp (CB_comp (CB_comp D Q) S) S)) S.
-have P : Clos (basis69 funE) exprPhatI.
-  exact: CB_comp (CB_comp (CB_comp E S) S) (CB_plusI (CB_plusI (CB_plusI G))).
-have S1 : suitable (basis1 funE).
-  apply: (suitable_by_simulation Theorem_6_7); last exact: C1_sound pr_E.
-  + by move=> F [->|->]; [exact: C1_one | exact: C1_G].
-  + by move=> u F [->|->]; [exact: C1_plusI | exact: C1_box].
-  + by move=> b F H ->; exact: C1_comp.
+have one := one_in69 h0 h1.
+have S : Clos (basis69 funE) funS by rewrite -S_expr; clos_solve.
+have O : Clos (basis69 funE) funO by rewrite -(O_expr_box1 h0 h1); clos_solve.
+have zero : Clos (basis69 funE) (cst 0) by rewrite -(zero_expr_O h0 h1); clos_solve.
+have D : Clos (basis69 funE) funD by rewrite -D_expr; clos_solve.
+have Q : Clos (basis69 funE) funQ by rewrite -Q_expr; clos_solve.
+have G : Clos (basis69 funE) funG by rewrite -G_expr; clos_solve.
+have P : Clos (basis69 funE) exprPhatI by rewrite /exprPhatI; clos_solve.
+have S1 : suitable (basis1 funE) by apply: suitable1 pr_E _; clos_solve.
 exact: suitable69 S1 pr_E PhatI_succ P one.
 Qed.
 
@@ -158,12 +138,10 @@ Qed.
 
 Theorem Remark_6_9_II : suitable (basis69 funK).
 Proof.
-have one := one_in69 funK0 funK1; have K := CB_G funK.
-have S : Clos (basis69 funK) funS by rewrite -S_expr; apply: CB_plusI.
-have H : Clos (basis69 funK) funH.
-  by rewrite -H_expr; exact: CB_comp S (CB_box1 (CB_comp (CB_comp S (CB_plusI K)) S)).
-have P : Clos (basis69 funK) exprPhatII.
-  exact: CB_comp (CB_comp (CB_comp (CB_comp K S) S) S) (CB_plusI (CB_plusI H)).
+have one := one_in69 funK0 funK1.
+have S : Clos (basis69 funK) funS by rewrite -S_expr; clos_solve.
+have H : Clos (basis69 funK) funH by rewrite -H_expr; clos_solve.
+have P : Clos (basis69 funK) exprPhatII by rewrite /exprPhatII; clos_solve.
 exact: suitable69 Theorem_6_8_K pr_fst PhatII_succ P one.
 Qed.
 
@@ -177,17 +155,7 @@ Proof. by apply: functional_extensionality; elim=> [//|n ih]; rewrite opBoxAS ih
 
 Theorem Remark_6_9_III : suitable (basis69 funL).
 Proof.
-have L := CB_G funL.
-have one : Clos (basis69 funL) (cst 1) by rewrite -one_expr_III; apply: CB_box1.
-have K : Clos (basis69 funL) funK.
-  rewrite -K_expr_L; apply: CB_comp (CB_comp L (CB_plusI one)) _.
-  exact: CB_plusI (CB_comp (CB_plusI (CB_plusI one)) L).
-apply: (suitable_by_simulation Remark_6_9_II).
-- by move=> F ->.
-- by move=> u F [->|->]; [exact: CB_plusI | exact: CB_box1].
-- by move=> b F H ->; exact: CB_comp.
-- apply: clos_sound.
-  + by move=> F ->; exact: pr_snd.
-  + by move=> u F [->|->]; [exact: pr_opPlusI | exact: pr_opBoxA].
-  + by move=> b F H ->; exact: pr_comp.
+have one : Clos (basis69 funL) (cst 1) by rewrite -one_expr_III; clos_solve.
+have K : Clos (basis69 funL) funK by rewrite -K_expr_L; clos_solve.
+by simulate Remark_6_9_II.
 Qed.

@@ -18,17 +18,8 @@ definition basis_6K :: basis where
 
 abbreviation C6K :: "ufun set" where "C6K \<equiv> clos basis_6K"
 
-lemma C6K_one: "cst 1 \<in> C6K" and C6K_K: "funK \<in> C6K"
-  by (rule clos_init, simp add: basis_6K_def)+
-
-lemma C6K_plusI: "F \<in> C6K \<Longrightarrow> opPlusI F \<in> C6K"
-  and C6K_box: "F \<in> C6K \<Longrightarrow> opBox F \<in> C6K"
-  using clos_unop[of opPlusI basis_6K F] clos_unop[of opBox basis_6K F] by (simp_all add: basis_6K_def)
-
-lemma C6K_comp: "F \<in> C6K \<Longrightarrow> G \<in> C6K \<Longrightarrow> F \<circ> G \<in> C6K"
-  using clos_binop[of "(\<circ>)" basis_6K F G] by (simp add: basis_6K_def)
-
-lemmas C6K_intros = C6K_one C6K_K C6K_plusI C6K_box C6K_comp
+lemmas basis_6K_sel [clos_defs] =
+  basis.sel[of "{cst 1, funK}" "{opPlusI, opBox}" "{(\<circ>)}", folded basis_6K_def]
 
 text \<open>Auxiliary functions of the proof (following p. 664 of Robinson [16]).\<close>
 definition funY :: ufun where "funY x = 2 * x - funRt x"          \<comment> \<open>\<open>Y(x) = 2x - \<lfloor>\<surd>x\<rfloor>\<close>\<close>
@@ -222,35 +213,25 @@ proof
   then show "exprIminusF (funSq \<circ> funRt) x = funE x" by (simp add: exprIminusF_val funSq_def funE_alt)
 qed
 
-lemma S_in_K: "funS \<in> C6K" by (metis S_expr C6K_intros)
-lemma Sgn_in_K: "funSgn \<in> C6K" by (metis Sgn_expr C6K_intros)
-lemma zero_in_K: "cst 0 \<in> C6K" by (metis zero_expr_K C6K_intros)
-lemma D_in_K: "funD \<in> C6K" by (metis D_expr zero_in_K C6K_intros)
-lemma Y_in_K: "funY \<in> C6K" by (metis Y_expr Sgn_in_K S_in_K C6K_intros)
-lemma Z_in_K: "funZ \<in> C6K" by (metis Z_expr S_in_K C6K_intros)
+lemma S_in_K [clos_rules]: "funS \<in> C6K" by (subst S_expr[symmetric]) clos_solve
+lemma Sgn_in_K [clos_rules]: "funSgn \<in> C6K" by (subst Sgn_expr[symmetric]) clos_solve
+lemma zero_in_K [clos_rules]: "cst 0 \<in> C6K" by (subst zero_expr_K[symmetric]) clos_solve
+lemma D_in_K [clos_rules]: "funD \<in> C6K" by (subst D_expr[symmetric]) clos_solve
+lemma Y_in_K [clos_rules]: "funY \<in> C6K" by (subst Y_expr[symmetric]) clos_solve
+lemma Z_in_K [clos_rules]: "funZ \<in> C6K" by (subst Z_expr[symmetric]) clos_solve
 
-lemma exprIminusF_in_K: "F \<in> C6K \<Longrightarrow> exprIminusF F \<in> C6K"
-  unfolding exprIminusF_def by (intro C6K_intros S_in_K Z_in_K)
+lemma exprIminusF_in_K [clos_rules]: "F \<in> C6K \<Longrightarrow> exprIminusF F \<in> C6K"
+  unfolding exprIminusF_def by clos_solve
 
-lemma exprDminusF_in_K: "F \<in> C6K \<Longrightarrow> exprDminusF F \<in> C6K"
-  unfolding exprDminusF_def by (intro C6K_intros S_in_K Z_in_K)
+lemma exprDminusF_in_K [clos_rules]: "F \<in> C6K \<Longrightarrow> exprDminusF F \<in> C6K"
+  unfolding exprDminusF_def by clos_solve
 
-lemma Rt_in_K: "funRt \<in> C6K" by (metis Rt_expr_K exprDminusF_in_K Y_in_K)
-lemma Sq_in_K: "funSq \<in> C6K" by (metis Sq_expr_K Rt_in_K C6K_intros)
-lemma E_in_K: "funE \<in> C6K" by (metis E_expr_K exprIminusF_in_K Sq_in_K Rt_in_K C6K_intros)
+lemma Rt_in_K [clos_rules]: "funRt \<in> C6K" by (subst Rt_expr_K[symmetric]) clos_solve
+lemma Sq_in_K [clos_rules]: "funSq \<in> C6K" by (subst Sq_expr_K[symmetric]) clos_solve
+lemma E_in_K [clos_rules]: "funE \<in> C6K" by (subst E_expr_K[symmetric]) clos_solve
 
 theorem Theorem_6_8_K: "suitable basis_6K"
-proof (rule suitable_by_simulation[OF Theorem_6_7])
-  show "inits basis_6 \<subseteq> C6K" using C6K_one E_in_K by (simp add: basis_6_def)
-  show "applyU u F \<in> C6K" if "u \<in> unops basis_6" "F \<in> C6K" for u F
-    using that C6K_plusI C6K_box by (auto simp: basis_6_def applyU_def)
-  show "applyB b F G \<in> C6K" if "b \<in> binops basis_6" "F \<in> C6K" "G \<in> C6K" for b F G
-    using that C6K_comp[of F G] by (simp add: basis_6_def applyB_def comp_def)
-  show "C6K \<subseteq> PrimNN"
-    by (rule clos_sound)
-       (auto simp: basis_6K_def applyU_def applyB_def cst_PR funK_PR
-             intro: opPlusI_PR opBox_PR comp_PR pr_comp1_1)
-qed
+  by (simulate S: Theorem_6_7)
 
 subsection \<open>The basis \<open>\<F>'' = \<langle>\<overline>1, L, F\<^sup>+, FG, F\<^sup>\<box>\<rangle>\<close>\<close>
 
@@ -259,17 +240,8 @@ definition basis_6L :: basis where
 
 abbreviation C6L :: "ufun set" where "C6L \<equiv> clos basis_6L"
 
-lemma C6L_one: "cst 1 \<in> C6L" and C6L_L: "funL \<in> C6L"
-  by (rule clos_init, simp add: basis_6L_def)+
-
-lemma C6L_plusI: "F \<in> C6L \<Longrightarrow> opPlusI F \<in> C6L"
-  and C6L_box: "F \<in> C6L \<Longrightarrow> opBox F \<in> C6L"
-  using clos_unop[of opPlusI basis_6L F] clos_unop[of opBox basis_6L F] by (simp_all add: basis_6L_def)
-
-lemma C6L_comp: "F \<in> C6L \<Longrightarrow> G \<in> C6L \<Longrightarrow> F \<circ> G \<in> C6L"
-  using clos_binop[of "(\<circ>)" basis_6L F G] by (simp add: basis_6L_def)
-
-lemmas C6L_intros = C6L_one C6L_L C6L_plusI C6L_box C6L_comp
+lemmas basis_6L_sel [clos_defs] =
+  basis.sel[of "{cst 1, funL}" "{opPlusI, opBox}" "{(\<circ>)}", folded basis_6L_def]
 
 text \<open>\<open>K \<equiv> L \<overline>1\<^sup>+ ((\<overline>1\<^sup>+)\<^sup>+ L)\<^sup>+\<close>, i.e. \<open>K(x) = L(x + 2L(x) + 2)\<close> (Robinson [16, p. 664]).\<close>
 lemma K_expr_L: "funL \<circ> opPlusI (cst 1) \<circ> opPlusI (opPlusI (opPlusI (cst 1)) \<circ> funL) = funK"
@@ -292,21 +264,10 @@ proof
     unfolding L .
 qed
 
-lemma K_in_L: "funK \<in> C6L"
-  by (metis K_expr_L C6L_intros)
+lemma K_in_L [clos_rules]: "funK \<in> C6L" by (subst K_expr_L[symmetric]) clos_solve
 
 theorem Theorem_6_8_L: "suitable basis_6L"
-proof (rule suitable_by_simulation[OF Theorem_6_8_K])
-  show "inits basis_6K \<subseteq> C6L" using C6L_one K_in_L by (simp add: basis_6K_def)
-  show "applyU u F \<in> C6L" if "u \<in> unops basis_6K" "F \<in> C6L" for u F
-    using that C6L_plusI C6L_box by (auto simp: basis_6K_def applyU_def)
-  show "applyB b F G \<in> C6L" if "b \<in> binops basis_6K" "F \<in> C6L" "G \<in> C6L" for b F G
-    using that C6L_comp[of F G] by (simp add: basis_6K_def applyB_def comp_def)
-  show "C6L \<subseteq> PrimNN"
-    by (rule clos_sound)
-       (auto simp: basis_6L_def applyU_def applyB_def cst_PR funL_PR
-             intro: opPlusI_PR opBox_PR comp_PR pr_comp1_1)
-qed
+  by (simulate S: Theorem_6_8_K)
 
 text \<open>Theorem 6.8.\<close>
 theorem Theorem_6_8: "suitable basis_6K" "suitable basis_6L"

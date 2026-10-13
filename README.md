@@ -315,12 +315,12 @@ A good reading order is:
 ### 4.3 Comparison
 
 Line counts cover Sections 2–6, including Robinson's theorem where it is proved (comments
-included). The Isabelle extensions of §2 add 712 more lines.
+included). The Isabelle extensions of §2 add 675 more lines.
 
 | | Isabelle/HOL | Mizar | Lean 4 | Rocq |
 |---|---|---|---|---|
-| Lines | 2 056 (1 739 without Robinson) | 4 094 | 1 388 | 1 521 |
-| Check time from clean | ~15 s (after the AFP session) | ~11 s | ~60 s (mostly loading Mathlib) | ~30 s |
+| Lines | 2 011 (1 710 without Robinson; 84 are proof methods) | 4 094 | 1 405 (97 are proof automation) | 1 556 (160 are proof automation) |
+| Check time from clean | ~15 s (after the AFP session) | ~11 s | ~95 s (loading Mathlib and proof search) | ~35 s |
 | What is proved | everything; `suitable` means equal to Prim | everything **at closure level**: every basis generates the same closure as Robinson's ⟨S, E, F + G, FG, F^□⟩; Robinson's theorem itself is not proved | everything; `suitable` means equal to Prim | everything; `suitable` means equal to Prim |
 | Robinson's theorem | proved, using the AFP characterization `PrimRec1'` | missing | proved against Mathlib's `Nat.Primrec` (Szudzik pairing) | proved against its own `PrimNN` (Cantor pairing) |
 | Soundness (closure ⊆ Prim) | AFP `prec` tactic | not applicable | Mathlib `Primrec` API (`nat_iterate`, `nat_sqrt`, …) | bootstrapped by hand in `Prim.v` (+, ∸, ×, =, √, E, Hf, iteration) |
@@ -345,6 +345,22 @@ included). The Isabelle extensions of §2 add 712 more lines.
     - definition by cases.
   - With Cantor's pairing (Isabelle, Rocq) the triangle walk needs only the difference of
     Lemma 6.6. That difference is correct below the diagonal, and the walk never leaves it.
+- **Proof automation.** Closure membership, soundness and simulation recur in every theorem.
+  Three provers capture them with their own extension mechanisms:
+
+  | Prover | Mechanism | Tactics |
+  |---|---|---|
+  | Rocq | Ltac2 (`Tactics.v`) | `clos_solve`, `sound`, `simulate` |
+  | Isabelle | Eisbach methods with named theorems (`UPRF_Methods.thy`) | `clos_solve`, `clos_sound_m`, `clos_subset_m`, `simulate` |
+  | Lean | tactic macros, extensible through `macro_rules` (`Tactics.lean`) | `clos_solve`, `prim_sound`, `simulate` |
+
+  In all three, most membership lemmas and every suitability theorem of 6.8 and 6.9 became one
+  line. The refactored files lost about 125 lines (Rocq), 160 lines (Isabelle) and 80 lines
+  (Lean) of proof. One design point mattered in all three: decomposing a function **by its
+  syntactic head**, never by unification modulo definitions. The Rocq version compares terms
+  syntactically, Lean uses reducible transparency, and Isabelle uses one rule per operator.
+  Without it, unification unfolds √ and the Cantor functions and can hang. Mizar has no
+  user-definable tactics.
 - **Closures as inductive predicates** (Lean, Rocq) give structural induction for free.
   Isabelle and Mizar define the closure as an intersection of closed sets and prove the
   induction principle (Isabelle) or work with "least closed set" arguments (Mizar).

@@ -23,16 +23,14 @@ definition basis_a :: "ufun \<Rightarrow> nat \<Rightarrow> basis" where
 lemma basis_69_eq: "basis_69_I = basis_a funE 1" "basis_69_II = basis_a funK 1" "basis_69_III = basis_a funL 1"
   by (simp_all add: basis_69_I_def basis_69_II_def basis_69_III_def basis_a_def)
 
-lemma Ca_X: "X \<in> clos (basis_a X a)"
-  by (rule clos_init) (simp add: basis_a_def)
+lemmas basis_a_sel [clos_defs] =
+  basis.sel[of "{X}" "{opPlusI, opBoxA a}" "{(\<circ>)}", folded basis_a_def] for X a
 
+lemma Ca_X: "X \<in> clos (basis_a X a)" by clos_solve
 lemma Ca_plusI: "F \<in> clos (basis_a X a) \<Longrightarrow> opPlusI F \<in> clos (basis_a X a)"
-  and Ca_boxA: "F \<in> clos (basis_a X a) \<Longrightarrow> opBoxA a F \<in> clos (basis_a X a)"
-  using clos_unop[of opPlusI "basis_a X a" F] clos_unop[of "opBoxA a" "basis_a X a" F]
-  by (simp_all add: basis_a_def)
-
+  and Ca_boxA: "F \<in> clos (basis_a X a) \<Longrightarrow> opBoxA a F \<in> clos (basis_a X a)" by clos_solve+
 lemma Ca_comp: "F \<in> clos (basis_a X a) \<Longrightarrow> G \<in> clos (basis_a X a) \<Longrightarrow> F \<circ> G \<in> clos (basis_a X a)"
-  using clos_binop[of "(\<circ>)" "basis_a X a" F G] by (simp add: basis_a_def)
+  by clos_solve
 
 text \<open>Finite powers \<open>F\<^sup>k G\<close> (composition) stay in any closure containing \<open>(\<circ>)\<close>.\<close>
 lemma clos_powcomp:
@@ -47,7 +45,7 @@ next
 qed
 
 lemma Ca_powcomp: "F \<in> clos (basis_a X a) \<Longrightarrow> G \<in> clos (basis_a X a) \<Longrightarrow> (F ^^ k) \<circ> G \<in> clos (basis_a X a)"
-  by (rule clos_powcomp) (simp_all add: basis_a_def)
+  by (rule clos_powcomp) (simp_all add: clos_defs)
 
 lemmas Ca_intros = Ca_X Ca_plusI Ca_boxA Ca_comp Ca_powcomp
 
@@ -347,19 +345,11 @@ proof -
 qed
 
 theorem Ext_a_E: assumes "2 \<le> a" shows "suitable (basis_a funE a)"
-proof (rule suitable_by_simulation[OF Theorem_6_7])
-  let ?C = "clos (basis_a funE a)"
-  have P: "\<And>x. PE a (Suc x) = x" using PE_Suc[OF assms] .
+proof -
   note L = locE[OF assms]
-  show "inits basis_6 \<subseteq> ?C" using ext_a.one_in[OF L] Ca_X by (simp add: basis_6_def)
-  show "applyU u F \<in> ?C" if "u \<in> unops basis_6" "F \<in> ?C" for u F
-    using that Ca_plusI ext_a.box_in[OF L PE_in[OF assms] P] by (auto simp: basis_6_def applyU_def)
-  show "applyB b F G \<in> ?C" if "b \<in> binops basis_6" "F \<in> ?C" "G \<in> ?C" for b F G
-    using that Ca_comp[of F funE a G] by (simp add: basis_6_def applyB_def comp_def)
-  show "?C \<subseteq> PrimNN"
-    by (rule clos_sound)
-       (auto simp: basis_a_def applyU_def applyB_def funE_PR
-             intro: opPlusI_PR opBoxA_PR comp_PR pr_comp1_1)
+  show ?thesis
+    by (simulate S: Theorem_6_7
+          add: ext_a.one_in[OF L] ext_a.box_in[OF L PE_in[OF assms] PE_Suc[OF assms]])
 qed
 
 subsection \<open>The case \<open>X = K\<close>\<close>
@@ -422,18 +412,10 @@ proof -
 qed
 
 theorem Ext_a_K: assumes "2 \<le> a" shows "suitable (basis_a funK a)"
-proof (rule suitable_by_simulation[OF Theorem_6_8_K])
-  let ?C = "clos (basis_a funK a)"
+proof -
   note L = locK[OF assms]
-  show "inits basis_6K \<subseteq> ?C" using ext_a.one_in[OF L] Ca_X by (simp add: basis_6K_def)
-  show "applyU u F \<in> ?C" if "u \<in> unops basis_6K" "F \<in> ?C" for u F
-    using that Ca_plusI ext_a.box_in[OF L PK_in[OF assms] PK_Suc] by (auto simp: basis_6K_def applyU_def)
-  show "applyB b F G \<in> ?C" if "b \<in> binops basis_6K" "F \<in> ?C" "G \<in> ?C" for b F G
-    using that Ca_comp[of F funK a G] by (simp add: basis_6K_def applyB_def comp_def)
-  show "?C \<subseteq> PrimNN"
-    by (rule clos_sound)
-       (auto simp: basis_a_def applyU_def applyB_def funK_PR
-             intro: opPlusI_PR opBoxA_PR comp_PR pr_comp1_1)
+  show ?thesis
+    by (simulate S: Theorem_6_8_K add: ext_a.one_in[OF L] ext_a.box_in[OF L PK_in[OF assms] PK_Suc])
 qed
 
 subsection \<open>The case \<open>X = L\<close>\<close>
@@ -472,18 +454,7 @@ lemma K_in_La: "2 \<le> a \<Longrightarrow> funK \<in> clos (basis_a funL a)"
   unfolding K_expr_L[symmetric] by (intro Ca_comp Ca_plusI Ca_X ext_a.one_in[OF locL])
 
 theorem Ext_a_L: assumes "2 \<le> a" shows "suitable (basis_a funL a)"
-proof (rule suitable_by_simulation[OF Ext_a_K[OF assms]])
-  let ?C = "clos (basis_a funL a)"
-  show "inits (basis_a funK a) \<subseteq> ?C" using K_in_La[OF assms] by (simp add: basis_a_def)
-  show "applyU u F \<in> ?C" if "u \<in> unops (basis_a funK a)" "F \<in> ?C" for u F
-    using that Ca_plusI Ca_boxA by (auto simp: basis_a_def applyU_def)
-  show "applyB b F G \<in> ?C" if "b \<in> binops (basis_a funK a)" "F \<in> ?C" "G \<in> ?C" for b F G
-    using that Ca_comp[of F funL a G] by (simp add: basis_a_def applyB_def comp_def)
-  show "?C \<subseteq> PrimNN"
-    by (rule clos_sound)
-       (auto simp: basis_a_def applyU_def applyB_def funL_PR
-             intro: opPlusI_PR opBoxA_PR comp_PR pr_comp1_1)
-qed
+  by (simulate S: Ext_a_K[OF assms] add: K_in_La[OF assms])
 
 subsection \<open>Every starting value \<open>a \<ge> 1\<close>\<close>
 

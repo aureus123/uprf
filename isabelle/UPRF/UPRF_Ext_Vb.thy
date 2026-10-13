@@ -36,19 +36,22 @@ definition basis_Vb :: "nat \<Rightarrow> basis" where
 
 subsection \<open>Closure rules\<close>
 
-lemma Cb_E: "funE \<in> clos (basis_Vb b)"
-  by (rule clos_init) (simp add: basis_Vb_def)
+lemmas basis_Vb_sel [clos_defs] =
+  basis.sel[of "{funE}" "{opPlusIb b, opBox}" "{(\<circ>)}", folded basis_Vb_def] for b
 
+lemma clos_plusIb_rule [clos_rules]:
+  "F \<in> clos B \<Longrightarrow> opPlusIb b \<in> unops B \<Longrightarrow> opPlusIb b F \<in> clos B"
+  using clos_unop[of "opPlusIb b" B F] by simp
+
+declare opPlusIb_PR [prim_intros]
+
+lemma Cb_E: "funE \<in> clos (basis_Vb b)" by clos_solve
 lemma Cb_Vb: "F \<in> clos (basis_Vb b) \<Longrightarrow> opPlusIb b F \<in> clos (basis_Vb b)"
-  and Cb_box: "F \<in> clos (basis_Vb b) \<Longrightarrow> opBox F \<in> clos (basis_Vb b)"
-  using clos_unop[of "opPlusIb b" "basis_Vb b" F] clos_unop[of opBox "basis_Vb b" F]
-  by (simp_all add: basis_Vb_def)
-
+  and Cb_box: "F \<in> clos (basis_Vb b) \<Longrightarrow> opBox F \<in> clos (basis_Vb b)" by clos_solve+
 lemma Cb_comp: "F \<in> clos (basis_Vb b) \<Longrightarrow> G \<in> clos (basis_Vb b) \<Longrightarrow> F \<circ> G \<in> clos (basis_Vb b)"
-  using clos_binop[of "(\<circ>)" "basis_Vb b" F G] by (simp add: basis_Vb_def)
-
+  by clos_solve
 lemma Cb_powcomp: "F \<in> clos (basis_Vb b) \<Longrightarrow> G \<in> clos (basis_Vb b) \<Longrightarrow> (F ^^ k) \<circ> G \<in> clos (basis_Vb b)"
-  by (rule clos_powcomp) (simp_all add: basis_Vb_def)
+  by (rule clos_powcomp) (simp_all add: clos_defs)
 
 lemmas Cb_intros = Cb_E Cb_Vb Cb_box Cb_comp Cb_powcomp
 
@@ -161,22 +164,15 @@ subsection \<open>Suitability for every \<open>b \<ge> 1\<close>\<close>
 
 theorem Ext_Vb:
   assumes "1 \<le> b" shows "suitable (basis_Vb b)"
-proof (rule suitable_by_simulation[OF Theorem_6_7])
+proof -
   let ?C = "clos (basis_Vb b)"
   have one: "funSb b \<circ> zeroB = cst 1"
     by (rule ext) (simp add: funSb_val[OF assms] zeroB_val cst_def)
   have plusI: "exprPlusIb b F = opPlusI F" for F
     by (rule ext) (simp add: exprPlusIb_val[OF assms])
   have one_in: "cst 1 \<in> ?C" unfolding one[symmetric] by (intro Cb_comp funSb_in zeroB_in)
-  show "inits basis_6 \<subseteq> ?C" using one_in Cb_E by (simp add: basis_6_def)
-  show "applyU u F \<in> ?C" if "u \<in> unops basis_6" "F \<in> ?C" for u F
-    using that exprPlusIb_in[of F b] Cb_box[of F b] by (auto simp: basis_6_def applyU_def plusI)
-  show "applyB c F G \<in> ?C" if "c \<in> binops basis_6" "F \<in> ?C" "G \<in> ?C" for c F G
-    using that Cb_comp[of F b G] by (simp add: basis_6_def applyB_def comp_def)
-  show "?C \<subseteq> PrimNN"
-    by (rule clos_sound)
-       (auto simp: basis_Vb_def applyU_def applyB_def funE_PR
-             intro: opPlusIb_PR opBox_PR comp_PR pr_comp1_1)
+  have plusI_in: "F \<in> ?C \<Longrightarrow> opPlusI F \<in> ?C" for F using exprPlusIb_in[of F b] by (simp add: plusI)
+  show ?thesis by (simulate S: Theorem_6_7 add: one_in plusI_in)
 qed
 
 subsection \<open>\<open>b = 0\<close>: the constant \<open>1\<close> cannot be dropped\<close>

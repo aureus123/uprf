@@ -20,10 +20,10 @@ section \<open>Robinson's theorem [15, \S7, Theorem 3]\<close>
 
 subsection \<open>More functions and operators in \<open>clos \<F>\<close>\<close>
 
-lemma I_in: "funI \<in> C6"
-  using C6_box[OF S_in] by (simp add: funI_eq_box_S)
+lemma I_in [clos_rules]: "funI \<in> C6"
+  by (subst funI_eq_box_S[symmetric]) clos_solve
 
-lemma plus_in: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> opPlus F G \<in> C6"
+lemma plus_in [clos_rules]: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> opPlus F G \<in> C6"
   by (rule Lemma_6_6(1))
 
 lemma minus_in: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> (\<And>x. G x \<le> F x) \<Longrightarrow> opMinus F G \<in> C6"
@@ -36,15 +36,15 @@ proof -
   then show ?thesis by simp
 qed
 
-lemma times_in:
+lemma times_in [clos_rules]:
   assumes "F \<in> C6" "G \<in> C6"
   shows "opOtimes F G \<in> C6"
 proof -
   let ?X = "opMinus (funSq \<circ> opPlus F G) (opPlus (funSq \<circ> F) (funSq \<circ> G))"
   have "?X \<in> C6"
   proof (rule minus_in)
-    show "funSq \<circ> opPlus F G \<in> C6" by (intro C6_comp Sq_in plus_in assms)
-    show "opPlus (funSq \<circ> F) (funSq \<circ> G) \<in> C6" by (intro C6_comp Sq_in plus_in assms)
+    show "funSq \<circ> opPlus F G \<in> C6" by (clos_solve add: assms)
+    show "opPlus (funSq \<circ> F) (funSq \<circ> G) \<in> C6" by (clos_solve add: assms)
     show "opPlus (funSq \<circ> F) (funSq \<circ> G) x \<le> (funSq \<circ> opPlus F G) x" for x
       by (simp add: opPlus_def funSq_def algebra_simps)
   qed
@@ -58,7 +58,7 @@ text \<open>Definition by cases: \<open>F(x)\<close> if \<open>C(x) \<noteq> 0\<
 definition opCond :: "ufun \<Rightarrow> ufun \<Rightarrow> ufun \<Rightarrow> ufun" where
   "opCond C F G x = (if C x = 0 then G x else F x)"
 
-lemma cond_in:
+lemma cond_in [clos_rules]:
   assumes "C \<in> C6" "F \<in> C6" "G \<in> C6"
   shows "opCond C F G \<in> C6"
 proof -
@@ -69,16 +69,16 @@ qed
 
 subsection \<open>The Cantor functions \<open>A\<close>, \<open>V\<close>, \<open>K\<close>, \<open>L\<close> and \<open>J(F, G)\<close>\<close>
 
-lemma A_in: "funA \<in> C6"
+lemma A_in [clos_rules]: "funA \<in> C6"
 proof -
   have "funA = funHf \<circ> opPlusI funSq"
     by (rule ext) (simp add: funA_def funHf_def opPlusI_def funSq_def)
-  moreover have "funHf \<circ> opPlusI funSq \<in> C6" by (intro C6_comp C6_plusI Hf_in Sq_in)
+  moreover have "funHf \<circ> opPlusI funSq \<in> C6" by clos_solve
   ultimately show ?thesis by simp
 qed
 
 text \<open>\<open>V(x) = Hf(P\<^sup>^(Rt(8x + 1)))\<close>.\<close>
-lemma V_in: "funV \<in> C6"
+lemma V_in [clos_rules]: "funV \<in> C6"
 proof -
   have "funV = funHf \<circ> exprPhat \<circ> funRt \<circ> funS \<circ> funD \<circ> funD \<circ> funD"
   proof
@@ -91,11 +91,11 @@ proof -
       by (simp add: funV_def funHf_def m Phat_Suc)
   qed
   moreover have "funHf \<circ> exprPhat \<circ> funRt \<circ> funS \<circ> funD \<circ> funD \<circ> funD \<in> C6"
-    by (intro C6_comp Hf_in Phat_in Rt_in S_in D_in)
+    by clos_solve
   ultimately show ?thesis by simp
 qed
 
-lemma K_in: "funK \<in> C6"
+lemma K_in [clos_rules]: "funK \<in> C6"
 proof -
   have "funK = opMinus funI (funA \<circ> funV)"
     by (rule ext) (simp add: funK_def opMinus_def funI_def)
@@ -105,7 +105,7 @@ proof -
   ultimately show ?thesis by simp
 qed
 
-lemma L_in: "funL \<in> C6"
+lemma L_in [clos_rules]: "funL \<in> C6"
 proof -
   have "funL = opMinus funV funK"
     by (rule ext) (simp add: opMinus_def funL_eq_c_snd funV_eq_c_sum funK_eq_c_fst c_snd_def)
@@ -117,7 +117,7 @@ qed
 text \<open>The operator \<open>J(F, G)(x) = J(F(x), G(x)) = A(F(x) + G(x)) + F(x)\<close>.\<close>
 definition opJ :: bop where "opJ F G x = c_pair (F x) (G x)"
 
-lemma J_in:
+lemma J_in [clos_rules]:
   assumes "F \<in> C6" "G \<in> C6"
   shows "opJ F G \<in> C6"
 proof -
@@ -156,7 +156,7 @@ definition stepT :: "ufun \<Rightarrow> ufun \<Rightarrow> ufun" where
 
 lemma stepT_in: "g \<in> C6 \<Longrightarrow> h \<in> C6 \<Longrightarrow> stepT g h \<in> C6"
   unfolding stepT_def
-  by (intro cond_in J_in C6_comp exprMinus_in K_in L_in S_in Phat_in zero_in)
+  by clos_solve
 
 lemma Phat_pos: "0 < n \<Longrightarrow> exprPhat n = n - 1"
   by (cases n) (simp_all add: Phat_Suc)
@@ -240,7 +240,7 @@ qed
 
 lemma UnaryRecOp_in: "g \<in> C6 \<Longrightarrow> h \<in> C6 \<Longrightarrow> UnaryRecOp g h \<in> C6"
   unfolding UnaryRecOp_expr
-  by (intro C6_comp C6_box stepT_in plus_in L_in A_in S_in K_in)
+  by (clos_solve add: stepT_in)
 
 subsection \<open>Every primitive recursive function is in \<open>clos \<F>\<close>\<close>
 
@@ -276,34 +276,18 @@ subsection \<open>Robinson's basis generates \<open>\<F>\<close>\<close>
 
 abbreviation CR :: "ufun set" where "CR \<equiv> clos basis_Robinson"
 
-lemma CR_S: "funS \<in> CR" and CR_E: "funE \<in> CR"
-  by (rule clos_init, simp add: basis_Robinson_def)+
-
-lemma CR_box: "F \<in> CR \<Longrightarrow> opBox F \<in> CR"
-  using clos_unop[of opBox basis_Robinson F] by (simp add: basis_Robinson_def)
-
-lemma CR_plus: "F \<in> CR \<Longrightarrow> G \<in> CR \<Longrightarrow> opPlus F G \<in> CR"
-  and CR_comp: "F \<in> CR \<Longrightarrow> G \<in> CR \<Longrightarrow> F \<circ> G \<in> CR"
-  using clos_binop[of opPlus basis_Robinson F G] clos_binop[of "(\<circ>)" basis_Robinson F G]
-  by (simp_all add: basis_Robinson_def)
-
 lemma C6_sub_CR: "C6 \<subseteq> CR"
-proof (rule clos_subset)
-  have I: "funI \<in> CR" using CR_box[OF CR_S] by (simp add: funI_eq_box_S)
+proof -
   have "opBox funE x = 0" for x by (induct x) simp_all
   then have "cst 1 = funS \<circ> opBox funE" by (intro ext) (simp add: cst_def funS_def)
-  then have "cst 1 \<in> CR" by (simp add: CR_comp CR_box CR_S CR_E)
-  then show "inits basis_6 \<subseteq> CR" using CR_E by (simp add: basis_6_def)
-  show "applyU u F \<in> CR" if "u \<in> unops basis_6" "F \<in> CR" for u F
+  then have one: "cst 1 \<in> CR" by (simp only:) clos_solve
+  have I: "funI \<in> CR" by (subst funI_eq_box_S[symmetric]) clos_solve
+  have plusI: "F \<in> CR \<Longrightarrow> opPlusI F \<in> CR" for F
   proof -
     have "opPlusI F = opPlus F funI" by (rule ext) (simp add: opPlusI_def opPlus_def funI_def)
-    then show ?thesis using that I by (auto simp: basis_6_def applyU_def CR_plus CR_box)
+    then show "F \<in> CR \<Longrightarrow> opPlusI F \<in> CR" by (simp only:) (clos_solve add: I)
   qed
-  show "applyB b F G \<in> CR" if "b \<in> binops basis_6" "F \<in> CR" "G \<in> CR" for b F G
-  proof -
-    have "b = (\<circ>)" using that(1) by (simp add: basis_6_def)
-    then show ?thesis using CR_comp[OF that(2,3)] by (simp only: applyB_def)
-  qed
+  show ?thesis by (clos_subset_m add: one plusI)
 qed
 
 subsection \<open>Robinson's theorem\<close>

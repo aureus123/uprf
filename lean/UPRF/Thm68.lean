@@ -8,15 +8,8 @@ namespace UPRF
 
 /-! ## The basis 𝓕' = ⟨1, K, F⁺, FG, F^□⟩ -/
 
-def basis6K : Basis := ⟨{cst 1, funK}, {opPlusI, opBox}, {(· ∘ ·)}⟩
+@[clos_defs] def basis6K : Basis := ⟨{cst 1, funK}, {opPlusI, opBox}, {(· ∘ ·)}⟩
 abbrev C6K (F : UFun) : Prop := Clos basis6K F
-
-lemma C6K_one : C6K (cst 1) := .init (by simp [basis6K])
-lemma C6K_K : C6K funK := .init (by simp [basis6K])
-lemma C6K_plusI {F} (h : C6K F) : C6K (opPlusI F) := .unop (u := opPlusI) (by simp [basis6K]) h
-lemma C6K_box {F} (h : C6K F) : C6K (opBox F) := .unop (u := opBox) (by simp [basis6K]) h
-lemma C6K_comp {F G} (hF : C6K F) (hG : C6K G) : C6K (F ∘ G) :=
-  .binop (b := (· ∘ ·)) (by simp [basis6K]) hF hG
 
 /-- auxiliary functions of the proof (Robinson [16, p. 664]):
   Y(x) = 2x - Rt(x) and Z(x) = x(x+3)/2 = A(x) + x -/
@@ -146,49 +139,33 @@ lemma Sq_expr_K : opBox (opPlusI (opPlusI (opPlusI (cst 1)) ∘ funRt)) = funSq 
 lemma E_expr_K : exprIminusF (funSq ∘ funRt) = funE := by
   funext x; rw [exprIminusF_val (funRt_sq_le x)]; rfl
 
-lemma S_in_K : C6K funS := S_expr ▸ C6K_plusI C6K_one
-lemma Sgn_in_K : C6K funSgn := Sgn_expr ▸ C6K_box C6K_one
-lemma Z_in_K : C6K funZ := Z_expr ▸ C6K_box (C6K_comp S_in_K (C6K_comp S_in_K (C6K_plusI C6K_K)))
-lemma Y_in_K : C6K funY :=
-  Y_expr ▸ C6K_box (C6K_comp (C6K_plusI (C6K_comp Sgn_in_K C6K_K)) S_in_K)
+lemma S_in_K : C6K funS := by rw [← S_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply S_in_K)
+lemma Sgn_in_K : C6K funSgn := by rw [← Sgn_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply Sgn_in_K)
+lemma Z_in_K : C6K funZ := by rw [← Z_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply Z_in_K)
+lemma Y_in_K : C6K funY := by rw [← Y_expr]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply Y_in_K)
 
-lemma KSSS_in_K : C6K (funK ∘ funS ∘ funS ∘ funS) :=
-  C6K_comp C6K_K (C6K_comp S_in_K (C6K_comp S_in_K S_in_K))
+lemma exprIminusF_in_K {F} (h : C6K F) : C6K (exprIminusF F) := by unfold exprIminusF; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply exprIminusF_in_K)
+lemma exprDminusF_in_K {F} (h : C6K F) : C6K (exprDminusF F) := by unfold exprDminusF; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply exprDminusF_in_K)
 
-lemma exprIminusF_in_K {F} (h : C6K F) : C6K (exprIminusF F) :=
-  C6K_comp C6K_K (C6K_comp S_in_K (C6K_comp S_in_K (C6K_comp S_in_K
-    (C6K_plusI (C6K_plusI (C6K_comp Z_in_K (C6K_plusI h)))))))
+lemma Rt_in_K : C6K funRt := by rw [← Rt_expr_K]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply Rt_in_K)
+lemma Sq_in_K : C6K funSq := by rw [← Sq_expr_K]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply Sq_in_K)
+lemma E_in_K : C6K funE := by rw [← E_expr_K]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply E_in_K)
 
-lemma exprDminusF_in_K {F} (h : C6K F) : C6K (exprDminusF F) :=
-  C6K_comp C6K_K (C6K_comp S_in_K (C6K_comp S_in_K (C6K_comp S_in_K
-    (C6K_plusI (C6K_plusI (C6K_plusI (C6K_plusI
-      (C6K_comp Z_in_K (C6K_plusI (C6K_plusI h))))))))))
-
-lemma Rt_in_K : C6K funRt := Rt_expr_K ▸ exprDminusF_in_K Y_in_K
-lemma Sq_in_K : C6K funSq :=
-  Sq_expr_K ▸ C6K_box (C6K_plusI (C6K_comp (C6K_plusI (C6K_plusI C6K_one)) Rt_in_K))
-lemma E_in_K : C6K funE := E_expr_K ▸ exprIminusF_in_K (C6K_comp Sq_in_K Rt_in_K)
-
-theorem Theorem_6_8_K : Suitable basis6K := by
-  refine suitable_by_simulation Theorem_6_7 ?_ ?_ ?_ ?_
-  · rintro F (rfl | rfl); exacts [C6K_one, E_in_K]
-  · rintro u (rfl | rfl) F hF; exacts [C6K_plusI hF, C6K_box hF]
-  · rintro b rfl F G hF hG; exact C6K_comp hF hG
-  · exact clos_sound (by rintro F (rfl | rfl); exacts [cst_PR 1, funK_PR])
-      (by rintro u (rfl | rfl) F hF; exacts [opPlusI_PR hF, opBox_PR hF])
-      (by rintro b rfl F G hF hG; exact comp_PR hF hG)
+theorem Theorem_6_8_K : Suitable basis6K := by simulate Theorem_6_7
 
 /-! ## The basis 𝓕'' = ⟨1, L, F⁺, FG, F^□⟩ -/
 
-def basis6L : Basis := ⟨{cst 1, funL}, {opPlusI, opBox}, {(· ∘ ·)}⟩
+@[clos_defs] def basis6L : Basis := ⟨{cst 1, funL}, {opPlusI, opBox}, {(· ∘ ·)}⟩
 abbrev C6L (F : UFun) : Prop := Clos basis6L F
-
-lemma C6L_one : C6L (cst 1) := .init (by simp [basis6L])
-lemma C6L_L : C6L funL := .init (by simp [basis6L])
-lemma C6L_plusI {F} (h : C6L F) : C6L (opPlusI F) := .unop (u := opPlusI) (by simp [basis6L]) h
-lemma C6L_box {F} (h : C6L F) : C6L (opBox F) := .unop (u := opBox) (by simp [basis6L]) h
-lemma C6L_comp {F G} (hF : C6L F) (hG : C6L G) : C6L (F ∘ G) :=
-  .binop (b := (· ∘ ·)) (by simp [basis6L]) hF hG
 
 /-- K ≡ L 1⁺ ((1⁺)⁺ L)⁺, i.e. K(x) = L(x + 2L(x) + 2) (Robinson [16, p. 664]) -/
 lemma K_expr_L : funL ∘ opPlusI (cst 1) ∘ opPlusI (opPlusI (opPlusI (cst 1)) ∘ funL) = funK := by
@@ -203,18 +180,10 @@ lemma K_expr_L : funL ∘ opPlusI (cst 1) ∘ opPlusI (opPlusI (opPlusI (cst 1))
     funL_diag (by omega)]
   omega
 
-lemma K_in_L : C6L funK :=
-  K_expr_L ▸ C6L_comp C6L_L (C6L_comp (C6L_plusI C6L_one)
-    (C6L_plusI (C6L_comp (C6L_plusI (C6L_plusI C6L_one)) C6L_L)))
+lemma K_in_L : C6L funK := by rw [← K_expr_L]; clos_solve
+macro_rules | `(tactic| clos_hint) => `(tactic| with_reducible apply K_in_L)
 
-theorem Theorem_6_8_L : Suitable basis6L := by
-  refine suitable_by_simulation Theorem_6_8_K ?_ ?_ ?_ ?_
-  · rintro F (rfl | rfl); exacts [C6L_one, K_in_L]
-  · rintro u (rfl | rfl) F hF; exacts [C6L_plusI hF, C6L_box hF]
-  · rintro b rfl F G hF hG; exact C6L_comp hF hG
-  · exact clos_sound (by rintro F (rfl | rfl); exacts [cst_PR 1, funL_PR])
-      (by rintro u (rfl | rfl) F hF; exacts [opPlusI_PR hF, opBox_PR hF])
-      (by rintro b rfl F G hF hG; exact comp_PR hF hG)
+theorem Theorem_6_8_L : Suitable basis6L := by simulate Theorem_6_8_K
 
 /-- Theorem 6.8 -/
 theorem Theorem_6_8 : Suitable basis6K ∧ Suitable basis6L := ⟨Theorem_6_8_K, Theorem_6_8_L⟩

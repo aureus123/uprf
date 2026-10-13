@@ -20,23 +20,26 @@ definition opPlusI :: uop where "opPlusI F x = F x + x"
 lemma opPlusI_PR: "F \<in> PrimNN \<Longrightarrow> opPlusI F \<in> PrimNN"
   unfolding opPlusI_def by prec
 
+lemma clos_plusI_rule [clos_rules]:
+  "F \<in> clos B \<Longrightarrow> opPlusI \<in> unops B \<Longrightarrow> opPlusI F \<in> clos B"
+  using clos_unop[of opPlusI B F] by simp
+
+declare opPlusI_PR [prim_intros]
+
 text \<open>\<open>\<F> = \<langle>\<overline>1, E, F\<^sup>+, FG, F\<^sup>\<box>\<rangle>\<close>.\<close>
 definition basis_6 :: basis where
   "basis_6 = Basis {cst 1, funE} {opPlusI, opBox} {(\<circ>)}"
 
+lemmas basis_6_sel [clos_defs] =
+  basis.sel[of "{cst 1, funE}" "{opPlusI, opBox}" "{(\<circ>)}", folded basis_6_def]
+
 abbreviation C6 :: "ufun set" where "C6 \<equiv> clos basis_6"
 
-lemma C6_one: "cst 1 \<in> C6" and C6_E: "funE \<in> C6"
-  by (rule clos_init, simp add: basis_6_def)+
-
-lemma C6_plusI: "F \<in> C6 \<Longrightarrow> opPlusI F \<in> C6"
-  and C6_box: "F \<in> C6 \<Longrightarrow> opBox F \<in> C6"
-  using clos_unop[of opPlusI basis_6 F] clos_unop[of opBox basis_6 F] by (simp_all add: basis_6_def)
-
-lemma C6_comp: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> F \<circ> G \<in> C6"
-  using clos_binop[of "(\<circ>)" basis_6 F G] by (simp add: basis_6_def)
-
-lemmas C6_intros = C6_one C6_E C6_plusI C6_box C6_comp
+text \<open>The closure rules specialized to \<open>\<F>\<close>, for use as plain facts.\<close>
+lemma C6_one: "cst 1 \<in> C6" and C6_E: "funE \<in> C6" by clos_solve+
+lemma C6_plusI: "F \<in> C6 \<Longrightarrow> opPlusI F \<in> C6" and C6_box: "F \<in> C6 \<Longrightarrow> opBox F \<in> C6"
+  by clos_solve+
+lemma C6_comp: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> F \<circ> G \<in> C6" by clos_solve
 
 subsection \<open>First functions in \<open>clos \<F>\<close>\<close>
 
@@ -154,16 +157,16 @@ proof
     by (induct n) (simp_all add: funS_def funR_def funSq_def algebra_simps)
 qed
 
-lemma S_in: "funS \<in> C6" by (metis S_expr C6_intros)
-lemma Sgn_in: "funSgn \<in> C6" by (metis Sgn_expr C6_intros)
-lemma zero_in: "cst 0 \<in> C6" by (metis zero_expr C6_intros)
-lemma D_in: "funD \<in> C6" by (metis D_expr zero_in C6_intros)
-lemma M3_in: "funM3 \<in> C6" by (metis M3_expr D_in C6_intros)
-lemma O_in: "funO \<in> C6" by (metis O_expr D_in S_in Sgn_in C6_intros)
-lemma Q_in: "funQ \<in> C6" by (metis Q_expr O_in C6_intros)
-lemma Mod3_in: "funMod3 \<in> C6" by (metis Mod3_expr S_in C6_intros)
-lemma R_in: "funR \<in> C6" by (metis R_expr D_in Q_in S_in C6_intros)
-lemma Sq_in: "funSq \<in> C6" by (metis Sq_expr S_in R_in C6_intros)
+lemma S_in [clos_rules]: "funS \<in> C6" by (subst S_expr[symmetric]) clos_solve
+lemma Sgn_in [clos_rules]: "funSgn \<in> C6" by (subst Sgn_expr[symmetric]) clos_solve
+lemma zero_in [clos_rules]: "cst 0 \<in> C6" by (subst zero_expr[symmetric]) clos_solve
+lemma D_in [clos_rules]: "funD \<in> C6" by (subst D_expr[symmetric]) clos_solve
+lemma M3_in [clos_rules]: "funM3 \<in> C6" by (subst M3_expr[symmetric]) clos_solve
+lemma O_in [clos_rules]: "funO \<in> C6" by (subst O_expr[symmetric]) clos_solve
+lemma Q_in [clos_rules]: "funQ \<in> C6" by (subst Q_expr[symmetric]) clos_solve
+lemma Mod3_in [clos_rules]: "funMod3 \<in> C6" by (subst Mod3_expr[symmetric]) clos_solve
+lemma R_in [clos_rules]: "funR \<in> C6" by (subst R_expr[symmetric]) clos_solve
+lemma Sq_in [clos_rules]: "funSq \<in> C6" by (subst Sq_expr[symmetric]) clos_solve
 
 subsection \<open>Definition 6.1\<close>
 
@@ -180,8 +183,8 @@ text \<open>\<open>F\<^sup>- \<equiv> E S (M\<^sub>3 F E)\<^sup>+ (Sq F\<^sup>+)
 definition exprMinusI :: uop where
   "exprMinusI F = funE \<circ> funS \<circ> opPlusI (funM3 \<circ> F \<circ> funE) \<circ> opPlusI (funSq \<circ> opPlusI F)"
 
-lemma exprMinusI_in: "F \<in> C6 \<Longrightarrow> exprMinusI F \<in> C6"
-  unfolding exprMinusI_def by (intro C6_intros S_in M3_in Sq_in)
+lemma exprMinusI_in [clos_rules]: "F \<in> C6 \<Longrightarrow> exprMinusI F \<in> C6"
+  unfolding exprMinusI_def by clos_solve
 
 text \<open>Pointwise correctness: needs \<open>F(x) \<ge> x\<close> only at the point \<open>x\<close>.\<close>
 lemma exprMinusI_val:
@@ -235,12 +238,12 @@ lemma Rt_expr: "exprRt = funRt"
 lemma Lemma_6_3: "funHf \<in> C6" "funRt \<in> C6"
 proof -
   show Hf: "funHf \<in> C6"
-    unfolding Hf_expr[symmetric] exprHf_def by (intro exprMinusI_in C6_intros S_in Mod3_in)
+    unfolding Hf_expr[symmetric] exprHf_def by clos_solve
   show "funRt \<in> C6"
-    unfolding Rt_expr[symmetric] exprRt_def by (intro C6_comp Hf exprMinusI_in R_in)
+    unfolding Rt_expr[symmetric] exprRt_def by (clos_solve add: Hf)
 qed
 
-lemmas Hf_in = Lemma_6_3(1) and Rt_in = Lemma_6_3(2)
+lemmas Hf_in [clos_rules] = Lemma_6_3(1) and Rt_in [clos_rules] = Lemma_6_3(2)
 
 subsection \<open>Lemma 6.4\<close>
 
@@ -250,11 +253,11 @@ definition exprOplus :: bop where
 definition exprOminus :: bop where
   "exprOminus F G = exprMinusI (opPlusI F \<circ> funE) \<circ> opPlusI (funSq \<circ> G)"
 
-lemma exprOplus_in: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> exprOplus F G \<in> C6"
-  unfolding exprOplus_def by (intro C6_intros exprMinusI_in Sq_in)
+lemma exprOplus_in [clos_rules]: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> exprOplus F G \<in> C6"
+  unfolding exprOplus_def by clos_solve
 
-lemma exprOminus_in: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> exprOminus F G \<in> C6"
-  unfolding exprOminus_def by (intro C6_intros exprMinusI_in Sq_in)
+lemma exprOminus_in [clos_rules]: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> exprOminus F G \<in> C6"
+  unfolding exprOminus_def by clos_solve
 
 text \<open>If \<open>G(x) \<ge> x\<close> then \<open>E(G\<^sup>2(x) + x) = x\<close>.\<close>
 lemma E_SqG: "x \<le> G x \<Longrightarrow> funE (G x * G x + x) = x"
@@ -297,8 +300,8 @@ text \<open>\<open>P\<^sup>^ \<equiv> ((Sq\<^sup>+)\<^sup>+)\<^sup>+ \<ominus> S
 definition exprPhat :: ufun where
   "exprPhat = exprOminus (opPlusI (opPlusI (opPlusI funSq))) funS"
 
-lemma Phat_in: "exprPhat \<in> C6"
-  unfolding exprPhat_def by (intro exprOminus_in C6_intros Sq_in S_in)
+lemma Phat_in [clos_rules]: "exprPhat \<in> C6"
+  unfolding exprPhat_def by clos_solve
 
 lemma Phat_Suc: "exprPhat (Suc x) = x"
 proof -
@@ -320,9 +323,9 @@ definition exprOtimes :: bop where
                             (funSq \<circ> G))
               (funSq \<circ> F)"
 
-lemma exprOtimes_in: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> exprOtimes F G \<in> C6"
+lemma exprOtimes_in [clos_rules]: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> exprOtimes F G \<in> C6"
   unfolding exprOtimes_def
-  by (intro C6_comp exprOminus_in exprOplus_in Rt_in Hf_in Sq_in S_in Phat_in)
+  by clos_solve
 
 lemma exprOtimes_val:
   assumes Fx: "x \<le> F x" and Gx: "x \<le> G x"
@@ -390,13 +393,13 @@ text \<open>\<open>F - G \<equiv> E S (Sq(F + G) + M\<^sub>3 F + G)\<close>.\<cl
 definition exprMinus :: bop where
   "exprMinus F G = funE \<circ> funS \<circ> exprPlus (exprPlus (funSq \<circ> exprPlus F G) (funM3 \<circ> F)) G"
 
-lemma exprPlus_in: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> exprPlus F G \<in> C6"
+lemma exprPlus_in [clos_rules]: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> exprPlus F G \<in> C6"
   unfolding exprPlus_def
-  by (intro exprMinusI_in C6_comp Rt_in exprOplus_in exprOtimes_in D_in C6_plusI)
+  by clos_solve
 
-lemma exprMinus_in: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> exprMinus F G \<in> C6"
+lemma exprMinus_in [clos_rules]: "F \<in> C6 \<Longrightarrow> G \<in> C6 \<Longrightarrow> exprMinus F G \<in> C6"
   unfolding exprMinus_def
-  by (intro C6_comp exprPlus_in S_in Sq_in M3_in C6_E)
+  by clos_solve
 
 lemma exprPlus_val: "exprPlus F G x = F x + G x"
 proof -

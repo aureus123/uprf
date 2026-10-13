@@ -3,7 +3,9 @@
 
 From Stdlib Require Import PeanoNat FunctionalExtensionality.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat div zify.
-From UPRF Require Import Basic Prim Sec6 Robinson Thm67.
+From Ltac2 Require Import Ltac2.
+From UPRF Require Import Basic Prim Tactics Sec6 Robinson Thm67.
+Set Default Proof Mode "Classic".
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -17,33 +19,16 @@ Section Basis1.
 Variable G : ufun.
 Notation C := (Clos (basis1 G)).
 
-Lemma C1_one : C (cst 1). Proof. by apply: clos_init; left. Qed.
-Lemma C1_G : C G. Proof. by apply: clos_init; right. Qed.
-Lemma C1_plusI F : C F -> C (opPlusI F). Proof. by apply: clos_unop; left. Qed.
-Lemma C1_box F : C F -> C (opBox F). Proof. by apply: clos_unop; right. Qed.
-Lemma C1_comp F H : C F -> C H -> C (F \o H).
-Proof. by move=> hF hH; apply: (clos_binop (b := comp)). Qed.
-
-Lemma C1_S : C funS. Proof. by rewrite -S_expr; apply: C1_plusI C1_one. Qed.
-Lemma C1_Sgn : C funSgn. Proof. by rewrite -Sgn_expr; apply: C1_box C1_one. Qed.
+Lemma C1_S : C funS. Proof. by rewrite -S_expr; clos_solve. Qed.
+Lemma C1_Sgn : C funSgn. Proof. by rewrite -Sgn_expr; clos_solve. Qed.
 
 (* the closure is sound when G is primitive recursive *)
 Lemma C1_sound : PrimNN G -> forall F, C F -> PrimNN F.
-Proof.
-move=> hG; apply: clos_sound.
-- by move=> ? [->|->] //; exact: pr_cst.
-- by move=> u ? [->|->]; [exact: pr_opPlusI | exact: pr_opBox].
-- by move=> b ? ? ->; exact: pr_comp.
-Qed.
+Proof. by move=> hG; sound. Qed.
 
 (* it is suitable as soon as it simulates F *)
 Lemma suitable1 : PrimNN G -> C funE -> suitable (basis1 G).
-Proof.
-move=> hG hE; apply: (suitable_by_simulation Theorem_6_7); last exact: C1_sound.
-- by move=> F [->|->]; [exact: C1_one | exact: hE].
-- by move=> u F [->|->]; [exact: C1_plusI | exact: C1_box].
-- by move=> b F H ->; exact: C1_comp.
-Qed.
+Proof. by move=> hG hE; simulate Theorem_6_7. Qed.
 
 End Basis1.
 
@@ -169,24 +154,16 @@ Proof. by apply: functional_extensionality => x; rewrite exprIminusF_val //; app
 
 Lemma E_in_K : Clos (basis1 funK) funE.
 Proof.
-have S := C1_S funK; have Sgn := C1_Sgn funK; have K := C1_G funK.
-have SSS : Clos (basis1 funK) (funK \o funS \o funS \o funS).
-  exact: C1_comp (C1_comp (C1_comp K S) S) S.
-have Z : Clos (basis1 funK) funZ.
-  by rewrite -Z_expr; apply: C1_box; apply: C1_comp (C1_comp S S) (C1_plusI K).
+have S := C1_S funK; have Sgn := C1_Sgn funK.
+have Z : Clos (basis1 funK) funZ by rewrite -Z_expr; clos_solve.
 have IF : forall F, Clos (basis1 funK) F -> Clos (basis1 funK) (exprIminusF F).
-  move=> F hF; apply: C1_comp SSS _.
-  exact: C1_plusI (C1_plusI (C1_comp Z (C1_plusI hF))).
+  by move=> F hF; rewrite /exprIminusF; clos_solve.
 have DF : forall F, Clos (basis1 funK) F -> Clos (basis1 funK) (exprDminusF F).
-  move=> F hF; apply: C1_comp SSS _.
-  exact: C1_plusI (C1_plusI (C1_plusI (C1_plusI (C1_comp Z (C1_plusI (C1_plusI hF)))))).
-have Y : Clos (basis1 funK) funY.
-  by rewrite -Y_expr; apply: C1_box; apply: C1_comp (C1_plusI (C1_comp Sgn K)) S.
-have Rt : Clos (basis1 funK) funRt by rewrite -Rt_expr_K; apply: DF.
-have Sq : Clos (basis1 funK) funSq.
-  rewrite -Sq_expr_K; apply: C1_box; apply: C1_plusI.
-  exact: C1_comp (C1_plusI (C1_plusI (C1_one funK))) Rt.
-by rewrite -E_expr_K; apply: IF; apply: C1_comp Sq Rt.
+  by move=> F hF; rewrite /exprDminusF; clos_solve.
+have Y : Clos (basis1 funK) funY by rewrite -Y_expr; clos_solve.
+have Rt : Clos (basis1 funK) funRt by rewrite -Rt_expr_K; clos_solve.
+have Sq : Clos (basis1 funK) funSq by rewrite -Sq_expr_K; clos_solve.
+by rewrite -E_expr_K; clos_solve.
 Qed.
 
 Theorem Theorem_6_8_K : suitable (basis1 funK).
@@ -205,20 +182,10 @@ rewrite /comp /opPlusI /cst e funL_diag; lia.
 Qed.
 
 Lemma K_in_L : Clos (basis1 funL) funK.
-Proof.
-have L := C1_G funL; have one := C1_one funL.
-rewrite -K_expr_L; apply: C1_comp (C1_comp L (C1_plusI one)) _.
-exact: C1_plusI (C1_comp (C1_plusI (C1_plusI one)) L).
-Qed.
+Proof. by rewrite -K_expr_L; clos_solve. Qed.
 
 Theorem Theorem_6_8_L : suitable (basis1 funL).
-Proof.
-apply: (suitable_by_simulation Theorem_6_8_K).
-- by move=> F [->|->]; [exact: C1_one | exact: K_in_L].
-- by move=> u F [->|->]; [exact: C1_plusI | exact: C1_box].
-- by move=> b F H ->; exact: C1_comp.
-- exact: C1_sound pr_snd.
-Qed.
+Proof. by have ? := K_in_L; simulate Theorem_6_8_K. Qed.
 
 (* Theorem 6.8 *)
 Theorem Theorem_6_8 : suitable (basis1 funK) /\ suitable (basis1 funL).

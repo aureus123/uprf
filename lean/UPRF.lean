@@ -1,4 +1,5 @@
 import UPRF.Basic
+import UPRF.Tactics
 import UPRF.Sec6
 import UPRF.Robinson
 import UPRF.Thm67

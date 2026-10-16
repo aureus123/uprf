@@ -79,8 +79,19 @@ Gladstone (1967, 1971). Its main results are the following.
 
 ## 2. Open questions of the paper and similar problems (solved here)
 
-Both results below are formalized in Isabelle/HOL (`isabelle/UPRF/UPRF_Ext_a.thy` and
-`isabelle/UPRF/UPRF_Ext_Vb.thy`), and the proofs below follow those formalizations.
+Both results below are formalized in all four proof assistants, and the proofs below follow
+the Isabelle formalization:
+
+| | §2.1 (iteration from a) | §2.2 (shifted operator) |
+|---|---|---|
+| Isabelle/HOL | `isabelle/UPRF/UPRF_Ext_a.thy`: `Ext_a_all` | `isabelle/UPRF/UPRF_Ext_Vb.thy`: `Ext_Vb_iff` |
+| Lean 4 | `lean/UPRF/ExtA.lean`: `Ext_a_all` | `lean/UPRF/ExtVb.lean`: `Ext_Vb_iff` |
+| Rocq | `rocq/theories/ExtA.v`: `Ext_a_all` | `rocq/theories/ExtVb.v`: `Ext_Vb_iff` |
+| Mizar | `mizar/text/uprf.miz`: `ExtA` | `mizar/text/uprf.miz`: `ExtVbIff` |
+
+As for Section 6, Mizar states them at closure level: for $`a \ge 1`$ the bases generate the
+same closure as $`\langle \bar 1, E, F^+, FG, F^\square\rangle`$, and the shifted basis does
+so if and only if $`b \ge 1`$.
 
 **Conventions used in the proofs:**
 - $`F^k`$ denotes the $`k`$-fold composition $`F \circ \dots \circ F`$.
@@ -309,13 +320,14 @@ A good reading order is:
 |---|---|---|---|---|
 | Sources | `isabelle/UPRF/*.thy` | `mizar/text/uprf.miz` | `lean/UPRF/*.lean` | `rocq/theories/*.v` |
 | Start with | `UPRF_Sec2_Notation.thy`, `UPRF_Sec6.thy` | the table in `mizar/README.md` | `Basic.lean`, `Sec6.lean` | `Basic.v`, `Sec6.v` |
-| Main theorems | `Theorem_6_7`, `Theorem_6_8`, `Remark_6_9_I/II/III`, `Robinson_1947_sec7_thm3`, `Ext_a_all`, `Ext_Vb_iff` | `Theorem67`, `Theorem68`, `Remark69` | `Theorem_6_7`, `Theorem_6_8`, `Remark_6_9_I/II/III`, `Robinson_1947_sec7_thm3` | same names as Lean |
+| Main theorems | `Theorem_6_7`, `Theorem_6_8`, `Remark_6_9_I/II/III`, `Robinson_1947_sec7_thm3`, `Ext_a_all`, `Ext_Vb_iff` | `Theorem67`, `Theorem68`, `Remark69`, `ExtA`, `ExtVbIff` | `Theorem_6_7`, `Theorem_6_8`, `Remark_6_9_I/II/III`, `Robinson_1947_sec7_thm3`, `Ext_a_all`, `Ext_Vb_iff` | same names as Lean |
 | Prim(ℕ,ℕ) | AFP `PrimRec1` | not connected | Mathlib `Nat.Primrec` | own inductive `PrimNN` (unary Cantor characterization) |
 
 ### 4.3 Comparison
 
 Line counts cover Sections 2–6, including Robinson's theorem where it is proved (comments
-included). The Isabelle extensions of §2 add 675 more lines.
+included). The extensions of §2 add 675 more lines in Isabelle, 1 505 in Mizar, 511 in Lean
+and 513 in Rocq.
 
 | | Isabelle/HOL | Mizar | Lean 4 | Rocq |
 |---|---|---|---|---|

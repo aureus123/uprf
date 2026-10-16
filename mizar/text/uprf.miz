@@ -4092,3 +4092,1508 @@ end;
 theorem Remark69:
   ClosB1 funE = C6 & ClosB1 funK = C6 & ClosB1 funL = C6
   by Remark69I, Remark69II, Remark69III;
+
+begin
+
+:: Questions left open in the paper (solved here; see the README).
+:: (1) Iteration from any a >= 2: <X, F^+, FG, F^box(a)> generates clos F
+::     for X in {E, K, L}; with Remark 6.9 (a = 1) this covers every a >= 1.
+:: (2) The shifted operator F^+b(x) = F(x) + x + b: <E, F^+b, FG, F^box>
+::     generates clos F if and only if b >= 1.
+
+reserve a,b,c,d,i,j for Nat;
+reserve X,W for Element of Funcs(NAT,NAT);
+
+:: iteration from a: F^box(a)(0) = a, F^box(a)(x+1) = F(F^box(a)(x))
+definition
+  let a be Nat;
+  func opBoxA a -> UnOp of Funcs(NAT,NAT) means :DefBoxA:
+  for F being Element of Funcs(NAT,NAT) holds (it.F).0 = a &
+    for x being Nat holds (it.F).(x+1) = F.((it.F).x);
+  existence
+  proof
+    reconsider a1 = a as Element of NAT by ORDINAL1:def 12;
+    defpred P[object,object] means
+      ex f,g being Element of Funcs(NAT,NAT) st f = $1 & g = $2 &
+      g.0 = a & for x being Nat holds g.(x+1) = f.(g.x);
+    A1: for F being Element of Funcs(NAT,NAT)
+        ex g being Element of Funcs(NAT,NAT) st P[F,g]
+    proof
+      let F be Element of Funcs(NAT,NAT);
+      deffunc R(Nat, Element of NAT) = F.$2;
+      consider g being sequence of NAT such that
+      B1: g.0 = a1 & for x being Nat holds g.(x+1) = R(x,g.x)
+        from NAT_1:sch 12;
+      reconsider g as Element of Funcs(NAT,NAT) by FUNCT_2:8;
+      take g, F, g;
+      thus thesis by B1;
+    end;
+    consider u being Function of Funcs(NAT,NAT),Funcs(NAT,NAT) such that
+    A2: for F being Element of Funcs(NAT,NAT) holds P[F,u.F]
+      from FUNCT_2:sch 3(A1);
+    take u;
+    let F be Element of Funcs(NAT,NAT);
+    ex f,g being Element of Funcs(NAT,NAT) st f = F & g = u.F &
+      g.0 = a & for x being Nat holds g.(x+1) = f.(g.x) by A2;
+    hence thesis;
+  end;
+  uniqueness
+  proof
+    let u,v be UnOp of Funcs(NAT,NAT) such that
+    A1: for F being Element of Funcs(NAT,NAT) holds (u.F).0 = a &
+      for x being Nat holds (u.F).(x+1) = F.((u.F).x) and
+    A2: for F being Element of Funcs(NAT,NAT) holds (v.F).0 = a &
+      for x being Nat holds (v.F).(x+1) = F.((v.F).x);
+    now
+      let F be Element of Funcs(NAT,NAT);
+      defpred P[Nat] means (u.F).$1 = (v.F).$1;
+      (u.F).0 = a by A1 .= (v.F).0 by A2;
+      then B1: P[0];
+      B2: for x being Nat st P[x] holds P[x+1]
+      proof
+        let x be Nat;
+        assume C1: P[x];
+        thus (u.F).(x+1) = F.((u.F).x) by A1 .= (v.F).(x+1) by A2, C1;
+      end;
+      for x being Nat holds P[x] from NAT_1:sch 2(B1,B2);
+      hence u.F = v.F by UFunExt;
+    end;
+    hence u = v by FUNCT_2:63;
+  end;
+end;
+
+theorem BoxA1:
+  opBoxA 1 = opBox1
+proof
+  for F being Element of Funcs(NAT,NAT) holds ((opBoxA 1).F).0 = 1 &
+    for x being Nat holds ((opBoxA 1).F).(x+1) = F.(((opBoxA 1).F).x)
+    by DefBoxA;
+  hence thesis by DefBox1;
+end;
+
+:: M_r(x) = r x
+definition
+  let r be Nat;
+  func funM r -> Element of Funcs(NAT,NAT) means :DefM:
+  for x being Nat holds it.x = r*x;
+  existence
+  proof
+    deffunc T(Nat) = r*$1;
+    thus ex f being Element of Funcs(NAT,NAT) st
+      for x being Nat holds f.x = T(x) from UFunEx;
+  end;
+  uniqueness
+  proof
+    deffunc T(Nat) = r*$1;
+    let f,g be Element of Funcs(NAT,NAT) such that
+    A1: for x being Nat holds f.x = T(x) and
+    A2: for x being Nat holds g.x = T(x);
+    thus f = g from UFunUq(A1,A2);
+  end;
+end;
+
+theorem MVals:
+  funM 0 = cst 0 & funM 1 = funI & funM 2 = funD &
+  opPlusI.(funM r) = funM (r+1)
+proof
+  now
+    let x;
+    thus (funM 0).x = 0*x by DefM .= (cst 0).x by DefCst;
+  end;
+  hence funM 0 = cst 0 by UFunExt;
+  now
+    let x;
+    thus (funM 1).x = 1*x by DefM .= funI.x by DefI;
+  end;
+  hence funM 1 = funI by UFunExt;
+  now
+    let x;
+    thus (funM 2).x = 2*x by DefM .= funD.x by DefD;
+  end;
+  hence funM 2 = funD by UFunExt;
+  now
+    let x;
+    thus (opPlusI.(funM r)).x = (funM r).x + x by DefPlusI
+      .= r*x + x by DefM
+      .= (r+1)*x
+      .= (funM (r+1)).x by DefM;
+  end;
+  hence thesis by UFunExt;
+end;
+
+:: M_r = (...(0^+)^+...)^+ (r times) is in every closure with 0 and F^+
+theorem MInClos:
+  cst 0 in clos(I,U,B) & opPlusI in U implies funM r in clos(I,U,B)
+proof
+  assume that A1: cst 0 in clos(I,U,B) and A2: opPlusI in U;
+  defpred P[Nat] means funM $1 in clos(I,U,B);
+  A3: P[0] by A1, MVals;
+  A4: for r st P[r] holds P[r+1]
+  proof
+    let r;
+    assume P[r];
+    then opPlusI.(funM r) in clos(I,U,B) by A2, ClosUnop;
+    hence thesis by MVals;
+  end;
+  for r holds P[r] from NAT_1:sch 2(A3,A4);
+  hence thesis;
+end;
+
+theorem CompIn:
+  F in clos(I,U,{opComp}) & G in clos(I,U,{opComp}) implies
+  F*G in clos(I,U,{opComp})
+proof
+  assume A1: F in clos(I,U,{opComp}) & G in clos(I,U,{opComp});
+  A2: opComp in {opComp} by TARSKI:def 1;
+  opComp.(F,G) = F*G by DefComp;
+  hence thesis by A1, A2, ClosBinop;
+end;
+
+:: powers under composition: A^k G for a shift A(x) = x + c
+theorem PowShift:
+  W in clos(I,U,{opComp}) & (for x holds W.x = x + c) &
+  G in clos(I,U,{opComp}) implies
+  ex H st H in clos(I,U,{opComp}) & for x holds H.x = G.x + k*c
+proof
+  assume that A1: W in clos(I,U,{opComp}) and
+    A2: for x holds W.x = x + c and A3: G in clos(I,U,{opComp});
+  defpred P[Nat] means ex H st H in clos(I,U,{opComp}) &
+    for x holds H.x = G.x + $1*c;
+  A4: P[0]
+  proof
+    take G;
+    thus G in clos(I,U,{opComp}) by A3;
+    let x;
+    thus G.x = G.x + 0*c;
+  end;
+  A5: for k st P[k] holds P[k+1]
+  proof
+    let k;
+    assume P[k];
+    then consider H such that A6: H in clos(I,U,{opComp}) and
+      A7: for x holds H.x = G.x + k*c;
+    take W*H;
+    thus W*H in clos(I,U,{opComp}) by A1, A6, CompIn;
+    let x;
+    thus (W*H).x = W.(H.x) by CompVal
+      .= H.x + c by A2
+      .= G.x + k*c + c by A7
+      .= G.x + (k+1)*c;
+  end;
+  for k holds P[k] from NAT_1:sch 2(A4,A5);
+  hence thesis;
+end;
+
+:: powers of a predecessor: P^k G, and P^k(y + k) = y
+theorem PowPred:
+  W in clos(I,U,{opComp}) & (for x holds W.(x+1) = x) &
+  G in clos(I,U,{opComp}) implies
+  ex H st H in clos(I,U,{opComp}) & for x,y st G.x = y + k holds H.x = y
+proof
+  assume that A1: W in clos(I,U,{opComp}) and
+    A2: for x holds W.(x+1) = x and A3: G in clos(I,U,{opComp});
+  defpred P[Nat] means for G st G in clos(I,U,{opComp}) holds
+    ex H st H in clos(I,U,{opComp}) & for x,y st G.x = y + $1 holds H.x = y;
+  A4: P[0]
+  proof
+    let G;
+    assume A5: G in clos(I,U,{opComp});
+    take G;
+    thus G in clos(I,U,{opComp}) by A5;
+    let x,y;
+    assume G.x = y + 0;
+    hence thesis;
+  end;
+  A6: for k st P[k] holds P[k+1]
+  proof
+    let k;
+    assume A7: P[k];
+    let G;
+    assume G in clos(I,U,{opComp});
+    then W*G in clos(I,U,{opComp}) by A1, CompIn;
+    then consider H such that A8: H in clos(I,U,{opComp}) and
+      A9: for x,y st (W*G).x = y + k holds H.x = y by A7;
+    take H;
+    thus H in clos(I,U,{opComp}) by A8;
+    let x,y;
+    assume A10: G.x = y + (k+1);
+    (W*G).x = W.(G.x) by CompVal
+      .= W.((y+k)+1) by A10
+      .= y + k by A2;
+    hence thesis by A9;
+  end;
+  for k holds P[k] from NAT_1:sch 2(A4,A6);
+  hence thesis by A3;
+end;
+
+:: powers of a decreasing X (X(0) = 0, X(y) < y for y > 0) reach 0
+theorem PowDec:
+  X in clos(I,U,{opComp}) & X.0 = 0 & (for y st 0 < y holds X.y < y) &
+  G in clos(I,U,{opComp}) & (for x holds G.x <= k) implies
+  ex H st H in clos(I,U,{opComp}) & for x holds H.x = 0
+proof
+  assume that A1: X in clos(I,U,{opComp}) and A2: X.0 = 0 and
+    A3: for y st 0 < y holds X.y < y;
+  defpred P[Nat] means for G st G in clos(I,U,{opComp}) &
+    (for x holds G.x <= $1) holds
+    ex H st H in clos(I,U,{opComp}) & for x holds H.x = 0;
+  A4: P[0]
+  proof
+    let G;
+    assume A5: G in clos(I,U,{opComp}) & for x holds G.x <= 0;
+    take G;
+    thus G in clos(I,U,{opComp}) by A5;
+    let x;
+    G.x <= 0 & 0 <= G.x by A5, NAT_1:2;
+    hence thesis by XXREAL_0:1;
+  end;
+  A6: for k st P[k] holds P[k+1]
+  proof
+    let k;
+    assume A7: P[k];
+    let G;
+    assume A8: G in clos(I,U,{opComp}) & for x holds G.x <= k+1;
+    A9: X*G in clos(I,U,{opComp}) by A1, A8, CompIn;
+    for x holds (X*G).x <= k
+    proof
+      let x;
+      A10: (X*G).x = X.(G.x) by CompVal;
+      per cases;
+      suppose G.x = 0;
+        hence thesis by A2, A10, NAT_1:2;
+      end;
+      suppose G.x <> 0;
+        then X.(G.x) < G.x by A3, NAT_1:3;
+        then A11: X.(G.x) + 1 <= G.x by NAT_1:13;
+        G.x <= k + 1 by A8;
+        then X.(G.x) + 1 <= k + 1 by A11, XXREAL_0:2;
+        hence thesis by A10, XREAL_1:6;
+      end;
+    end;
+    hence thesis by A7, A9;
+  end;
+  A11: for k holds P[k] from NAT_1:sch 2(A4,A6);
+  assume G in clos(I,U,{opComp}) & for x holds G.x <= k;
+  hence thesis by A11;
+end;
+
+:: recovering iteration from 0 out of iteration from a (cf. Remark 5.10):
+:: F^box = P^a (S^a F P^a)^box(a)
+theorem BoxFromBoxA:
+  (for y holds W.(y+a) = y) & (for x holds X.x = x + a) implies
+  W*((opBoxA a).(X*F*W)) = opBox.F
+proof
+  assume that A1: for y holds W.(y+a) = y and A2: for x holds X.x = x + a;
+  set T = (opBoxA a).(X*F*W);
+  defpred P[Nat] means T.$1 = (opBox.F).$1 + a;
+  T.0 = 0 + a by DefBoxA;
+  then A3: P[0] by DefBox;
+  A4: for n st P[n] holds P[n+1]
+  proof
+    let n;
+    assume A5: P[n];
+    thus T.(n+1) = (X*F*W).((opBox.F).n + a) by A5, DefBoxA
+      .= (X*F).(W.((opBox.F).n + a)) by CompVal
+      .= (X*F).((opBox.F).n) by A1
+      .= X.(F.((opBox.F).n)) by CompVal
+      .= F.((opBox.F).n) + a by A2
+      .= (opBox.F).(n+1) + a by DefBox;
+  end;
+  A6: for n holds P[n] from NAT_1:sch 2(A3,A4);
+  now
+    let n;
+    thus (W*T).n = W.(T.n) by CompVal
+      .= W.((opBox.F).n + a) by A6
+      .= (opBox.F).n by A1;
+  end;
+  hence thesis by UFunExt;
+end;
+
+:: soundness: clos F is closed under F^box(a).  As in Box1In,
+:: F^box(a) = P^ T^box S with T(0) = a+1, T(y+1) = F(y) + 1,
+:: T = Sgn . (S F P^) + M_(a+1) O
+theorem BoxAIn:
+  F in C6 implies (opBoxA a).F in C6
+proof
+  assume A1: F in C6;
+  set T = opPlus.(opOtimes.(funSgn, funS*F*exprPhat), (funM (a+1))*funO);
+  set W = opBox.T;
+  set u = (opBoxA a).F;
+  A2: T.0 = a + 1
+  proof
+    thus T.0 = (opOtimes.(funSgn, funS*F*exprPhat)).0 + ((funM (a+1))*funO).0
+        by DefPlus
+      .= funSgn.0 * (funS*F*exprPhat).0 + ((funM (a+1))*funO).0 by DefOtimes
+      .= 0 * (funS*F*exprPhat).0 + ((funM (a+1))*funO).0 by DefSgn
+      .= (funM (a+1)).(funO.0) by CompVal
+      .= (funM (a+1)).1 by DefO
+      .= (a+1)*1 by DefM
+      .= a + 1;
+  end;
+  A3: for y holds T.(y+1) = F.y + 1
+  proof
+    let y;
+    thus T.(y+1) = (opOtimes.(funSgn, funS*F*exprPhat)).(y+1)
+        + ((funM (a+1))*funO).(y+1) by DefPlus
+      .= funSgn.(y+1) * (funS*F*exprPhat).(y+1) + ((funM (a+1))*funO).(y+1)
+        by DefOtimes
+      .= 1 * (funS*F*exprPhat).(y+1) + ((funM (a+1))*funO).(y+1) by DefSgn
+      .= (funS*F*exprPhat).(y+1) + (funM (a+1)).(funO.(y+1)) by CompVal
+      .= (funS*F*exprPhat).(y+1) + (funM (a+1)).0 by DefO
+      .= (funS*F*exprPhat).(y+1) + (a+1)*0 by DefM
+      .= (funS*F).(exprPhat.(y+1)) by CompVal
+      .= (funS*F).y by PhatVal
+      .= funS.(F.y) by CompVal
+      .= F.y + 1 by DefS;
+  end;
+  defpred P[Nat] means W.($1+1) = u.$1 + 1;
+  W.(0+1) = T.(W.0) by DefBox .= T.0 by DefBox .= a + 1 by A2;
+  then A4: P[0] by DefBoxA;
+  A5: for n st P[n] holds P[n+1]
+  proof
+    let n;
+    assume A6: P[n];
+    thus W.(n+1+1) = T.(u.n + 1) by A6, DefBox
+      .= F.(u.n) + 1 by A3
+      .= u.(n+1) + 1 by DefBoxA;
+  end;
+  A7: for n holds P[n] from NAT_1:sch 2(A4,A5);
+  now
+    let n;
+    thus (exprPhat*W*funS).n = (exprPhat*W).(funS.n) by CompVal
+      .= exprPhat.(W.(funS.n)) by CompVal
+      .= exprPhat.(W.(n+1)) by DefS
+      .= exprPhat.(u.n + 1) by A7
+      .= u.n by PhatVal;
+  end;
+  then A8: exprPhat*W*funS = u by UFunExt;
+  funS*F in C6 by A1, SIn, C6Comp;
+  then funS*F*exprPhat in C6 by PhatIn, C6Comp;
+  then A9: opOtimes.(funSgn, funS*F*exprPhat) in C6 by SgnIn, TimesIn;
+  opPlusI in {opPlusI, opBox} by TARSKI:def 2;
+  then funM (a+1) in C6 by ZeroIn, MInClos;
+  then (funM (a+1))*funO in C6 by OIn, C6Comp;
+  then T in C6 by A9, Lemma66;
+  then W in C6 by C6Box;
+  then exprPhat*W in C6 by PhatIn, C6Comp;
+  hence thesis by A8, SIn, C6Comp;
+end;
+
+:: Bases <G, F^+, FG, F^box(a)> for a single initial function G
+
+definition
+  let G be Element of Funcs(NAT,NAT), a be Nat;
+  func ClosBa(G,a) -> Subset of Funcs(NAT,NAT) equals
+  clos({G}, {opPlusI, opBoxA a}, {opComp});
+  coherence;
+end;
+
+theorem CBaG:
+  G1 in ClosBa(G1,a)
+proof
+  G1 in {G1} by TARSKI:def 1;
+  hence thesis by ClosInit;
+end;
+
+theorem CBaPlusI:
+  F in ClosBa(G1,a) implies opPlusI.F in ClosBa(G1,a)
+proof
+  assume A1: F in ClosBa(G1,a);
+  opPlusI in {opPlusI, opBoxA a} by TARSKI:def 2;
+  hence thesis by A1, ClosUnop;
+end;
+
+theorem CBaBoxA:
+  F in ClosBa(G1,a) implies (opBoxA a).F in ClosBa(G1,a)
+proof
+  assume A1: F in ClosBa(G1,a);
+  opBoxA a in {opPlusI, opBoxA a} by TARSKI:def 2;
+  hence thesis by A1, ClosUnop;
+end;
+
+theorem CBaComp:
+  F in ClosBa(G1,a) & G in ClosBa(G1,a) implies F*G in ClosBa(G1,a)
+  by CompIn;
+
+theorem CBaB1:
+  ClosBa(G1,1) = ClosB1 G1 by BoxA1;
+
+theorem CBaSubC6:
+  G1 in C6 implies ClosBa(G1,a) c= C6
+proof
+  assume A1: G1 in C6;
+  C6 is_closed_under {G1}, {opPlusI, opBoxA a}, {opComp}
+  proof
+    thus {G1} c= C6
+    proof
+      let z be object;
+      assume z in {G1};
+      hence thesis by A1, TARSKI:def 1;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opPlusI, opBoxA a} & F in C6 holds u.F in C6
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A2: u in {opPlusI, opBoxA a} & F in C6;
+      then u = opPlusI or u = opBoxA a by TARSKI:def 2;
+      hence thesis by A2, C6PlusI, BoxAIn;
+    end;
+    let b be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A3: b in {opComp} & F in C6 & G in C6;
+    then b = opComp by TARSKI:def 1;
+    then b.(F,G) = F*G by DefComp;
+    hence thesis by A3, C6Comp;
+  end;
+  hence thesis by ClosLeast;
+end;
+
+theorem CBaSub:
+  G1 in ClosBa(H,a) implies ClosBa(G1,a) c= ClosBa(H,a)
+proof
+  assume A1: G1 in ClosBa(H,a);
+  ClosBa(H,a) is_closed_under {G1}, {opPlusI, opBoxA a}, {opComp}
+  proof
+    thus {G1} c= ClosBa(H,a)
+    proof
+      let z be object;
+      assume z in {G1};
+      hence thesis by A1, TARSKI:def 1;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opPlusI, opBoxA a} & F in ClosBa(H,a) holds u.F in ClosBa(H,a)
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A2: u in {opPlusI, opBoxA a} & F in ClosBa(H,a);
+      then u = opPlusI or u = opBoxA a by TARSKI:def 2;
+      hence thesis by A2, CBaPlusI, CBaBoxA;
+    end;
+    let b be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A3: b in {opComp} & F in ClosBa(H,a) & G in ClosBa(H,a);
+    then b = opComp by TARSKI:def 1;
+    then b.(F,G) = F*G by DefComp;
+    hence thesis by A3, CBaComp;
+  end;
+  hence thesis by ClosLeast;
+end;
+
+:: if 1 is generated and the closure is closed under F^box, the basis
+:: <1, X, F^+, FG, F^box> is simulated
+theorem CBaSup:
+  cst 1 in ClosBa(X,a) &
+  (for F st F in ClosBa(X,a) holds opBox.F in ClosBa(X,a)) implies
+  Clos1 X c= ClosBa(X,a)
+proof
+  assume that A1: cst 1 in ClosBa(X,a) and
+    A2: for F st F in ClosBa(X,a) holds opBox.F in ClosBa(X,a);
+  ClosBa(X,a) is_closed_under {cst 1, X}, {opPlusI, opBox}, {opComp}
+  proof
+    thus {cst 1, X} c= ClosBa(X,a)
+    proof
+      let z be object;
+      assume z in {cst 1, X};
+      then z = cst 1 or z = X by TARSKI:def 2;
+      hence thesis by A1, CBaG;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opPlusI, opBox} & F in ClosBa(X,a) holds u.F in ClosBa(X,a)
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A3: u in {opPlusI, opBox} & F in ClosBa(X,a);
+      then u = opPlusI or u = opBox by TARSKI:def 2;
+      hence thesis by A2, A3, CBaPlusI;
+    end;
+    let b be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A4: b in {opComp} & F in ClosBa(X,a) & G in ClosBa(X,a);
+    then b = opComp by TARSKI:def 1;
+    then b.(F,G) = F*G by DefComp;
+    hence thesis by A4, CBaComp;
+  end;
+  hence thesis by ClosLeast;
+end;
+
+:: The common part.  From 0 and multipliers r with X(r(i+1)) = i, the
+:: chain N = T_2 ... T_(k+1), T_j = X M_r(j), maps k+1 to 1 and 0 to 0
+theorem ExtAChain:
+  cst 0 in ClosBa(X,a) & X.0 = 0 &
+  (for i st 1 <= i ex r st X.(r*(i+1)) = i) implies
+  ex W st W in ClosBa(X,a) & W.(k+1) = 1 & W.0 = 0
+proof
+  assume that A1: cst 0 in ClosBa(X,a) and A2: X.0 = 0 and
+    A3: for i st 1 <= i ex r st X.(r*(i+1)) = i;
+  A4: opPlusI in {opPlusI, opBoxA a} by TARSKI:def 2;
+  defpred P[Nat] means ex W st W in ClosBa(X,a) & W.($1+1) = 1 & W.0 = 0;
+  A5: P[0]
+  proof
+    take funI;
+    funM 1 in ClosBa(X,a) by A1, A4, MInClos;
+    hence funI in ClosBa(X,a) by MVals;
+    thus funI.(0+1) = 1 by DefI;
+    thus thesis by DefI;
+  end;
+  A6: for k st P[k] holds P[k+1]
+  proof
+    let k;
+    assume P[k];
+    then consider W such that A7: W in ClosBa(X,a) and A8: W.(k+1) = 1
+      and A9: W.0 = 0;
+    1 <= k+1 by NAT_1:11;
+    then consider r such that A10: X.(r*(k+1+1)) = k+1 by A3;
+    A12: X in ClosBa(X,a) by CBaG;
+    funM r in ClosBa(X,a) by A1, A4, MInClos;
+    then X*(funM r) in ClosBa(X,a) by A12, CBaComp;
+    then A11: W*(X*(funM r)) in ClosBa(X,a) by A7, CBaComp;
+    take W*(X*(funM r));
+    thus W*(X*(funM r)) in ClosBa(X,a) by A11;
+    thus (W*(X*(funM r))).(k+1+1) = W.((X*(funM r)).(k+1+1)) by CompVal
+      .= W.(X.((funM r).(k+1+1))) by CompVal
+      .= W.(X.(r*(k+1+1))) by DefM
+      .= 1 by A8, A10;
+    thus (W*(X*(funM r))).0 = W.((X*(funM r)).0) by CompVal
+      .= W.(X.((funM r).0)) by CompVal
+      .= W.(X.(r*0)) by DefM
+      .= 0 by A2, A9;
+  end;
+  for k holds P[k] from NAT_1:sch 2(A5,A6);
+  hence thesis;
+end;
+
+:: I = M_1, D = M_2, 1 = N I^box(a) (I^box(a) = cst a), S = 1^+ and the
+:: cosignum O = N 0^box(a) (0^box(a) has values a, 0, 0, ...)
+theorem ExtABasics:
+  2 <= a & cst 0 in ClosBa(X,a) & X.0 = 0 &
+  (for i st 1 <= i ex r st X.(r*(i+1)) = i) implies
+  funI in ClosBa(X,a) & funD in ClosBa(X,a) & cst 1 in ClosBa(X,a) &
+  funS in ClosBa(X,a) & funO in ClosBa(X,a)
+proof
+  assume that A1: 2 <= a and A2: cst 0 in ClosBa(X,a) and A3: X.0 = 0 and
+    A4: for i st 1 <= i ex r st X.(r*(i+1)) = i;
+  A5: opPlusI in {opPlusI, opBoxA a} by TARSKI:def 2;
+  funM 1 in ClosBa(X,a) by A2, A5, MInClos;
+  hence A6: funI in ClosBa(X,a) by MVals;
+  funM 2 in ClosBa(X,a) by A2, A5, MInClos;
+  hence funD in ClosBa(X,a) by MVals;
+  consider c such that A7: a = 2 + c by A1, NAT_1:10;
+  consider W such that A8: W in ClosBa(X,a) and A9: W.(c+1+1) = 1 and
+    A10: W.0 = 0 by A2, A3, A4, ExtAChain;
+  A11: W.a = 1 by A7, A9;
+  defpred P[Nat] means ((opBoxA a).funI).$1 = a;
+  A12: P[0] by DefBoxA;
+  A13: for n st P[n] holds P[n+1]
+  proof
+    let n;
+    assume A14: P[n];
+    thus ((opBoxA a).funI).(n+1) = funI.(((opBoxA a).funI).n) by DefBoxA
+      .= a by A14, DefI;
+  end;
+  A15: for n holds P[n] from NAT_1:sch 2(A12,A13);
+  now
+    let x;
+    thus (W*((opBoxA a).funI)).x = W.(((opBoxA a).funI).x) by CompVal
+      .= 1 by A11, A15
+      .= (cst 1).x by DefCst;
+  end;
+  then A16: W*((opBoxA a).funI) = cst 1 by UFunExt;
+  (opBoxA a).funI in ClosBa(X,a) by A6, CBaBoxA;
+  hence A17: cst 1 in ClosBa(X,a) by A8, A16, CBaComp;
+  thus funS in ClosBa(X,a) by A17, CBaPlusI, SExpr;
+  now
+    let x;
+    A18: (W*((opBoxA a).(cst 0))).x = W.(((opBoxA a).(cst 0)).x) by CompVal;
+    per cases by NAT_1:6;
+    suppose A19: x = 0;
+      hence (W*((opBoxA a).(cst 0))).x = W.a by A18, DefBoxA
+        .= funO.x by A11, A19, DefO;
+    end;
+    suppose ex y st x = y+1;
+      then consider y such that A20: x = y+1;
+      thus (W*((opBoxA a).(cst 0))).x
+          = W.((cst 0).(((opBoxA a).(cst 0)).y)) by A18, A20, DefBoxA
+        .= 0 by A10, DefCst
+        .= funO.x by A20, DefO;
+    end;
+  end;
+  then A21: W*((opBoxA a).(cst 0)) = funO by UFunExt;
+  (opBoxA a).(cst 0) in ClosBa(X,a) by A2, CBaBoxA;
+  hence thesis by A8, A21, CBaComp;
+end;
+
+:: with a predecessor in the closure, iteration from 0 is available
+theorem ExtABox:
+  funI in ClosBa(X,a) & funS in ClosBa(X,a) & W in ClosBa(X,a) &
+  (for x holds W.(x+1) = x) & F in ClosBa(X,a) implies
+  opBox.F in ClosBa(X,a)
+proof
+  assume that A1: funI in ClosBa(X,a) and A2: funS in ClosBa(X,a) and
+    A3: W in ClosBa(X,a) and A4: for x holds W.(x+1) = x and
+    A5: F in ClosBa(X,a);
+  A6: for x holds funS.x = x + 1 by DefS;
+  consider Sa being Element of Funcs(NAT,NAT) such that
+    A7: Sa in ClosBa(X,a) and A8: for x holds Sa.x = funI.x + a*1
+    by A1, A2, A6, PowShift;
+  consider Pa being Element of Funcs(NAT,NAT) such that
+    A9: Pa in ClosBa(X,a) and A10: for x,y st funI.x = y + a holds Pa.x = y
+    by A1, A3, A4, PowPred;
+  A11: for y holds Pa.(y+a) = y
+  proof
+    let y;
+    funI.(y+a) = y + a by DefI;
+    hence thesis by A10;
+  end;
+  A12: for x holds Sa.x = x + a
+  proof
+    let x;
+    thus Sa.x = funI.x + a*1 by A8 .= x + a by DefI;
+  end;
+  Sa*F in ClosBa(X,a) by A5, A7, CBaComp;
+  then Sa*F*Pa in ClosBa(X,a) by A9, CBaComp;
+  then (opBoxA a).(Sa*F*Pa) in ClosBa(X,a) by CBaBoxA;
+  then Pa*((opBoxA a).(Sa*F*Pa)) in ClosBa(X,a) by A9, CBaComp;
+  hence thesis by A11, A12, BoxFromBoxA;
+end;
+
+:: for X with X(0) = 0 and X(y) < y for y > 0: 0 = X^a X^box(a)
+theorem BoxABound:
+  X.0 = 0 & (for y st 0 < y holds X.y < y) implies ((opBoxA a).X).n <= a
+proof
+  assume that A1: X.0 = 0 and A2: for y st 0 < y holds X.y < y;
+  defpred P[Nat] means ((opBoxA a).X).$1 <= a;
+  A3: P[0] by DefBoxA;
+  A4: for n st P[n] holds P[n+1]
+  proof
+    let n;
+    assume A5: P[n];
+    set v = ((opBoxA a).X).n;
+    A6: ((opBoxA a).X).(n+1) = X.v by DefBoxA;
+    per cases;
+    suppose v = 0;
+      hence thesis by A1, A6, NAT_1:2;
+    end;
+    suppose v <> 0;
+      then X.v < v by A2, NAT_1:3;
+      hence thesis by A5, A6, XXREAL_0:2;
+    end;
+  end;
+  for n holds P[n] from NAT_1:sch 2(A3,A4);
+  hence thesis;
+end;
+
+theorem ZeroDec:
+  X.0 = 0 & (for y st 0 < y holds X.y < y) implies cst 0 in ClosBa(X,a)
+proof
+  assume that A1: X.0 = 0 and A2: for y st 0 < y holds X.y < y;
+  A3: X in ClosBa(X,a) by CBaG;
+  then A4: (opBoxA a).X in ClosBa(X,a) by CBaBoxA;
+  for x holds ((opBoxA a).X).x <= a by A1, A2, BoxABound;
+  then consider H such that A5: H in ClosBa(X,a) and
+    A6: for x holds H.x = 0 by A1, A2, A3, A4, PowDec;
+  now
+    let x;
+    thus H.x = 0 by A6 .= (cst 0).x by DefCst;
+  end;
+  hence thesis by A5, UFunExt;
+end;
+
+:: The case X = E
+
+theorem ELt:
+  0 < y implies funE.y < y
+proof
+  assume A1: 0 < y;
+  A2: funE.y + funRt.y * funRt.y = y by EVal;
+  funRt.y <> 0
+  proof
+    assume funRt.y = 0;
+    then y < (0+1)*(0+1) by DefRt;
+    hence contradiction by A1, NAT_1:14;
+  end;
+  then 1 <= funRt.y by NAT_1:14;
+  then 1*1 <= funRt.y * funRt.y by XREAL_1:66;
+  then funE.y + 1 <= y by A2, XREAL_1:6;
+  hence thesis by NAT_1:13;
+end;
+
+theorem XmE:
+  ex r st funE.(r*(i+1)) = i
+proof
+  take i;
+  i <= i + i by NAT_1:11;
+  then i <= 2*i;
+  then funE.(i*i + i) = i by ESqAdd;
+  hence thesis;
+end;
+
+theorem RRec:
+  funR.(t+1) = 2*(funQ.(funR.t + 4)) + funR.t + 1
+proof
+  set v = funR.t;
+  A1: funS.v = v+1 by DefS;
+  thus funR.(t+1) = (opPlusI.(funD*funQ*funS*funS*funS)).(funS.v) by RStep
+    .= (funD*funQ*funS*funS*funS).(v+1) + (v+1) by A1, DefPlusI
+    .= 2*(funQ.(v+1+3)) + (v+1) by DQSVal
+    .= 2*(funQ.(v + 4)) + v + 1;
+end;
+
+:: B = (S (D Q S^c)^+)^box(a), c = a^2 + a + 4: B(n) + a^2 + a = R(n + a^2)
+theorem BEVal:
+  (for x holds W.x = x + (a*a + a + 4)) implies
+  ((opBoxA a).(funS*(opPlusI.(funD*funQ*W)))).n + a*a + a = funR.(n + a*a)
+proof
+  assume A1: for x holds W.x = x + (a*a + a + 4);
+  set HE = funS*(opPlusI.(funD*funQ*W));
+  set BE = (opBoxA a).HE;
+  A2: for y holds HE.y = 2*(funQ.(y + (a*a+a+4))) + y + 1
+  proof
+    let y;
+    thus HE.y = funS.((opPlusI.(funD*funQ*W)).y) by CompVal
+      .= (opPlusI.(funD*funQ*W)).y + 1 by DefS
+      .= (funD*funQ*W).y + y + 1 by DefPlusI
+      .= (funD*funQ).(W.y) + y + 1 by CompVal
+      .= funD.(funQ.(W.y)) + y + 1 by CompVal
+      .= 2*(funQ.(W.y)) + y + 1 by DefD
+      .= 2*(funQ.(y + (a*a+a+4))) + y + 1 by A1;
+  end;
+  defpred P[Nat] means BE.$1 + a*a + a = funR.($1 + a*a);
+  A3: funRt.(a*a) = a by RtSq;
+  A4: BE.0 = a by DefBoxA;
+  funR.(0 + a*a) = a*a + 2*(funRt.(a*a)) by DefR .= a*a + 2*a by A3;
+  then A5: P[0] by A4;
+  A6: for n st P[n] holds P[n+1]
+  proof
+    let n;
+    assume A7: P[n];
+    set v = funR.(n + a*a);
+    A8: BE.n + (a*a + a + 4) = v + 4 by A7;
+    BE.(n+1) = HE.(BE.n) by DefBoxA
+      .= 2*(funQ.(BE.n + (a*a+a+4))) + BE.n + 1 by A2
+      .= 2*(funQ.(v + 4)) + BE.n + 1 by A8;
+    hence BE.(n+1) + a*a + a = 2*(funQ.(v + 4)) + v + 1 by A7
+      .= funR.(n + a*a + 1) by RRec
+      .= funR.(n + 1 + a*a);
+  end;
+  for n holds P[n] from NAT_1:sch 2(A5,A6);
+  hence thesis;
+end;
+
+:: G = (S^(a+1) B)^box(a) satisfies G(n) = n^2 + 2an + a
+theorem GEVal:
+  (for x holds W.x = x + (a*a + a + 4)) & (for x holds X.x = x + (a+1))
+  implies
+  ((opBoxA a).(X*((opBoxA a).(funS*(opPlusI.(funD*funQ*W)))))).n
+    = n*n + 2*a*n + a
+proof
+  assume that A1: for x holds W.x = x + (a*a + a + 4) and
+    A2: for x holds X.x = x + (a+1);
+  set BE = (opBoxA a).(funS*(opPlusI.(funD*funQ*W)));
+  set GE = (opBoxA a).(X*BE);
+  defpred P[Nat] means GE.$1 = $1*$1 + 2*a*$1 + a;
+  GE.0 = a by DefBoxA;
+  then A3: P[0];
+  A4: for n st P[n] holds P[n+1]
+  proof
+    let n;
+    assume A5: P[n];
+    set g = n*n + 2*a*n + a;
+    a <= a + (2*n + a) by NAT_1:11;
+    then a <= 2*(n+a);
+    then funRt.((n+a)*(n+a) + a) = n + a by RtSqAdd;
+    then A6: funRt.(g + a*a) = n + a;
+    BE.g + a*a + a = funR.(g + a*a) by A1, BEVal
+      .= g + a*a + 2*(n+a) by A6, DefR;
+    then A7: BE.g = g + 2*n + a;
+    thus GE.(n+1) = (X*BE).g by A5, DefBoxA
+      .= X.(BE.g) by CompVal
+      .= BE.g + (a+1) by A2
+      .= (n+1)*(n+1) + 2*a*(n+1) + a by A7;
+  end;
+  for n holds P[n] from NAT_1:sch 2(A3,A4);
+  hence thesis;
+end;
+
+:: with a = c + 2 and d = a^2 - a - 1 = c^2 + 3c + 1, P^ = E S^d G^+ is
+:: a predecessor
+theorem PEVal:
+  (for n holds G.n = n*n + 2*(c+2)*n + (c+2)) &
+  (for x holds H.x = x + (c*c + 3*c + 1)) implies
+  (funE*H*(opPlusI.G)).(k+1) = k
+proof
+  assume that A1: for n holds G.n = n*n + 2*(c+2)*n + (c+2) and
+    A2: for x holds H.x = x + (c*c + 3*c + 1);
+  k <= k + (k + 2 + 2*(c+2)) by NAT_1:11;
+  then k <= 2*(k+1+(c+2));
+  then A3: funE.((k+1+(c+2))*(k+1+(c+2)) + k) = k by ESqAdd;
+  thus (funE*H*(opPlusI.G)).(k+1) = (funE*H).((opPlusI.G).(k+1)) by CompVal
+    .= funE.(H.((opPlusI.G).(k+1))) by CompVal
+    .= funE.((opPlusI.G).(k+1) + (c*c + 3*c + 1)) by A2
+    .= funE.(G.(k+1) + (k+1) + (c*c + 3*c + 1)) by DefPlusI
+    .= funE.((k+1)*(k+1) + 2*(c+2)*(k+1) + (c+2) + (k+1)
+      + (c*c + 3*c + 1)) by A1
+    .= k by A3;
+end;
+
+theorem ExtAE:
+  2 <= a implies ClosBa(funE,a) = C6
+proof
+  assume A1: 2 <= a;
+  set C = ClosBa(funE,a);
+  consider c such that A2: a = 2 + c by A1, NAT_1:10;
+  A3: funE.0 = 0 by ESmall;
+  A4: cst 0 in C by A3, ELt, ZeroDec;
+  A5: for i st 1 <= i ex r st funE.(r*(i+1)) = i by XmE;
+  then A6: funI in C & funD in C & cst 1 in C & funS in C & funO in C
+    by A1, A3, A4, ExtABasics;
+  A0: funE in C by CBaG;
+  funO*funE in C by A0, A6, CBaComp;
+  then A7: funQ in C by QExpr;
+  A8: for x holds funS.x = x + 1 by DefS;
+  consider W such that A9: W in C and
+    A10: for x holds W.x = funI.x + (a*a+a+4)*1 by A6, A8, PowShift;
+  consider X such that A11: X in C and
+    A12: for x holds X.x = funI.x + (a+1)*1 by A6, A8, PowShift;
+  consider H such that A13: H in C and
+    A14: for x holds H.x = funI.x + (c*c+3*c+1)*1 by A6, A8, PowShift;
+  A15: for x holds W.x = x + (a*a+a+4)
+  proof
+    let x;
+    thus W.x = funI.x + (a*a+a+4)*1 by A10 .= x + (a*a+a+4) by DefI;
+  end;
+  A16: for x holds X.x = x + (a+1)
+  proof
+    let x;
+    thus X.x = funI.x + (a+1)*1 by A12 .= x + (a+1) by DefI;
+  end;
+  A17: for x holds H.x = x + (c*c+3*c+1)
+  proof
+    let x;
+    thus H.x = funI.x + (c*c+3*c+1)*1 by A14 .= x + (c*c+3*c+1) by DefI;
+  end;
+  set GE = (opBoxA a).(X*((opBoxA a).(funS*(opPlusI.(funD*funQ*W)))));
+  set PE = funE*H*(opPlusI.GE);
+  funD*funQ in C by A6, A7, CBaComp;
+  then funD*funQ*W in C by A9, CBaComp;
+  then opPlusI.(funD*funQ*W) in C by CBaPlusI;
+  then funS*(opPlusI.(funD*funQ*W)) in C by A6, CBaComp;
+  then (opBoxA a).(funS*(opPlusI.(funD*funQ*W))) in C by CBaBoxA;
+  then X*((opBoxA a).(funS*(opPlusI.(funD*funQ*W)))) in C by A11, CBaComp;
+  then GE in C by CBaBoxA;
+  then A18: opPlusI.GE in C by CBaPlusI;
+  funE*H in C by A0, A13, CBaComp;
+  then A19: PE in C by A18, CBaComp;
+  A20: for n holds GE.n = n*n + 2*(c+2)*n + (c+2)
+  proof
+    let n;
+    thus GE.n = n*n + 2*a*n + a by A15, A16, GEVal
+      .= n*n + 2*(c+2)*n + (c+2) by A2;
+  end;
+  A21: for k holds PE.(k+1) = k by A17, A20, PEVal;
+  for F st F in C holds opBox.F in C by A6, A19, A21, ExtABox;
+  then Clos1 funE c= C by A6, CBaSup;
+  then A22: C6 c= C by C6Eq;
+  C c= C6 by C6E, CBaSubC6;
+  hence thesis by A22, XBOOLE_0:def 10;
+end;
+
+:: The case X = K
+
+theorem AZero:
+  funA.0 = 0
+proof
+  2*(funA.0) = 0*0 + 0 by TwoA;
+  hence thesis;
+end;
+
+theorem KLt:
+  0 < y implies funK.y < y
+proof
+  assume A1: 0 < y;
+  A2: y = funA.(funV.y) + funK.y & funK.y <= funV.y by Decomp;
+  funV.y <> 0
+  proof
+    assume A3: funV.y = 0;
+    then funK.y <= 0 & 0 <= funK.y by A2, NAT_1:2;
+    then A4: funK.y = 0 by XXREAL_0:1;
+    y = funA.0 + 0 by A2, A3, A4 .= 0 by AZero;
+    hence contradiction by A1;
+  end;
+  then 1 <= funV.y by NAT_1:14;
+  then funA.1 <= funA.(funV.y) by AMono;
+  then 1 <= funA.(funV.y) by AOne;
+  then funK.y + 1 <= y by A2, XREAL_1:6;
+  hence thesis by NAT_1:13;
+end;
+
+theorem XmK:
+  ex r st funK.(r*(i+1)) = i
+proof
+  take 2*i;
+  2*(funA.(2*i)) = (2*i)*(2*i) + 2*i by TwoA;
+  then A1: (2*i)*(i+1) = funA.(2*i) + i;
+  i <= i + i by NAT_1:11;
+  then i <= 2*i;
+  then funK.(funA.(2*i) + i) = i by Diag;
+  hence thesis by A1;
+end;
+
+theorem SSVal:
+  (funS*funS).x = x + 2
+proof
+  thus (funS*funS).x = funS.(funS.x) by CompVal
+    .= funS.x + 1 by DefS
+    .= x + 1 + 1 by DefS
+    .= x + 2;
+end;
+
+:: with c = A(a), B = (S S (K S^c)^+)^box(a) satisfies
+:: B(n) + A(a) + 1 = A(n + a + 1)
+theorem BKVal:
+  (for x holds W.x = x + funA.a) implies
+  ((opBoxA a).(funS*funS*(opPlusI.(funK*W)))).n + funA.a + 1
+    = funA.(n + a + 1)
+proof
+  assume A1: for x holds W.x = x + funA.a;
+  set BK = (opBoxA a).(funS*funS*(opPlusI.(funK*W)));
+  defpred P[Nat] means BK.$1 + funA.a + 1 = funA.($1 + a + 1);
+  BK.0 = a by DefBoxA;
+  then A2: P[0] by ASuc;
+  A3: for n st P[n] holds P[n+1]
+  proof
+    let n;
+    assume A4: P[n];
+    A5: funA.(n+a+1) = funA.(n+a) + (n+a) + 1 by ASuc;
+    then A6: BK.n + funA.a = funA.(n+a) + (n+a) by A4;
+    n + a <= n + a;
+    then A7: funK.(BK.n + funA.a) = n + a by A6, Diag;
+    BK.(n+1) = (funS*funS*(opPlusI.(funK*W))).(BK.n) by DefBoxA
+      .= (funS*funS).((opPlusI.(funK*W)).(BK.n)) by CompVal
+      .= (opPlusI.(funK*W)).(BK.n) + 2 by SSVal
+      .= (funK*W).(BK.n) + BK.n + 2 by DefPlusI
+      .= funK.(W.(BK.n)) + BK.n + 2 by CompVal
+      .= funK.(BK.n + funA.a) + BK.n + 2 by A1
+      .= n + a + BK.n + 2 by A7;
+    hence BK.(n+1) + funA.a + 1 = funA.(n+a+1) + (n+a+1) + 1 by A4
+      .= funA.(n+1+a+1) by ASuc;
+  end;
+  for n holds P[n] from NAT_1:sch 2(A2,A3);
+  hence thesis;
+end;
+
+:: P^ = K S^c B^+ is a predecessor
+theorem PKVal:
+  (for x holds W.x = x + funA.a) &
+  G = (opBoxA a).(funS*funS*(opPlusI.(funK*W))) implies
+  (funK*W*(opPlusI.G)).(k+1) = k
+proof
+  assume that A1: for x holds W.x = x + funA.a and
+    A2: G = (opBoxA a).(funS*funS*(opPlusI.(funK*W)));
+  A3: G.(k+1) + funA.a + 1 = funA.(k+1+a+1) by A1, A2, BKVal;
+  k <= k + (a+2) by NAT_1:11;
+  then A4: funK.(funA.(k+a+2) + k) = k by Diag;
+  thus (funK*W*(opPlusI.G)).(k+1) = (funK*W).((opPlusI.G).(k+1)) by CompVal
+    .= funK.(W.((opPlusI.G).(k+1))) by CompVal
+    .= funK.((opPlusI.G).(k+1) + funA.a) by A1
+    .= funK.(G.(k+1) + (k+1) + funA.a) by DefPlusI
+    .= funK.(funA.(k+a+2) + k) by A3
+    .= k by A4;
+end;
+
+theorem ExtAK:
+  2 <= a implies ClosBa(funK,a) = C6
+proof
+  assume A1: 2 <= a;
+  set C = ClosBa(funK,a);
+  A2: funK.0 = 0 by KSmall;
+  A3: cst 0 in C by A2, KLt, ZeroDec;
+  A4: for i st 1 <= i ex r st funK.(r*(i+1)) = i by XmK;
+  then A5: funI in C & funD in C & cst 1 in C & funS in C & funO in C
+    by A1, A2, A3, ExtABasics;
+  A6: funK in C by CBaG;
+  A7: for x holds funS.x = x + 1 by DefS;
+  consider W such that A8: W in C and
+    A9: for x holds W.x = funI.x + (funA.a)*1 by A5, A7, PowShift;
+  A10: for x holds W.x = x + funA.a
+  proof
+    let x;
+    thus W.x = funI.x + (funA.a)*1 by A9 .= x + funA.a by DefI;
+  end;
+  set G = (opBoxA a).(funS*funS*(opPlusI.(funK*W)));
+  set PK = funK*W*(opPlusI.G);
+  funK*W in C by A6, A8, CBaComp;
+  then A11: opPlusI.(funK*W) in C by CBaPlusI;
+  funS*funS in C by A5, CBaComp;
+  then funS*funS*(opPlusI.(funK*W)) in C by A11, CBaComp;
+  then G in C by CBaBoxA;
+  then A12: opPlusI.G in C by CBaPlusI;
+  funK*W in C by A6, A8, CBaComp;
+  then A13: PK in C by A12, CBaComp;
+  A14: for k holds PK.(k+1) = k by A10, PKVal;
+  for F st F in C holds opBox.F in C by A5, A13, A14, ExtABox;
+  then Clos1 funK c= C by A5, CBaSup;
+  then A15: C6 c= C by Theorem68;
+  C c= C6 by KIn, CBaSubC6;
+  hence thesis by A15, XBOOLE_0:def 10;
+end;
+
+:: The case X = L: 0 = L L^+, and K = L 1^+ ((1^+)^+ L)^+ as in Theorem 6.8
+
+theorem ZeroExprL:
+  funL*(opPlusI.funL) = cst 0
+proof
+  now
+    let x;
+    set t = funV.x, k = funK.x;
+    A1: x = funA.t + k & k <= t by Decomp;
+    A2: funL.x = t -' k by LEq;
+    t -' k + k = t by A1, XREAL_1:235;
+    then A3: funL.x + x = funA.t + t by A1, A2;
+    A4: t <= t;
+    thus (funL*(opPlusI.funL)).x = funL.((opPlusI.funL).x) by CompVal
+      .= funL.(funL.x + x) by DefPlusI
+      .= funL.(funA.t + t) by A3
+      .= t -' t by A4, Diag
+      .= 0 + t -' t
+      .= 0 by NAT_D:34
+      .= (cst 0).x by DefCst;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem XmL:
+  ex r st funL.(r*(i+1)) = i
+proof
+  take 2*(i+1);
+  2*(funA.(2*i+1)) = (2*i+1)*(2*i+1) + (2*i+1) by TwoA;
+  then A1: (2*(i+1))*(i+1) = funA.(2*i+1) + (i+1);
+  i+1 <= i+1 + i by NAT_1:11;
+  then i+1 <= 2*i+1;
+  then funL.(funA.(2*i+1) + (i+1)) = 2*i+1 -' (i+1) by Diag
+    .= i + (i+1) -' (i+1)
+    .= i by NAT_D:34;
+  hence thesis by A1;
+end;
+
+theorem LZero:
+  funL.0 = 0
+proof
+  A1: 0 <= 0;
+  funL.(funA.0 + 0) = 0 -' 0 by A1, Diag
+    .= 0 + 0 -' 0
+    .= 0 by NAT_D:34;
+  hence thesis by AZero;
+end;
+
+theorem ExtAL:
+  2 <= a implies ClosBa(funL,a) = C6
+proof
+  assume A1: 2 <= a;
+  set C = ClosBa(funL,a);
+  A2: funL in C by CBaG;
+  then opPlusI.funL in C by CBaPlusI;
+  then funL*(opPlusI.funL) in C by A2, CBaComp;
+  then A3: cst 0 in C by ZeroExprL;
+  A4: for i st 1 <= i ex r st funL.(r*(i+1)) = i by XmL;
+  A5: cst 1 in C by A1, A3, A4, LZero, ExtABasics;
+  then A6: opPlusI.(cst 1) in C by CBaPlusI;
+  then opPlusI.(opPlusI.(cst 1)) in C by CBaPlusI;
+  then (opPlusI.(opPlusI.(cst 1)))*funL in C by A2, CBaComp;
+  then A7: opPlusI.((opPlusI.(opPlusI.(cst 1)))*funL) in C by CBaPlusI;
+  funL*(opPlusI.(cst 1)) in C by A2, A6, CBaComp;
+  then funK in C by A7, CBaComp, KExprL;
+  then ClosBa(funK,a) c= C by CBaSub;
+  then A8: C6 c= C by A1, ExtAK;
+  C c= C6 by LIn, CBaSubC6;
+  hence thesis by A8, XBOOLE_0:def 10;
+end;
+
+:: Every starting value a >= 1 (a = 1 is Remark 6.9)
+theorem ExtA:
+  1 <= a implies
+  ClosBa(funE,a) = C6 & ClosBa(funK,a) = C6 & ClosBa(funL,a) = C6
+proof
+  assume A1: 1 <= a;
+  per cases;
+  suppose A2: a = 1;
+    hence ClosBa(funE,a) = ClosB1 funE by CBaB1 .= C6 by Remark69;
+    thus ClosBa(funK,a) = ClosB1 funK by A2, CBaB1 .= C6 by Remark69;
+    thus ClosBa(funL,a) = ClosB1 funL by A2, CBaB1 .= C6 by Remark69;
+  end;
+  suppose a <> 1;
+    then 1 < a by A1, XXREAL_0:1;
+    then 1 + 1 <= a by NAT_1:13;
+    hence thesis by ExtAE, ExtAK, ExtAL;
+  end;
+end;
+
+:: The shifted operator F^+b(x) = F(x) + x + b
+
+definition
+  let b be Nat;
+  func opPlusIb b -> UnOp of Funcs(NAT,NAT) means :DefPlusIb:
+  for F being Element of Funcs(NAT,NAT), x being Nat holds
+    (it.F).x = F.x + x + b;
+  existence
+  proof
+    deffunc T(Element of Funcs(NAT,NAT), Nat) = $1.$2 + $2 + b;
+    thus ex u being UnOp of Funcs(NAT,NAT) st
+      for F being Element of Funcs(NAT,NAT), x being Nat holds
+      (u.F).x = T(F,x) from UOpEx;
+  end;
+  uniqueness
+  proof
+    deffunc T(Element of Funcs(NAT,NAT), Nat) = $1.$2 + $2 + b;
+    let u,v be UnOp of Funcs(NAT,NAT) such that
+    A1: for F being Element of Funcs(NAT,NAT), x being Nat holds
+      (u.F).x = T(F,x) and
+    A2: for F being Element of Funcs(NAT,NAT), x being Nat holds
+      (v.F).x = T(F,x);
+    thus u = v from UOpUq(A1,A2);
+  end;
+end;
+
+:: the basis <E, F^+b, FG, F^box>
+definition
+  let b be Nat;
+  func ClosVb b -> Subset of Funcs(NAT,NAT) equals
+  clos({funE}, {opPlusIb b, opBox}, {opComp});
+  coherence;
+end;
+
+theorem CVbE:
+  funE in ClosVb b
+proof
+  funE in {funE} by TARSKI:def 1;
+  hence thesis by ClosInit;
+end;
+
+theorem CVbPlusIb:
+  F in ClosVb b implies (opPlusIb b).F in ClosVb b
+proof
+  assume A1: F in ClosVb b;
+  opPlusIb b in {opPlusIb b, opBox} by TARSKI:def 2;
+  hence thesis by A1, ClosUnop;
+end;
+
+theorem CVbBox:
+  F in ClosVb b implies opBox.F in ClosVb b
+proof
+  assume A1: F in ClosVb b;
+  opBox in {opPlusIb b, opBox} by TARSKI:def 2;
+  hence thesis by A1, ClosUnop;
+end;
+
+theorem CVbComp:
+  F in ClosVb b & G in ClosVb b implies F*G in ClosVb b
+  by CompIn;
+
+:: soundness: F^+b = F^+ + M_b 1
+theorem PlusIbIn:
+  F in C6 implies (opPlusIb b).F in C6
+proof
+  assume A1: F in C6;
+  opPlusI in {opPlusI, opBox} by TARSKI:def 2;
+  then funM b in C6 by ZeroIn, MInClos;
+  then A2: (funM b)*(cst 1) in C6 by C6One, C6Comp;
+  opPlusI.F in C6 by A1, C6PlusI;
+  then A3: opPlus.(opPlusI.F, (funM b)*(cst 1)) in C6 by A2, Lemma66;
+  now
+    let x;
+    thus (opPlus.(opPlusI.F, (funM b)*(cst 1))).x
+        = (opPlusI.F).x + ((funM b)*(cst 1)).x by DefPlus
+      .= F.x + x + ((funM b)*(cst 1)).x by DefPlusI
+      .= F.x + x + (funM b).((cst 1).x) by CompVal
+      .= F.x + x + (funM b).1 by DefCst
+      .= F.x + x + b*1 by DefM
+      .= ((opPlusIb b).F).x by DefPlusIb;
+  end;
+  hence thesis by A3, UFunExt;
+end;
+
+theorem CVbSubC6:
+  ClosVb b c= C6
+proof
+  C6 is_closed_under {funE}, {opPlusIb b, opBox}, {opComp}
+  proof
+    thus {funE} c= C6
+    proof
+      let z be object;
+      assume z in {funE};
+      hence thesis by C6E, TARSKI:def 1;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opPlusIb b, opBox} & F in C6 holds u.F in C6
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A1: u in {opPlusIb b, opBox} & F in C6;
+      then u = opPlusIb b or u = opBox by TARSKI:def 2;
+      hence thesis by A1, PlusIbIn, C6Box;
+    end;
+    let c be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A2: c in {opComp} & F in C6 & G in C6;
+    then c = opComp by TARSKI:def 1;
+    then c.(F,G) = F*G by DefComp;
+    hence thesis by A2, C6Comp;
+  end;
+  hence thesis by ClosLeast;
+end;
+
+:: For b = c + 1 >= 1:  0 = E^box, A = 0^+b (A(x) = x + b),
+:: C = E A^c 0 (the constant c), B = C^+b (B(x) = x + 2c + 1),
+:: T = B^(2c) A A (T(x) = x + 4c^2 + 4c + 2), G = (A^3 (E T)^+b)^box
+:: (G(n) = n^2 + 4bn), P^ = E A^(4b+1) ((G^+b)^+b)^+b (a predecessor),
+:: S = P^^c A, 1 = S 0 and F^+ = P^^b F^+b
+theorem ExtVb:
+  1 <= b implies ClosVb b = C6
+proof
+  assume A1: 1 <= b;
+  consider c such that A2: b = 1 + c by A1, NAT_1:10;
+  set C = ClosVb b;
+  A3: funE in C by CVbE;
+  set Z = opBox.funE;
+  A4: Z in C by A3, CVbBox;
+  defpred P[Nat] means Z.$1 = 0;
+  A5: P[0] by DefBox;
+  A6: for n st P[n] holds P[n+1]
+  proof
+    let n;
+    assume P[n];
+    then Z.(n+1) = funE.0 by DefBox;
+    hence thesis by ESmall;
+  end;
+  A0: for n holds P[n] from NAT_1:sch 2(A5,A6);
+  A7: for x holds Z.x = 0 by A0;
+  set Ab = (opPlusIb b).Z;
+  A8: Ab in C by A4, CVbPlusIb;
+  A9: for x holds Ab.x = x + b
+  proof
+    let x;
+    Z.x = 0 by A7;
+    hence Ab.x = 0 + x + b by DefPlusIb .= x + b;
+  end;
+  consider H0 being Element of Funcs(NAT,NAT) such that
+    A10: H0 in C and A11: for x holds H0.x = Z.x + c*b by A4, A8, A9, PowShift;
+  set Cb = funE*H0;
+  A12: Cb in C by A3, A10, CVbComp;
+  c <= c + c by NAT_1:11;
+  then c <= 2*c;
+  then A13: funE.(c*c + c) = c by ESqAdd;
+  A14: for x holds Cb.x = c
+  proof
+    let x;
+    thus Cb.x = funE.(H0.x) by CompVal
+      .= funE.(Z.x + c*b) by A11
+      .= funE.(0 + c*(1+c)) by A2, A7
+      .= c by A13;
+  end;
+  set Bb = (opPlusIb b).Cb;
+  A15: Bb in C by A12, CVbPlusIb;
+  A16: for x holds Bb.x = x + (2*c+1)
+  proof
+    let x;
+    thus Bb.x = Cb.x + x + b by DefPlusIb .= c + x + b by A14
+      .= x + (2*c+1) by A2;
+  end;
+  A17: Ab*Ab in C by A8, CVbComp;
+  consider Tb being Element of Funcs(NAT,NAT) such that
+    A18: Tb in C and A19: for x holds Tb.x = (Ab*Ab).x + (2*c)*(2*c+1)
+    by A15, A16, A17, PowShift;
+  A20: for x holds Tb.x = x + (4*c*c + 4*c + 2)
+  proof
+    let x;
+    thus Tb.x = (Ab*Ab).x + (2*c)*(2*c+1) by A19
+      .= Ab.(Ab.x) + (2*c)*(2*c+1) by CompVal
+      .= Ab.(x + b) + (2*c)*(2*c+1) by A9
+      .= x + b + b + (2*c)*(2*c+1) by A9
+      .= x + (4*c*c + 4*c + 2) by A2;
+  end;
+  set Hp = (opPlusIb b).(funE*Tb);
+  funE*Tb in C by A3, A18, CVbComp;
+  then A21: Hp in C by CVbPlusIb;
+  consider Hb being Element of Funcs(NAT,NAT) such that
+    A22: Hb in C and A23: for x holds Hb.x = Hp.x + 3*b
+    by A8, A9, A21, PowShift;
+  A24: for y holds Hb.y = funE.(Tb.y) + y + 4*b
+  proof
+    let y;
+    thus Hb.y = Hp.y + 3*b by A23
+      .= (funE*Tb).y + y + b + 3*b by DefPlusIb
+      .= funE.(Tb.y) + y + b + 3*b by CompVal
+      .= funE.(Tb.y) + y + 4*b;
+  end;
+  set Gb = opBox.Hb;
+  A25: Gb in C by A22, CVbBox;
+  defpred Q[Nat] means Gb.$1 = $1*$1 + 4*b*$1;
+  Gb.0 = 0 by DefBox;
+  then A26: Q[0];
+  A27: for n st Q[n] holds Q[n+1]
+  proof
+    let n;
+    assume A28: Q[n];
+    set g = n*n + 4*b*n;
+    2*n+1 <= (2*n+1) + (4*c+1) by NAT_1:11;
+    then 2*n+1 <= 2*(n+2*c+1);
+    then A29: funE.((n+2*c+1)*(n+2*c+1) + (2*n+1)) = 2*n+1 by ESqAdd;
+    A30: funE.(Tb.g) = funE.(g + (4*c*c + 4*c + 2)) by A20
+      .= funE.((n+2*c+1)*(n+2*c+1) + (2*n+1)) by A2
+      .= 2*n+1 by A29;
+    thus Gb.(n+1) = Hb.(Gb.n) by DefBox
+      .= funE.(Tb.g) + g + 4*b by A24, A28
+      .= (n+1)*(n+1) + 4*b*(n+1) by A30;
+  end;
+  A31: for n holds Q[n] from NAT_1:sch 2(A26,A27);
+  set G3 = (opPlusIb b).((opPlusIb b).((opPlusIb b).Gb));
+  (opPlusIb b).Gb in C by A25, CVbPlusIb;
+  then (opPlusIb b).((opPlusIb b).Gb) in C by CVbPlusIb;
+  then A32: G3 in C by CVbPlusIb;
+  A33: for x holds G3.x = Gb.x + 3*x + 3*b
+  proof
+    let x;
+    thus G3.x = ((opPlusIb b).((opPlusIb b).Gb)).x + x + b by DefPlusIb
+      .= ((opPlusIb b).Gb).x + x + b + x + b by DefPlusIb
+      .= Gb.x + x + b + x + b + x + b by DefPlusIb
+      .= Gb.x + 3*x + 3*b;
+  end;
+  consider P4 being Element of Funcs(NAT,NAT) such that
+    A34: P4 in C and A35: for x holds P4.x = G3.x + (4*b+1)*b
+    by A8, A9, A32, PowShift;
+  set Pb = funE*P4;
+  A36: Pb in C by A3, A34, CVbComp;
+  A37: for k holds Pb.(k+1) = k
+  proof
+    let k;
+    k <= k + (k + 4*b + 4) by NAT_1:11;
+    then k <= 2*(k + 2*b + 2);
+    then A38: funE.((k + 2*b + 2)*(k + 2*b + 2) + k) = k by ESqAdd;
+    thus Pb.(k+1) = funE.(P4.(k+1)) by CompVal
+      .= funE.(G3.(k+1) + (4*b+1)*b) by A35
+      .= funE.(Gb.(k+1) + 3*(k+1) + 3*b + (4*b+1)*b) by A33
+      .= funE.((k+1)*(k+1) + 4*b*(k+1) + 3*(k+1) + 3*b + (4*b+1)*b) by A31
+      .= k by A38;
+  end;
+  consider Sb being Element of Funcs(NAT,NAT) such that
+    A39: Sb in C and A40: for x,y st Ab.x = y + c holds Sb.x = y
+    by A8, A36, A37, PowPred;
+  now
+    let x;
+    Ab.x = x + b by A9 .= (x+1) + c by A2;
+    hence Sb.x = x + 1 by A40 .= funS.x by DefS;
+  end;
+  then A41: funS in C by A39, UFunExt;
+  now
+    let x;
+    thus (funS*Z).x = funS.(Z.x) by CompVal .= Z.x + 1 by DefS
+      .= 0 + 1 by A7 .= (cst 1).x by DefCst;
+  end;
+  then funS*Z = cst 1 by UFunExt;
+  then A42: cst 1 in C by A4, A41, CVbComp;
+  A43: for F st F in C holds opPlusI.F in C
+  proof
+    let F;
+    assume F in C;
+    then A44: (opPlusIb b).F in C by CVbPlusIb;
+    then consider Q1 being Element of Funcs(NAT,NAT) such that
+      A45: Q1 in C and
+      A46: for x,y st ((opPlusIb b).F).x = y + b holds Q1.x = y
+      by A36, A37, PowPred;
+    now
+      let x;
+      ((opPlusIb b).F).x = (F.x + x) + b by DefPlusIb;
+      hence Q1.x = F.x + x by A46 .= (opPlusI.F).x by DefPlusI;
+    end;
+    hence thesis by A45, UFunExt;
+  end;
+  C is_closed_under {cst 1, funE}, {opPlusI, opBox}, {opComp}
+  proof
+    thus {cst 1, funE} c= C
+    proof
+      let z be object;
+      assume z in {cst 1, funE};
+      then z = cst 1 or z = funE by TARSKI:def 2;
+      hence thesis by A3, A42;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opPlusI, opBox} & F in C holds u.F in C
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A47: u in {opPlusI, opBox} & F in C;
+      then u = opPlusI or u = opBox by TARSKI:def 2;
+      hence thesis by A43, A47, CVbBox;
+    end;
+    let d be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A48: d in {opComp} & F in C & G in C;
+    then d = opComp by TARSKI:def 1;
+    then d.(F,G) = F*G by DefComp;
+    hence thesis by A48, CVbComp;
+  end;
+  then A49: C6 c= C by ClosLeast;
+  C c= C6 by CVbSubC6;
+  hence thesis by A49, XBOOLE_0:def 10;
+end;
+
+:: b = 0: every function generated by <E, F^+, FG, F^box> fixes 0, so the
+:: constant 1 is not generated
+theorem ExtVb0:
+  ClosVb 0 <> C6
+proof
+  defpred P[object] means ex F st F = $1 & F.0 = 0;
+  consider Y being Subset of Funcs(NAT,NAT) such that
+    A1: for F being Element of Funcs(NAT,NAT) holds F in Y iff P[F]
+    from SUBSET_1:sch 3;
+  A2: for F holds F in Y iff F.0 = 0
+  proof
+    let F;
+    thus F in Y implies F.0 = 0
+    proof
+      assume F in Y;
+      then ex G st G = F & G.0 = 0 by A1;
+      hence thesis;
+    end;
+    assume F.0 = 0;
+    hence thesis by A1;
+  end;
+  Y is_closed_under {funE}, {opPlusIb 0, opBox}, {opComp}
+  proof
+    thus {funE} c= Y
+    proof
+      let z be object;
+      assume z in {funE};
+      then z = funE by TARSKI:def 1;
+      hence thesis by A2, ESmall;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opPlusIb 0, opBox} & F in Y holds u.F in Y
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A3: u in {opPlusIb 0, opBox} & F in Y;
+      then A4: F.0 = 0 by A2;
+      per cases by A3, TARSKI:def 2;
+      suppose A5: u = opPlusIb 0;
+        (u.F).0 = F.0 + 0 + 0 by A5, DefPlusIb .= 0 by A4;
+        hence thesis by A2;
+      end;
+      suppose u = opBox;
+        then (u.F).0 = 0 by DefBox;
+        hence thesis by A2;
+      end;
+    end;
+    let d be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A6: d in {opComp} & F in Y & G in Y;
+    then d = opComp by TARSKI:def 1;
+    then A7: d.(F,G) = F*G by DefComp;
+    (F*G).0 = F.(G.0) by CompVal .= F.0 by A2, A6 .= 0 by A2, A6;
+    hence thesis by A2, A7;
+  end;
+  then A8: ClosVb 0 c= Y by ClosLeast;
+  (cst 1).0 = 1 by DefCst;
+  then not cst 1 in Y by A2;
+  hence thesis by A8, C6One;
+end;
+
+theorem ExtVbIff:
+  ClosVb b = C6 iff 1 <= b
+proof
+  thus ClosVb b = C6 implies 1 <= b
+  proof
+    assume A1: ClosVb b = C6;
+    b <> 0 by A1, ExtVb0;
+    hence thesis by NAT_1:14;
+  end;
+  thus thesis by ExtVb;
+end;

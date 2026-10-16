@@ -44,6 +44,8 @@ Then build (about 35 s):
 | `theories/Thm67.v` | 62 | `Theorem_6_7`, `Robinson_1947_sec7_thm3`, `Lemma_3_3`, `Theorem_6_7_via_L33` |
 | `theories/Thm68.v` | 192 | `Theorem_6_8` |
 | `theories/Rem69.v` | 161 | `Remark_6_9_I`, `_II`, `_III` |
+| `theories/ExtA.v` | 359 | open question of Remark 6.9: ⟨X, F^+, FG, F^□(a)⟩ is suitable for every a ≥ 1 and X ∈ {E, K, L} (`Ext_a_E`, `Ext_a_K`, `Ext_a_L`, `Ext_a_all`) |
+| `theories/ExtVb.v` | 154 | ⟨E, F^+b, FG, F^□⟩ with F^+b(x) = F(x) + x + b is suitable iff b ≥ 1 (`Ext_Vb`, `Ext_Vb_0`, `Ext_Vb_iff`) |
 
 ## Status
 

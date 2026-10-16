@@ -5,3 +5,5 @@ import UPRF.Robinson
 import UPRF.Thm67
 import UPRF.Thm68
 import UPRF.Rem69
+import UPRF.ExtA
+import UPRF.ExtVb

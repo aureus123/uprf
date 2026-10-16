@@ -38,6 +38,8 @@ tactics.
 | `UPRF/Thm67.lean` | 51 | `Lemma_3_3`, `Theorem_6_7`, `Theorem_6_7_via_L33` (the paper's route) |
 | `UPRF/Thm68.lean` | 191 | `Theorem_6_8` (bases with K and L) |
 | `UPRF/Rem69.lean` | 150 | `Remark_6_9_I`, `_II`, `_III` (iteration from 1) |
+| `UPRF/ExtA.lean` | 369 | open question of Remark 6.9: ⟨X, F⁺, FG, F^□⁽ᵃ⁾⟩ is suitable for every a ≥ 1 and X ∈ {E, K, L} (`Ext_a_E`, `Ext_a_K`, `Ext_a_L`, `Ext_a_all`) |
+| `UPRF/ExtVb.lean` | 142 | ⟨E, F⁺ᵇ, FG, F^□⟩ with F⁺ᵇ(x) = F(x) + x + b is suitable iff b ≥ 1 (`Ext_Vb`, `Ext_Vb_zero`, `Ext_Vb_iff`) |
 
 ## Status
 

@@ -48,7 +48,7 @@ abstract and shows the theorem labels.
 | `dict/uprf.voc` | vocabulary (the new symbols) |
 | `miz.sh`, `mmlthm.sh` | scripts described above |
 
-## Contents of `uprf.miz` (4094 lines, 157 theorems, 52 definitions, 6 schemes)
+## Contents of `uprf.miz` (5599 lines, 207 theorems, 57 definitions, 6 schemes)
 
 Functions are `Element of Funcs(NAT,NAT)`. Operators are `UnOp`/`BinOp of Funcs(NAT,NAT)`, so
 that they can be members of a basis. `F*G` is the composition FG of the paper.
@@ -69,6 +69,8 @@ that they can be members of a basis. `F*G` is the composition FG of the paper.
 | Theorem 6.7 | `Theorem67`: `C6 = RobinsonClos`; `Theorem67L33`: the basis of Lemma 3.3 is generated |
 | Theorem 6.8 | `Theorem68`: `C6K = C6 & C6L = C6` |
 | Remark 6.9 (I)–(III), F^□(1) | `opBox1`, `Remark69`: `ClosB1 funE = C6 & ClosB1 funK = C6 & ClosB1 funL = C6` |
+| open question of Remark 6.9: iteration from any a ≥ 1, F^□(a) | `opBoxA`, `ClosBa`, `ExtA`: `1 <= a implies ClosBa(funE,a) = C6 & ClosBa(funK,a) = C6 & ClosBa(funL,a) = C6` |
+| shifted operator F⁺ᵇ(x) = F(x) + x + b | `opPlusIb`, `ClosVb`, `ExtVbIff`: `ClosVb b = C6 iff 1 <= b` |
 
 ## Status
 
@@ -81,6 +83,11 @@ between closures.
   Theorem 3).
 - `Theorem68` and `Remark69` show that the other five bases generate the same closure, so they
   are suitable as soon as the basis of Theorem 6.7 is.
+- `ExtA` and `ExtVbIff` do the same for the answers to the open questions (README §2): the
+  bases with $`F^{\square(a)}`$, $`a \ge 1`$, and the shifted basis with $`b \ge 1`$ generate
+  the same closure; for $`b = 0`$ the closure differs (`ExtVb0`). As for Remark 6.9, the
+  inclusion in `C6` needs $`F^{\square(a)}`$ in the closure (`BoxAIn`, which generalizes
+  `Box1In` with $`M_{a+1} O`$ in place of $`D O`$).
 
 Not yet formalized:
 

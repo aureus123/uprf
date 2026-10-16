@@ -8,3 +8,5 @@ theories/Robinson.v
 theories/Thm67.v
 theories/Thm68.v
 theories/Rem69.v
+theories/ExtA.v
+theories/ExtVb.v

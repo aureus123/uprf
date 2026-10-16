@@ -1,0 +1,46 @@
+\documentclass{article}
+\usepackage{z-eves}
+\begin{document}
+
+Installation check: a few straightforward facts.
+
+\begin{theorem}{plusZero}
+  \forall n: \nat @ n + 0 = n
+\end{theorem}
+
+\begin{zproof}
+prove by reduce;
+\end{zproof}
+
+The successor function $S$ of the paper, as a total function on $\nat$:
+
+\begin{axdef}
+  S: \nat \fun \nat
+\where
+  \forall x: \nat @ S~x = x + 1
+\end{axdef}
+
+\begin{zproof}[S\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{SThree}
+  S~3 = 4
+\end{theorem}
+
+\begin{zproof}
+use axiom\$1[x := 3];
+prove by reduce;
+\end{zproof}
+
+\begin{theorem}{SGreater}
+  \forall x: \nat @ S~x > x
+\end{theorem}
+
+\begin{zproof}
+prove by reduce;
+use axiom\$1;
+prove by reduce;
+\end{zproof}
+
+\end{document}

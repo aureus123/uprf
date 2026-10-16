@@ -8,14 +8,14 @@ It contains:
 - the paper's results;
 - the questions it leaves open, with the ones answered here;
 - the problems that are still open;
-- machine-checked formalizations of Section 6 in four proof assistants: Isabelle/HOL, Mizar,
-  Lean 4 and Rocq.
+- machine-checked formalizations of Section 6 in five proof assistants: Isabelle/HOL, Mizar,
+  Lean 4, Rocq and Z/EVES.
 
 | Folder | Content |
 |---|---|
 | [`references/`](references/README.md) | summaries of the papers cited by the UPRF paper |
 | [`others/`](others/README.md) | summaries of further papers on restricted recursion schemes (Péter, Kleene, Axt, Calude, Georgieva, Mazzanti, …) |
-| [`isabelle/`](isabelle/README.md), [`mizar/`](mizar/README.md), [`lean/`](lean/README.md), [`rocq/`](rocq/README.md) | the formalizations |
+| [`isabelle/`](isabelle/README.md), [`mizar/`](mizar/README.md), [`lean/`](lean/README.md), [`rocq/`](rocq/README.md), [`z/`](z/README.md) | the formalizations |
 
 ---
 
@@ -79,7 +79,7 @@ Gladstone (1967, 1971). Its main results are the following.
 
 ## 2. Open questions of the paper and similar problems (solved here)
 
-Both results below are formalized in all four proof assistants, and the proofs below follow
+Both results below are formalized in all five proof assistants, and the proofs below follow
 the Isabelle formalization:
 
 | | §2.1 (iteration from a) | §2.2 (shifted operator) |
@@ -88,10 +88,11 @@ the Isabelle formalization:
 | Lean 4 | `lean/UPRF/ExtA.lean`: `Ext_a_all` | `lean/UPRF/ExtVb.lean`: `Ext_Vb_iff` |
 | Rocq | `rocq/theories/ExtA.v`: `Ext_a_all` | `rocq/theories/ExtVb.v`: `Ext_Vb_iff` |
 | Mizar | `mizar/text/uprf.miz`: `ExtA` | `mizar/text/uprf.miz`: `ExtVbIff` |
+| Z/EVES | `z/uprf.tex`: `ExtAAll` | `z/uprf.tex`: `ExtVbIff` |
 
-As for Section 6, Mizar states them at closure level: for $`a \ge 1`$ the bases generate the
-same closure as $`\langle \bar 1, E, F^+, FG, F^\square\rangle`$, and the shifted basis does
-so if and only if $`b \ge 1`$.
+As for Section 6, Mizar and Z/EVES state them at closure level: for $`a \ge 1`$ the bases
+generate the same closure as $`\langle \bar 1, E, F^+, FG, F^\square\rangle`$, and the shifted
+basis does so if and only if $`b \ge 1`$.
 
 **Conventions used in the proofs:**
 - $`F^k`$ denotes the $`k`$-fold composition $`F \circ \dots \circ F`$.
@@ -280,7 +281,7 @@ can only be applied to onto functions, so those constructions would have to be r
 
 ## 4. The formalizations
 
-All four formalize **Section 6**:
+All five formalize **Section 6**:
 
 - Definition 6.1;
 - Lemmas 6.2–6.6;
@@ -293,8 +294,8 @@ They use the same names wherever the language allows:
   constant n̄;
 - an operator is `opX` (`opPlusI` for F⁺, `opBox` for F^□, `opBoxA a` for F^□(a), …);
 - when the paper defines `X ≡ expression`, `exprX` is the expression, built only with the
-  operators of the basis. Lemmas `X_expr` / `exprX_val` (`XExpr` / `…Val` in Mizar) state that
-  it computes X, and `X_in` (`XIn`) that it lies in the closure.
+  operators of the basis. Lemmas `X_expr` / `exprX_val` (`XExpr` / `…Val` in Mizar and Z/EVES)
+  state that it computes X, and `X_in` (`XIn`) that it lies in the closure.
 
 ### 4.1 Requirements and installation
 
@@ -306,6 +307,7 @@ Each folder has its own README with detailed instructions.
 | [Mizar](mizar/README.md) | [Mizar 8.1.15 with MML 5.94.1493](https://mizar.uwb.edu.pl/system/), Python 3 | run the package's `install.sh`, set `MIZFILES`, put the binaries on `PATH`; then `mizar/miz.sh uprf` |
 | [Lean 4](lean/README.md) | [elan](https://github.com/leanprover/elan) (it installs Lean 4.34.1); Mathlib v4.34.1 is fetched by `lake` | `cd lean && lake exe cache get && ./build.sh` |
 | [Rocq](rocq/README.md) | [Rocq 9.3](https://rocq-prover.org), MathComp 2.6 (`rocq-mathcomp-ssreflect`), mczify (`coq-mathcomp-zify`), installed with [opam](https://opam.ocaml.org) | `opam repo add rocq-released https://rocq-prover.org/opam/released`; `opam install rocq-prover rocq-mathcomp-ssreflect coq-mathcomp-zify`; `rocq/build.sh` |
+| [Z/EVES](z/README.md) | [Z/EVES 2.3](https://github.com/arandilopez/z-eves) (32-bit Linux only; on macOS inside a [Lima](https://lima-vm.io) VM) | unpack into `/opt/Z/Z-Eves`; on macOS `limactl start zeves`; then `z/zeves.sh z/uprf.tex` |
 
 ### 4.2 How to read them
 
@@ -316,28 +318,29 @@ A good reading order is:
 3. the `*_val` lemmas, which are the arithmetic behind each formula;
 4. the final theorems.
 
-| | Isabelle/HOL | Mizar | Lean 4 + Mathlib | Rocq + MathComp |
-|---|---|---|---|---|
-| Sources | `isabelle/UPRF/*.thy` | `mizar/text/uprf.miz` | `lean/UPRF/*.lean` | `rocq/theories/*.v` |
-| Start with | `UPRF_Sec2_Notation.thy`, `UPRF_Sec6.thy` | the table in `mizar/README.md` | `Basic.lean`, `Sec6.lean` | `Basic.v`, `Sec6.v` |
-| Main theorems | `Theorem_6_7`, `Theorem_6_8`, `Remark_6_9_I/II/III`, `Robinson_1947_sec7_thm3`, `Ext_a_all`, `Ext_Vb_iff` | `Theorem67`, `Theorem68`, `Remark69`, `ExtA`, `ExtVbIff` | `Theorem_6_7`, `Theorem_6_8`, `Remark_6_9_I/II/III`, `Robinson_1947_sec7_thm3`, `Ext_a_all`, `Ext_Vb_iff` | same names as Lean |
-| Prim(ℕ,ℕ) | AFP `PrimRec1` | not connected | Mathlib `Nat.Primrec` | own inductive `PrimNN` (unary Cantor characterization) |
+| | Isabelle/HOL | Mizar | Lean 4 + Mathlib | Rocq + MathComp | Z/EVES |
+|---|---|---|---|---|---|
+| Sources | `isabelle/UPRF/*.thy` | `mizar/text/uprf.miz` | `lean/UPRF/*.lean` | `rocq/theories/*.v` | `z/uprf.tex` |
+| Start with | `UPRF_Sec2_Notation.thy`, `UPRF_Sec6.thy` | the table in `mizar/README.md` | `Basic.lean`, `Sec6.lean` | `Basic.v`, `Sec6.v` | the table in `z/README.md` |
+| Main theorems | `Theorem_6_7`, `Theorem_6_8`, `Remark_6_9_I/II/III`, `Robinson_1947_sec7_thm3`, `Ext_a_all`, `Ext_Vb_iff` | `Theorem67`, `Theorem68`, `Remark69`, `ExtA`, `ExtVbIff` | `Theorem_6_7`, `Theorem_6_8`, `Remark_6_9_I/II/III`, `Robinson_1947_sec7_thm3`, `Ext_a_all`, `Ext_Vb_iff` | same names as Lean | `Theorem67`, `Theorem68`, `Remark69`, `ExtAAll`, `ExtVbIff` |
+| Prim(ℕ,ℕ) | AFP `PrimRec1` | not connected | Mathlib `Nat.Primrec` | own inductive `PrimNN` (unary Cantor characterization) | not defined |
 
 ### 4.3 Comparison
 
 Line counts cover Sections 2–6, including Robinson's theorem where it is proved (comments
-included). The extensions of §2 add 675 more lines in Isabelle, 1 505 in Mizar, 511 in Lean
-and 513 in Rocq.
+included). The extensions of §2 add 675 more lines in Isabelle, 1 505 in Mizar, 511 in Lean,
+513 in Rocq and 2 654 in Z/EVES. Z/EVES proves Remark 6.9 as the case a = 1 of the extension
+§2.1, so its lines are counted there.
 
-| | Isabelle/HOL | Mizar | Lean 4 | Rocq |
-|---|---|---|---|---|
-| Lines | 2 011 (1 710 without Robinson; 84 are proof methods) | 4 094 | 1 405 (97 are proof automation) | 1 556 (160 are proof automation) |
-| Check time from clean | ~15 s (after the AFP session) | ~11 s | ~95 s (loading Mathlib and proof search) | ~35 s |
-| What is proved | everything; `suitable` means equal to Prim | everything **at closure level**: every basis generates the same closure as Robinson's ⟨S, E, F + G, FG, F^□⟩; Robinson's theorem itself is not proved | everything; `suitable` means equal to Prim | everything; `suitable` means equal to Prim |
-| Robinson's theorem | proved, using the AFP characterization `PrimRec1'` | missing | proved against Mathlib's `Nat.Primrec` (Szudzik pairing) | proved against its own `PrimNN` (Cantor pairing) |
-| Soundness (closure ⊆ Prim) | AFP `prec` tactic | not applicable | Mathlib `Primrec` API (`nat_iterate`, `nat_sqrt`, …) | bootstrapped by hand in `Prim.v` (+, ∸, ×, =, √, E, Hf, iteration) |
-| Axioms | HOL | Tarski–Grothendieck set theory | `propext`, `Classical.choice`, `Quot.sound` | functional extensionality only |
-| Arithmetic automation | `simp`, `algebra_simps`, `presburger`, `arith` | none beyond the checker's polynomial normalization; every inequality step needs a library lemma | `omega`, `nlinarith`, `ring`, `simp` | `lia`, `nia` (through mczify) |
+| | Isabelle/HOL | Mizar | Lean 4 | Rocq | Z/EVES |
+|---|---|---|---|---|---|
+| Lines | 2 011 (1 710 without Robinson; 84 are proof methods) | 4 094 | 1 405 (97 are proof automation) | 1 556 (160 are proof automation) | 5 666 |
+| Check time from clean | ~15 s (after the AFP session) | ~11 s | ~95 s (loading Mathlib and proof search) | ~35 s | ~45 s (on macOS, in a Linux VM) |
+| What is proved | everything; `suitable` means equal to Prim | everything **at closure level**: every basis generates the same closure as Robinson's ⟨S, E, F + G, FG, F^□⟩; Robinson's theorem itself is not proved | everything; `suitable` means equal to Prim | everything; `suitable` means equal to Prim | everything **at closure level**, as in Mizar; Robinson's theorem itself is not proved |
+| Robinson's theorem | proved, using the AFP characterization `PrimRec1'` | missing | proved against Mathlib's `Nat.Primrec` (Szudzik pairing) | proved against its own `PrimNN` (Cantor pairing) | missing |
+| Soundness (closure ⊆ Prim) | AFP `prec` tactic | not applicable | Mathlib `Primrec` API (`nat_iterate`, `nat_sqrt`, …) | bootstrapped by hand in `Prim.v` (+, ∸, ×, =, √, E, Hf, iteration) | not applicable |
+| Axioms | HOL | Tarski–Grothendieck set theory | `propext`, `Classical.choice`, `Quot.sound` | functional extensionality only | ZF set theory (the Z mathematical toolkit) |
+| Arithmetic automation | `simp`, `algebra_simps`, `presburger`, `arith` | none beyond the checker's polynomial normalization; every inequality step needs a library lemma | `omega`, `nlinarith`, `ring`, `simp` | `lia`, `nia` (through mczify) | linear arithmetic and polynomial normalization in the simplifier; nonlinear steps through `timesMonotonic2` |
 
 ### 4.4 Findings
 
@@ -345,8 +348,9 @@ and 513 in Rocq.
   - Isabelle (the AFP's `PrimRec1'`) and Lean (Mathlib's `Nat.Primrec`) both provide a
     *unary* characterization of the primitive recursive functions. With it, Robinson's theorem
     is an induction with seven cases.
-  - Mizar's MML only has n-ary partial functions on tuples (`COMPUT_1`). That is why the Mizar
-    version stops at closure level.
+  - Mizar's MML only has n-ary partial functions on tuples (`COMPUT_1`), and Z/EVES has no
+    library of computable functions at all. That is why these two versions stop at closure
+    level.
   - Rocq has nothing, so Prim(ℕ,ℕ) is defined there by the same unary characterization, and
     soundness is bootstrapped by hand.
 - **The pairing function matters.**
@@ -358,39 +362,53 @@ and 513 in Rocq.
   - With Cantor's pairing (Isabelle, Rocq) the triangle walk needs only the difference of
     Lemma 6.6. That difference is correct below the diagonal, and the walk never leaves it.
 - **Proof automation.** Closure membership, soundness and simulation recur in every theorem.
-  Three provers capture them with their own extension mechanisms:
+  Four of the provers automate them, each with its own mechanism; Mizar has no user-definable
+  tactics.
 
-  | Prover | Mechanism | Tactics |
+  | Prover | Mechanism | Automation |
   |---|---|---|
   | Rocq | Ltac2 (`Tactics.v`) | `clos_solve`, `sound`, `simulate` |
   | Isabelle | Eisbach methods with named theorems (`UPRF_Methods.thy`) | `clos_solve`, `clos_sound_m`, `clos_subset_m`, `simulate` |
   | Lean | tactic macros, extensible through `macro_rules` (`Tactics.lean`) | `clos_solve`, `prim_sound`, `simulate` |
+  | Z/EVES | closure rules stated as rewrite rules, applied by the simplifier; a Python generator (`z/gen/zgen.py`) for the repetitive definitions | `prove` with `ClosInit`, `ClosUnop`, `ClosBinop` |
 
-  In all three, most membership lemmas and every suitability theorem of 6.8 and 6.9 became one
-  line. The refactored files lost about 125 lines (Rocq), 160 lines (Isabelle) and 80 lines
-  (Lean) of proof. One design point mattered in all three: decomposing a function **by its
-  syntactic head**, never by unification modulo definitions. The Rocq version compares terms
-  syntactically, Lean uses reducible transparency, and Isabelle uses one rule per operator.
-  Without it, unification unfolds √ and the Cantor functions and can hang. Mizar has no
-  user-definable tactics.
+  In Rocq, Isabelle and Lean, most membership lemmas and every suitability theorem of 6.8 and
+  6.9 became one line. The refactored files lost about 125 lines (Rocq), 160 lines (Isabelle)
+  and 80 lines (Lean) of proof. One design point mattered in all three: decomposing a function
+  **by its syntactic head**, never by unification modulo definitions. The Rocq version compares
+  terms syntactically, Lean uses reducible transparency, and Isabelle uses one rule per
+  operator. Without it, unification unfolds √ and the Cantor functions and can hang. In Z/EVES
+  the rewrite rules close short membership goals by themselves, but long chains of memberships
+  have to be built one step at a time.
 - **Closures as inductive predicates** (Lean, Rocq) give structural induction for free.
-  Isabelle and Mizar define the closure as an intersection of closed sets and prove the
-  induction principle (Isabelle) or work with "least closed set" arguments (Mizar).
+  Isabelle, Mizar and Z/EVES define the closure as an intersection of closed sets and prove the
+  induction principle (Isabelle) or work with "least closed set" arguments (Mizar, Z/EVES).
 - **The paper's proofs are mostly arithmetic.** Each formula `X ≡ …` hides a polynomial
   identity with truncated subtraction. Provers with a decision procedure for linear integer
   arithmetic plus a nonlinear heuristic (`omega`/`nlinarith`, `lia`/`nia`, `presburger`) prove
-  most of them in one line. Mizar needs each step spelled out: an inference may not mix a
-  definition expansion with arithmetic, and numerals block instantiation. Mostly for that
-  reason it is about 2–3× longer.
-- **Remark 6.9 hides one use of soundness.** At closure level (Mizar), Remark 6.9 needs
+  most of them in one line. The other two need more steps spelled out:
+  - in Mizar, an inference may not mix a definition expansion with arithmetic, and numerals
+    block instantiation;
+  - Z/EVES decides linear arithmetic, but nonlinear facts must be supplied, and the arguments
+    of functions are not normalized, so a value lemma applies only to the exact form of its
+    argument.
+
+  Mostly for these reasons, Mizar is about 2–3× and Z/EVES about 3–4× longer than the others.
+- **Remark 6.9 hides one use of soundness.** At closure level (Mizar, Z/EVES), Remark 6.9 needs
   F^□(1) in the closure, and Theorem 6.8 needs K and L there. Both were proved directly, using
   a general product built from Lemma 6.6. The other provers get these memberships from
   Robinson's theorem.
+- **Definitions and consistency.** In Isabelle, Lean and Rocq, definitions are conservative by
+  construction, and Mizar requires correctness proofs (existence, uniqueness) for its definitions.
+  In Z, an axiomatic definition is an unchecked axiom. The Z/EVES version therefore follows
+  each of its 33 axiomatic definitions with a consistency theorem, which shows that an
+  explicit witness term satisfies it.
 - **Pitfalls specific to each prover.** They are listed in each folder's README, for example:
   - Lean's and Rocq's `∘` associate in opposite directions;
   - ssreflect's `//` and `/=` try to compute √ and the Cantor functions and hang;
   - Mizar can cite other articles' theorems only by number, so its formalization is a single
-    file.
+    file;
+  - Z/EVES rewrites `x + 1` to `1 + x`, so rewrite rules must be stated in that normal form.
 
 ---
 

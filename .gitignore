@@ -28,3 +28,7 @@ rocq/**/*.glob
 rocq/**/.*.aux
 rocq/.lia.cache
 rocq/.nia.cache
+
+# Z/EVES: PDF build directory (pdf.sh); the typeset development itself is committed
+z/build/
+!z/uprf.pdf

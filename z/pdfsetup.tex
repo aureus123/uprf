@@ -1,0 +1,47 @@
+% Read by pdf.sh before uprf.tex. It only changes the typesetting (z-eves.sty), not the Z text
+% that Z/EVES reads.
+%
+% - A4 paper with 2 cm margins, and amssymb for \mathbb in the section titles.
+% - Z/LaTeX puts each line of a box in one row of an \halign, so TeX cannot break it and long
+%   formulas run off the page. Here each row is a ragged-right paragraph instead (continuation
+%   lines indented by 2em), a comma in math allows a line break, and spaces in proof scripts
+%   allow a break (z-eves.sty makes them unbreakable).
+% - z-eves.sty starts a theorem row with \hskip\zedleftsep and no \relax, so a theorem whose
+%   text begins with "plus..." (e.g. PlusIWit) was read as a glue specification.
+\RequirePackage{amssymb}
+% the $ of labels such as comp$domainCheck from the text font (not a bitmap TS1 font)
+\AddToHook{begindocument/before}{\DeclareTextSymbol{\textdollar}{OT1}{36}}
+\AddToHook{class/after}{\RequirePackage[a4paper,margin=2cm]{geometry}}
+\makeatletter
+\newdimen\uprf@ind
+% start and end of a cell: a paragraph as wide as the rest of the line
+\def\uprf@u{\vtop\bgroup
+  \hsize=\dimexpr\linewidth-\uprf@ind\relax \parindent=0pt
+  \hangindent=2em \hangafter=1 \rightskip=0pt plus1fil \relax
+  \noindent\strut$\@zlign}
+\def\uprf@v{\strut$\endgraf\egroup}
+\def\uprf@zed{\@zed\@znoskip\uprf@ind=0pt \halign to\linewidth\bgroup
+  \uprf@u##\uprf@v\hfil \tabskip=0pt plus1fil\cr}
+\def\uprf@axdef{\def\also{\@zskip\zedskip}%
+  \predisplaypenalty=\preboxpenalty
+  \@zed\@znoskip \uprf@ind=\dimexpr\zedleftsep+\arrayrulewidth\relax
+  \halign to\linewidth\bgroup
+    \strut \vrule width\arrayrulewidth \hskip\zedleftsep
+    \uprf@u##\uprf@v\hfil \tabskip=0pt plus1fil\cr}
+\def\uprf@theorem#1{\@zed\@znoskip \uprf@ind=\zedleftsep
+  \halign to\linewidth\bgroup
+  \strut\hskip\zedleftsep\relax\uprf@u##\uprf@v\hfil \tabskip=0pt plus1fil\crcr
+  \omit\strut\hbox{\bf theorem \rm \@ability #1}\hfil\crcr}
+\def\uprf@zproof{\ifshowzproofs\@zed\@znoskip\uprf@ind=\zedleftsep
+  \let\par=\cr\obeylines\uprf@spaces\halign to\linewidth\bgroup
+  \strut\hskip\zedleftsep\relax\uprf@u##\uprf@v\hfil \tabskip=0pt plus1fil\crcr
+  \omit\strut\hbox{\bf proof}\hfil \let\0\relax
+  \else \let\do\@makeother \dospecials \let\0\ignore@zproof \fi \0}
+% in proof scripts a space is a normal (breakable) space
+{\catcode`\ =\active\gdef\uprf@spaces{\catcode`\ =\active\def {\ \penalty0\relax}}}
+% a comma in math: the usual punctuation, followed by a permitted break
+\begingroup \lccode`\~=`\, \lowercase{\endgroup \def~}{\mathchar"613B\penalty 50\relax}
+\AtBeginDocument{%
+  \let\zed\uprf@zed \let\axdef\uprf@axdef \let\@@theorem\uprf@theorem \let\zproof\uprf@zproof
+  \mathcode`\,="8000 }
+\makeatother

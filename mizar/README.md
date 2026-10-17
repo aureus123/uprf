@@ -27,7 +27,7 @@ Formalization of Section 6 of D. E. Severin, *Unary primitive recursive function
    export PATH=/usr/local/bin:$PATH
    ```
 
-3. Verify the article (about 11 s):
+3. Verify the article (about 25 s):
 
    ```sh
    ./miz.sh uprf
@@ -48,7 +48,7 @@ abstract and shows the theorem labels.
 | `dict/uprf.voc` | vocabulary (the new symbols) |
 | `miz.sh`, `mmlthm.sh` | scripts described above |
 
-## Contents of `uprf.miz` (5599 lines, 207 theorems, 57 definitions, 6 schemes)
+## Contents of `uprf.miz` (9166 lines, 358 theorems, 86 definitions, 6 schemes)
 
 Functions are `Element of Funcs(NAT,NAT)`. Operators are `UnOp`/`BinOp of Funcs(NAT,NAT)`, so
 that they can be members of a basis. `F*G` is the composition FG of the paper.
@@ -71,6 +71,14 @@ that they can be members of a basis. `F*G` is the composition FG of the paper.
 | Remark 6.9 (I)–(III), F^□(1) | `opBox1`, `Remark69`: `ClosB1 funE = C6 & ClosB1 funK = C6 & ClosB1 funL = C6` |
 | open question of Remark 6.9: iteration from any a ≥ 1, F^□(a) | `opBoxA`, `ClosBa`, `ExtA`: `1 <= a implies ClosBa(funE,a) = C6 & ClosBa(funK,a) = C6 & ClosBa(funL,a) = C6` |
 | shifted operator F⁺ᵇ(x) = F(x) + x + b | `opPlusIb`, `ClosVb`, `ExtVbIff`: `ClosVb b = C6 iff 1 <= b` |
+| README §2.3: inversion F⁻¹ (least preimage; F itself when F is not onto) | `surj`, `linv`, `opInv`; `InvRight`, `InvLeast`, `InvNot` |
+| Robinson's basis ⟨S, E, F + G, FG, F⁻¹⟩ and ⟨1, X, F⁺, FG, F⁻¹⟩ | `ClosJR`, `ClosGR X` |
+| Lemmas 6.2–6.6 in any closure containing I, E, S, D, M₃, Sq, Hf, Rt | attribute `rich`; `RLemma66`, `RichAVKL` (A, V, K, L) |
+| §2.3, Theorem 1 | `GREqJR`: `ClosGR funE = ClosJR & ClosGR funK = ClosJR & ClosGR funL = ClosJR` |
+| the constant cannot be dropped | `ClosGR0`, `GR0Fix`, `GR0Neq` |
+| Remark: 1̄ and S are interchangeable | `ClosGRS`, `GRSEq`: `ClosGRS funE = ClosJR & …` |
+| Remark: any constant n̄, n ≥ 1 | `ClosC(X,U,n)`; `CEq` (for `opPlusI in U`); `CnBox`: `ClosC(funE,{opPlusI, opBox},n) = C6 iff 1 <= n` (and K, L); `CnInv`: the same with `opInv` and `ClosJR` |
+| §2.3, Theorem 2: F⁺ᵇ with inversion | `ClosGRb(X,b)`, `GRbIff`: `ClosGRb(funE,b) = ClosJR iff 1 <= b` (and K, L) |
 
 ## Status
 
@@ -88,12 +96,19 @@ between closures.
   the same closure; for $`b = 0`$ the closure differs (`ExtVb0`). As for Remark 6.9, the
   inclusion in `C6` needs $`F^{\square(a)}`$ in the closure (`BoxAIn`, which generalizes
   `Box1In` with $`M_{a+1} O`$ in place of $`D O`$).
+- `GREqJR`, `GRSEq`, `GRbIff` and `CnInv` do the same for README §2.3: the bases with
+  inversion generate the closure `ClosJR` of J. Robinson's basis
+  $`\langle S, E, F+G, FG, F^{-1}\rangle`$, which is the set of unary general recursive
+  functions by J. Robinson (1950), §4, Theorem 3. The proof follows the Isabelle one: it
+  generates $`E, S, D, M_3, \mathrm{Sq}, \mathrm{Hf}, \mathrm{Rt}`$ with inversion in place of
+  iteration, and then reuses Lemmas 6.2–6.6 through the attribute `rich`.
 
 Not yet formalized:
 
 1. **Prim(ℕ,ℕ) itself.** The MML's notion of primitive recursion (`COMPUT_1`, `PrimRec`) is for
    n-ary partial functions on tuples. It is still to be connected with `Funcs(NAT,NAT)`.
-2. **Robinson's theorem.**
+2. **Robinson's theorems** (R. M. Robinson 1947 and J. Robinson 1950), and the notion of
+   general recursive function.
 
 **Two remarks on the proofs:**
 
@@ -121,3 +136,7 @@ Not yet formalized:
 - `F.x` is known to be natural only after the article's own registration
   `cluster F.x -> natural`.
 - Cross-article references are by number only, hence the single file.
+- A functor defined by cases (`means … if … otherwise …`) needs `consistency` besides
+  `existence` and `uniqueness`.
+- `by T1, T2` cannot instantiate two theorems in one step (for example `CGInv` inside the
+  premise of `JRSubRich`). State the intermediate fact first.

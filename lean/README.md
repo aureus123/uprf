@@ -1,7 +1,8 @@
 # Lean 4 + Mathlib formalization
 
 Formalization of Section 6 of D. E. Severin, *Unary primitive recursive functions*
-(J. Symbolic Logic 73(4), 2008), including R. M. Robinson's theorem and Lemma 3.3.
+(J. Symbolic Logic 73(4), 2008), including R. M. Robinson's theorem and Lemma 3.3, and of the
+open questions answered in the root README (§2, including §2.3 on general recursive functions).
 
 **Naming:**
 - `funX` is the function X of the paper, and `opX` an operator;
@@ -24,7 +25,7 @@ lake exe cache get     # download the prebuilt Mathlib (once)
 ./build.sh             # build the library; prints only errors and warnings
 ```
 
-The build takes about 95 s from clean: loading Mathlib, plus the proof search of the closure
+The build takes about 2 min from clean: loading Mathlib, plus the proof search of the closure
 tactics.
 
 ## Files
@@ -40,12 +41,21 @@ tactics.
 | `UPRF/Rem69.lean` | 150 | `Remark_6_9_I`, `_II`, `_III` (iteration from 1) |
 | `UPRF/ExtA.lean` | 369 | open question of Remark 6.9: ⟨X, F⁺, FG, F^□⁽ᵃ⁾⟩ is suitable for every a ≥ 1 and X ∈ {E, K, L} (`Ext_a_E`, `Ext_a_K`, `Ext_a_L`, `Ext_a_all`) |
 | `UPRF/ExtVb.lean` | 142 | ⟨E, F⁺ᵇ, FG, F^□⟩ with F⁺ᵇ(x) = F(x) + x + b is suitable iff b ≥ 1 (`Ext_Vb`, `Ext_Vb_zero`, `Ext_Vb_iff`) |
+| `UPRF/ExtGR.lean` | 852 | README §2.3: the inversion `opInv`, the tactics `inv_eq` and `eval`, the generic lemmas `sub_inv_surj` and `sub_inv_val` (see below); ⟨1, X, F⁺, FG, F⁻¹⟩ generates J. Robinson's closure ⟨S, E, F + G, FG, F⁻¹⟩ (`GR_E_eq_JR`, `GR_K_eq_JR`, `GR_L_eq_JR`, `Ext_GR`); without 1 it does not (`Ext_GR0`); 1 and S are interchangeable (`GRS_eq_GR`, `Ext_GRS`) |
+| `UPRF/ExtGRb.lean` | 494 | ⟨X, F⁺ᵇ, FG, F⁻¹⟩ generates the general recursive functions iff b ≥ 1 (`Ext_GRb_iff`) |
+| `UPRF/ExtCn.lean` | 254 | any constant n̄ in place of 1: ⟨n̄, X, F⁺, FG, F^□⟩ is suitable iff n ≥ 1 (`Ext_Cn_suitable`), and ⟨n̄, X, F⁺, FG, F⁻¹⟩ generates the general recursive functions iff n ≥ 1 (`Ext_GRCn`) |
 
 ## Status
 
 Complete, with no `sorry`. The main theorems depend only on the standard axioms (`propext`,
 `Classical.choice`, `Quot.sound`). Every basis of Section 6 is proved suitable, that is, it
 generates exactly Mathlib's `Nat.Primrec`.
+
+For §2.3, J. Robinson's theorem (Proc. AMS 1 (1950), §4, Theorem 3: her basis
+⟨S, E, F + G, FG, F⁻¹⟩ generates the unary general recursive functions) is not formalized. It is
+a hypothesis `Robinson_1950_sec4_thm3 : ∀ F, CJR F ↔ GR F` of the theorems `Ext_GR`, `Ext_GRS`,
+`Ext_GRb_iff` and `Ext_GRCn`. Everything else is proved; `opInv` uses `Nat.find` with classical
+logic.
 
 ## Proof automation (`Tactics.lean`)
 
@@ -70,6 +80,19 @@ Three mechanisms recur in every theorem. `Tactics.lean` captures them as tactic 
 
 With them, every theorem of 6.8 and 6.9 and Lemma 3.3 is a `simulate`, and a membership lemma
 is `by rw [← X_expr]; clos_solve`.
+
+For §2.3, `ExtGR.lean` adds:
+
+- **`inv_eq h`** proves `opInv F x = v`, where `h : Function.Surjective F`, through
+  `opInv_eqI`. It leaves two goals: `F v = x`, and the minimality `∀ y, F y = x → v ≤ y`. Each
+  is tried with `rfl`, `omega` and `simp_all`, and is left to the user if these fail. For
+  `opInv F = G`, use `funext x` first. Example: `Kinv_eq_Z` (K⁻¹ = Z).
+- **`eval`** (or `eval [lemmas]`) computes the value of an expression at a point. It unfolds
+  the operators and the basic functions, then tries `omega`, `ring1` and `nlinarith`.
+- **Subtraction by inversion** is the generic pair `sub_inv_surj` / `sub_inv_val`. Suppose
+  every y decomposes as y = base(t) + X(y) with X(y) ≤ bound(t), and X(base(t) + k) = k for
+  k ≤ bound(t). If V(y) = y + c, then X (X V)⁻¹ subtracts c. `E_sub_inv` is the instance
+  base(t) = t², bound(t) = 2t, and `K_sub_inv` is the instance base = A, bound = id.
 
 ## Notes
 

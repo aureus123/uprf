@@ -48,6 +48,8 @@ definition funMod3 :: ufun where "funMod3 x = x mod 3"
 definition funM3   :: ufun where "funM3 x = 3 * x"
 definition funR    :: ufun where "funR x = x + 2 * funRt x"     \<comment> \<open>as in Lemma 5.7\<close>
 
+declare funM3_def [eval_simps] opPlusI_def [eval_simps]
+
 lemma funRt_small [simp]: "funRt 0 = 0" "funRt 1 = 1" "funRt 2 = 1" "funRt 3 = 1" "funRt 4 = 2"
 proof -
   show "funRt 0 = 0" by (simp add: funRt_def)

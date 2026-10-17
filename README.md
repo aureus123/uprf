@@ -8,8 +8,8 @@ It contains:
 - the paper's results;
 - the questions it leaves open, with the ones answered here;
 - the problems that are still open;
-- machine-checked formalizations of Section 6 in five proof assistants: Isabelle/HOL, Mizar,
-  Lean 4, Rocq and Z/EVES.
+- machine-checked formalizations of Section 6 and of the answered questions (§2.1–2.3) in five
+  proof assistants: Isabelle/HOL, Mizar, Lean 4, Rocq and Z/EVES.
 
 | Folder | Content |
 |---|---|
@@ -79,20 +79,27 @@ Gladstone (1967, 1971). Its main results are the following.
 
 ## 2. Open questions of the paper and similar problems (solved here)
 
-Both results below are formalized in all five proof assistants, and the proofs below follow
-the Isabelle formalization:
+The results of §2.1, §2.2 and §2.3 (with its remarks) are formalized in all five proof
+assistants, and their proofs below follow the Isabelle formalization:
 
-| | §2.1 (iteration from a) | §2.2 (shifted operator) |
-|---|---|---|
-| Isabelle/HOL | `isabelle/UPRF/UPRF_Ext_a.thy`: `Ext_a_all` | `isabelle/UPRF/UPRF_Ext_Vb.thy`: `Ext_Vb_iff` |
-| Lean 4 | `lean/UPRF/ExtA.lean`: `Ext_a_all` | `lean/UPRF/ExtVb.lean`: `Ext_Vb_iff` |
-| Rocq | `rocq/theories/ExtA.v`: `Ext_a_all` | `rocq/theories/ExtVb.v`: `Ext_Vb_iff` |
-| Mizar | `mizar/text/uprf.miz`: `ExtA` | `mizar/text/uprf.miz`: `ExtVbIff` |
-| Z/EVES | `z/uprf.tex`: `ExtAAll` | `z/uprf.tex`: `ExtVbIff` |
+| | §2.1 (iteration from a) | §2.2 (shifted operator) | §2.3 (general recursive functions) |
+|---|---|---|---|
+| Isabelle/HOL | `isabelle/UPRF/UPRF_Ext_a.thy`: `Ext_a_all` | `isabelle/UPRF/UPRF_Ext_Vb.thy`: `Ext_Vb_iff` | `isabelle/UPRF/UPRF_Ext_GR.thy`: `Ext_GR`, `Ext_GR0`, `Ext_GRS`; `UPRF_Ext_GRb.thy`: `Ext_GRb_iff`; `UPRF_Ext_Cn.thy`: `Ext_Cn_suitable`, `Ext_GRCn` |
+| Lean 4 | `lean/UPRF/ExtA.lean`: `Ext_a_all` | `lean/UPRF/ExtVb.lean`: `Ext_Vb_iff` | `lean/UPRF/ExtGR.lean`: `Ext_GR`, `Ext_GR0`, `Ext_GRS`; `ExtGRb.lean`: `Ext_GRb_iff`; `ExtCn.lean`: `Ext_Cn_suitable`, `Ext_GRCn` |
+| Rocq | `rocq/theories/ExtA.v`: `Ext_a_all` | `rocq/theories/ExtVb.v`: `Ext_Vb_iff` | `rocq/theories/ExtGR.v`: `Ext_GR`, `Ext_GR0`, `Ext_GRS`; `ExtGRb.v`: `Ext_GRb_iff`; `ExtCn.v`: `Ext_Cn_suitable`, `Ext_GRCn` |
+| Mizar | `mizar/text/uprf.miz`: `ExtA` | `mizar/text/uprf.miz`: `ExtVbIff` | `mizar/text/uprf.miz`: `GREqJR`, `GR0Neq`, `GRSEq`, `GRbIff`, `CnBox`, `CnInv` |
+| Z/EVES | `z/uprf.tex`: `ExtAAll` | `z/uprf.tex`: `ExtVbIff` | `z/uprf.tex`: `GREqJR`, `ExtGR0`, `GRSEq`, `ExtGRbIff`, `CnBox`, `CnInv` |
 
-As for Section 6, Mizar and Z/EVES state them at closure level: for $`a \ge 1`$ the bases
-generate the same closure as $`\langle \bar 1, E, F^+, FG, F^\square\rangle`$, and the shifted
-basis does so if and only if $`b \ge 1`$.
+As for Section 6, Mizar and Z/EVES state them at closure level:
+- for $`a \ge 1`$ the bases generate the same closure as
+  $`\langle \bar 1, E, F^+, FG, F^\square\rangle`$;
+- the shifted basis does so if and only if $`b \ge 1`$;
+- for §2.3, the bases with inversion generate the same closure as J. Robinson's
+  $`\langle S, E, F+G, FG, F^{-1}\rangle`$.
+
+J. Robinson's theorem itself (that this closure is the set of unary general recursive
+functions) is not formalized anywhere. Isabelle, Lean and Rocq take it as a hypothesis
+`Robinson_1950_sec4_thm3` of the final §2.3 theorems.
 
 **Conventions used in the proofs:**
 - $`F^k`$ denotes the $`k`$-fold composition $`F \circ \dots \circ F`$.
@@ -100,8 +107,9 @@ basis does so if and only if $`b \ge 1`$.
 - Two arithmetic facts are used repeatedly:
   - $`E(m^2 + k) = k`$ whenever $`k \le 2m`$;
   - $`K(A(t)+k) = k`$ and $`L(A(t)+k) = t-k`$ whenever $`k \le t`$.
-- *Soundness* is never an issue: every function and operator involved is primitive recursive.
-  Each proof therefore only shows that the basis of Theorem 6.7 (or 6.8) is simulated.
+- *Soundness* is never an issue: every function and operator involved is primitive recursive
+  (general recursive in §2.3). Each proof therefore only shows that the basis of Theorem 6.7
+  (or 6.8, or Theorem 1 of §2.3) is simulated.
 
 ### 2.1 Iteration started at any $`a \ge 2`$ (question at the end of Remark 6.9)
 
@@ -221,6 +229,218 @@ So the closure contains $`\bar 1`$ and $`E`$, and is closed under $`F^+`$, $`F^\
 composition. It therefore contains the closure of $`\langle \bar 1, E, F^+, FG, F^\square\rangle`$,
 which is suitable by Theorem 6.7. $`\blacksquare`$
 
+### 2.3 General recursive functions with the unary operator $`F^+`$
+
+Julia Robinson (*General recursive functions*, Proc. AMS 1 (1950), §4, Theorem 3) proved the
+analogue of R. M. Robinson's primitive recursive basis, with inversion in place of iteration:
+
+> $`\mathrm{clos}\langle S, X, F+G, FG, F^{-1}\rangle`$, for $`X \in \{E, K, L\}`$, is the set
+> $`\mathrm{GR}`$ of all unary general recursive functions.
+
+Here $`F^{-1}(x) = \mu y\,[F(y) = x]`$, applied to onto functions only. Two facts about it
+are used throughout:
+- $`F F^{-1} = I`$, that is, $`F^{-1}(x)`$ is *a* preimage of $`x`$;
+- $`F^{-1}(x)`$ is the *least* preimage of $`x`$.
+
+Most constructions below only need the first fact. The question is whether $`F + G`$ can be
+replaced by $`F^+`$, as Section 6 does for primitive recursion. Lemmas 6.2–6.6 of the paper
+cannot be reused as they stand, because $`\mathrm{Sq}`$, $`\mathrm{Hf}`$ and $`\mathrm{Rt}`$
+come from $`F^\square`$ there.
+
+> **Theorem 1.** For $`X \in \{E, K, L\}`$,
+> $`\mathrm{clos}\langle \bar 1, X, F^+, FG, F^{-1}\rangle = \mathrm{GR}`$.
+
+*Proof.* The operators $`F^+`$, $`FG`$ and $`F^{-1}`$ (on onto functions) preserve general
+recursiveness, so the closure is contained in $`\mathrm{GR}`$.
+
+For the converse, look at what Lemmas 6.2–6.6 actually use. Their formulas build $`F + G`$ from
+$`F^+`$ and composition, using only the functions
+$`E, S, D, M_3, \mathrm{Sq}, \mathrm{Hf}, \mathrm{Rt}`$ and the predecessor $`\hat P`$ of
+Lemma 6.5. Iteration enters only through the
+construction of these functions. So it is enough to obtain $`E`$, $`\mathrm{Sq}`$,
+$`\mathrm{Hf}`$ and $`\mathrm{Rt}`$ with inversion. The closure is then closed under
+$`F + G`$, contains $`S = \bar 1^+`$ and $`E`$, and so contains J. Robinson's closure.
+
+Write $`A(t) = t(t+1)/2`$, let $`V(y)`$ be the triangular root, so that $`y = A(V(y)) + K(y)`$
+with $`K(y) \le V(y)`$, and let $`I - F`$ denote $`x \mapsto x - F(x)`$.
+
+**The case $`X = E`$.** First, $`S = \bar 1^+`$, $`\bar 0 = E\bar 1`$, $`I = \bar 0^+`$,
+$`D = I^+`$, $`M_3 = D^+`$ and $`M_4 = M_3^+`$. Then:
+
+| Expression | Value |
+|---|---|
+| $`E^{-1}`$ | $`\lceil x/2\rceil^2 + x`$, so $`E^{-1}(2z) = z^2 + 2z`$ |
+| $`F^- \equiv E\,(SSS\,M_3 F E)^+\,S\,(E^{-1} D F^+)^+`$ | $`F(x) - x`$, if $`F(x) \ge x`$ |
+| $`\mathrm{Sq} \equiv ((E^{-1}D)^-)^-`$ | $`x^2`$ |
+| $`I - F \equiv E\,(S (F^+)^+ E)^+ (\mathrm{Sq}\,F^+)^+`$ | $`x - F(x)`$, if $`F(x) \le x`$ |
+| $`W \equiv E\,(SSDEE)^+ E^{-1}`$ | $`2E(y) + [y \text{ even}]`$ |
+| $`\mathrm{Hf} \equiv E\,W^{-1}`$ | $`\lfloor x/2\rfloor`$ |
+| $`\mathrm{Rt} \equiv \mathrm{Hf}\,\mathrm{Hf}\,SS\,E\,(I - \bar 1)(I - E)\,S\,M_4`$ | $`\lfloor\sqrt x\rfloor`$ |
+
+- **$`F^-`$.** Let $`s = F(x) + x`$. The inner function gives $`(s+1)^2 + x`$, so $`E`$ recovers
+  $`x`$ from it. Adding $`3F(x) + 3`$ gives $`(s+2)^2 + (F(x) - x)`$, and $`E`$ of this is
+  $`F(x) - x`$.
+- **$`I - F`$** is Robinson's formula $`E\big((x + F(x))^2 + 3x + F(x) + 1\big) = x - F(x)`$.
+  The sum is built in the same way: $`E`$ recovers $`x`$ from $`(x + F(x))^2 + x`$.
+- **$`W`$** is the function that J. Robinson inverts in her §3. She builds it with $`+`$; here it
+  comes from $`F^+`$. Let $`c = \lceil y/2\rceil`$. Then $`E^{-1}(y) = c^2 + y`$ and $`E`$ of it is
+  $`y`$, so
+  $$W(y) = E\big(c^2 + y + 2E(y) + 2\big) = E\big((c+1)^2 + 2E(y) + 1 + y - 2c\big).$$
+  Since $`2E(y) \le y + 1`$, the offset is at most $`2(c+1)`$. So
+  $`W(y) = 2E(y) + 1 + y - 2c = 2E(y) + [y \text{ even}]`$.
+- **$`\mathrm{Hf}`$.** $`W`$ is onto, and every $`y`$ with $`W(y) = x`$ has
+  $`E(y) = \lfloor x/2\rfloor`$.
+- **$`\mathrm{Rt}`$.** Let $`n = \lfloor\sqrt{4x+1}\rfloor \ge 1`$. Then
+  $`(I - E)(4x+1) = n^2`$ and $`E(n^2 - 1) = 2(n-1)`$, so $`\mathrm{Hf}\,SS`$ gives $`n`$. Finally
+  $`\lfloor n/2\rfloor = \lfloor\sqrt x\rfloor`$, because
+  $`2\lfloor\sqrt x\rfloor \le n \le 2\lfloor\sqrt x\rfloor + 1`$. Using $`4x + 1`$ instead of $`x`$
+  avoids the root $`0`$, where $`I - \bar 1`$ is not a predecessor.
+
+The predecessor $`\hat P`$ of Lemma 6.5 only needs $`\mathrm{Sq}`$ and Lemma 6.4. So all the
+ingredients of Lemmas 6.2–6.6 are in the closure.
+
+**The case $`X = K`$.** Again $`S = \bar 1^+`$, $`\bar 0 = K\bar 1`$, $`I`$, $`D`$ and $`M_3`$
+are in the closure. Then:
+
+| Expression | Value |
+|---|---|
+| $`Z = K^{-1}`$ | $`A(x) + x`$ |
+| $`I - F \equiv K\,SSS\,((Z F^+)^+)^+`$ | $`x - F(x)`$, if $`F(x) \le x`$ (proof of Theorem 6.8) |
+| $`A \equiv K\,SSS\,(Y K)^+ Z`$, with $`Y \equiv (Z Z^+ K)^+ Z`$ | $`A(x)`$ |
+| $`F^- \equiv K\,(SSS\,M_3 F K)^+ (A F^+)^+`$ | $`F(x) - x`$, if $`F(x) \ge x`$ |
+| $`\mathrm{Sq} \equiv (((DZ)^-)^-)^-`$ | $`x^2 = 2Z(x) - 3x`$ |
+| $`P \equiv K\,(KS)^{-1}`$ | $`x \mathbin{\dot-} 1`$ |
+| $`U \equiv I - A K P (I - K)`$ | $`V(y) + K(y)`$ |
+| $`\mathrm{Hf} \equiv K\,U^{-1}`$ | $`\lfloor x/2\rfloor`$ |
+| $`B \equiv I - \big(I - \mathrm{Sq}\,(I - \mathrm{Hf})\,U\big)(I - K)`$ | $`K(y) + \lceil V(y)/2\rceil^2`$ |
+| $`E \equiv K\,B^{-1}`$ | $`E(x)`$ |
+
+- **$`A`$.** This is Robinson's difference $`K\big(Z(\alpha+\beta) + 2\alpha + 3\big) = \alpha - \beta`$
+  with $`\alpha = Z(x)`$ and $`\beta = x`$. The sums with $`Z(x)`$ are formed as in
+  $`F + Z = (F K)^+ Z`$, which works because $`K`$ is a left inverse of $`Z`$.
+- **$`F^-`$.** Let $`s = F(x) + x`$. The inner function gives $`A(s) + x`$, from which $`K`$
+  recovers $`x`$. The total is $`A(s+2) + (F(x) - x)`$.
+- **$`U`$.** Write $`y = A(t) + k`$. Then $`(I - K)(y) = A(t)`$, and $`K P(A(t)) = t \mathbin{\dot-} 1`$.
+  So $`U(y) = y - A(t-1) = t + k`$ for $`t \ge 1`$, and $`U(0) = 0`$. Also $`U(A(t)) = t`$.
+- **$`\mathrm{Hf}`$** uses minimality. The least $`y = A(t) + k`$ with $`t + k = x`$ and
+  $`k \le t`$ has $`t = \lceil x/2\rceil`$, so $`k = \lfloor x/2\rfloor`$.
+- **$`B`$.** At $`A(t)`$ the inner function is $`A(t) - \lceil t/2\rceil^2`$, so
+  $`B(y) = k + \lceil t/2\rceil^2`$.
+- **$`E`$.** $`B`$ is onto: take $`t = 2\lfloor\sqrt x\rfloor`$ and $`k = E(x)`$. If $`B(y) = x`$
+  and $`c = \lceil t/2\rceil`$, then $`x = c^2 + k`$ with $`k \le t \le 2c`$, so $`E(x) = k = K(y)`$.
+
+So $`E`$ is in the closure, and the case $`X = E`$ applies.
+
+**The case $`X = L`$.** As in Theorem 6.8, $`K = L\,\bar 1^+\big((\bar 1^+)^+ L\big)^+`$, and the
+case $`X = K`$ applies. $`\blacksquare`$
+
+**Remark** ($`\bar 1`$ and $`S`$ are interchangeable). The basis of Theorem 1 may contain $`S`$
+instead of $`\bar 1`$, as J. Robinson's does.
+- One direction is immediate: $`S = \bar 1^+`$.
+- Conversely, $`\bar 1 = S\,\bar 0`$, and $`\bar 0`$ is obtained from $`S`$, $`X`$, composition and
+  inversion alone:
+
+  | $`X`$ | $`\bar 0`$ | Why |
+  |---|---|---|
+  | $`K`$ | $`K\,S\,K^{-1}`$ | $`K^{-1}(x) + 1 = A(x) + x + 1 = A(x+1)`$, a triangular number |
+  | $`E`$ | $`(E\,S\,E^{-1})^2`$ | $`f = E\,S\,E^{-1}`$ maps $`2j`$ to $`E((j+1)^2) = 0`$ and $`2j+1`$ to $`E((j+1)^2 + 2j + 2) = 2j + 2`$; so $`f(x)`$ is even and $`f(f(x)) = 0`$ |
+  | $`L`$ | $`L\,(LS)^{-1}\,S`$ | for $`x \ge 1`$ the least $`y`$ with $`L(y+1) = x`$ is $`A(x) - 1 = A(x-1) + (x-1)`$, and $`L`$ of it is $`0`$ |
+
+  The first line is J. Robinson's $`O = K S K^{-1}`$. With $`F^+`$ available, $`E`$ also has
+  her shorter $`\bar 0 = E\,S\,E^{-1} I^+`$, since $`E^{-1}(2x) + 1 = (x+1)^2`$.
+
+**Remark** (any constant $`\bar n`$ with $`n \ge 1`$). The constant $`\bar 1`$ can be replaced
+by any $`\bar n`$ with $`n \ge 1`$, both here and in Section 6:
+- $`\langle \bar n, X, F^+, FG, F^\square\rangle`$ is suitable;
+- $`\mathrm{clos}\langle \bar n, X, F^+, FG, F^{-1}\rangle = \mathrm{GR}`$.
+
+For $`n = 0`$ both fail, because every generated function fixes $`0`$.
+
+The argument uses only $`F^+`$, composition and $`X`$, so it does not depend on iteration or
+inversion. Since $`\bar n^+(x) = x + n`$, every constant $`c + kn`$ is generated from a
+constant $`c`$. Then $`X`$ steps down from $`c \ge 1`$ to $`c - 1`$:
+
+| $`X`$ | Step |
+|---|---|
+| $`E`$ | $`c + kn = (nc+1)^2 + (c-1)`$ for $`k = nc^2 + 2c`$, and $`E`$ of it is $`c - 1`$ |
+| $`K`$ | $`c + kn = A(2nc+1) + (c-1)`$ for $`k = 2nc^2 + 3c`$, and $`K`$ of it is $`c - 1`$ |
+| $`L`$ | two steps, $`c \mapsto nc - c \mapsto c - 1`$, since $`c + n(2nc^2 + 2c) = A(2nc) + (nc + c)`$ and $`(nc - c) + n \cdot 2nc^2 = A(2nc - 1) + (2nc - c)`$ |
+
+For $`L`$ a single step is not always possible, because triangular numbers miss some residues
+modulo $`n`$.
+
+Starting from $`c = n`$, the steps reach $`\bar 1`$. So the closure contains the basis with
+$`\bar 1`$. Conversely, $`\bar n = (\bar 1^+)^{n-1}\,\bar 1`$ is in the closure of the basis with
+$`\bar 1`$.
+
+**The constant cannot be dropped.** In $`\langle X, F^+, FG, F^{-1}\rangle`$ every function fixes
+$`0`$. Indeed $`X(0) = 0`$ and $`F^+(0) = F(0)`$, and if $`F(0) = 0`$ then also
+$`F^{-1}(0) = 0`$. So $`\bar 1`$ is not generated. As in §2.2, shifting the operator fixes this.
+
+> **Theorem 2.** Let $`F^{+b}(x) = F(x) + x + b`$. For $`X \in \{E, K, L\}`$,
+> $`\mathrm{clos}\langle X, F^{+b}, FG, F^{-1}\rangle = \mathrm{GR}`$ **if and only if
+> $`b \ge 1`$**.
+
+*Proof.* The closure is contained in $`\mathrm{GR}`$, and for $`b = 0`$ it misses $`\bar 1`$.
+
+Let $`b \ge 1`$. It is enough to obtain $`S`$. Then a predecessor $`\hat P`$ gives
+$`F^+ = \hat P^b F^{+b}`$, and a constant $`\bar 0`$ gives $`\bar 1 = S\bar 0`$:
+
+| $`X`$ | $`\hat P`$ | $`\bar 0`$ |
+|---|---|---|
+| $`E`$ | $`E\,(ES)^{-1}`$ | $`E\,S\,E^{-1} D`$, with $`D = I^+`$ |
+| $`K`$ | $`K\,(KS)^{-1}`$ | $`K A`$, with $`A`$ as in Theorem 1 |
+| $`L`$ | $`L\,S\,L^{-1}`$ | $`L\,(L^{-1})^+`$ |
+
+The closure then contains $`\langle \bar 1, X, F^+, FG, F^{-1}\rangle`$, and Theorem 1 applies.
+
+Two tools are used to obtain $`S`$:
+- $`I = X X^{-1}`$ and $`T = I^{+b}`$, so that $`T(x) = 2x + b`$;
+- **subtraction by inversion.** If $`V(x) = x + c`$ is in the closure and $`X \in \{E, K\}`$,
+  then $`X\,(XV)^{-1}(x) = x - c`$ for $`x \ge c`$. Indeed, if $`E(y + c) = x`$ then
+  $`y + c = m^2 + x`$ with $`x \le 2m`$, so $`E(y) = E\big(m^2 + (x - c)\big) = x - c`$. The same
+  argument works with $`A(t)`$ and $`K`$. Any preimage works here, not only the least one.
+
+**$`S`$ for $`X = E`$, $`b \ge 2`$.** Note that $`E^{-1}(2m) = (m+1)^2 - 1`$ and
+$`E^{-1}(2m+1) = (m+2)^2 - 2`$. So, for $`m`$ large enough compared with $`x + b`$,
+$$E\big((E^{-1} G)^{+b}\big)(x) = \begin{cases} x + b - 1 & \text{if } G(x) = 2m, \\ x + b - 2 & \text{if } G(x) = 2m + 1. \end{cases}$$
+- $`G = T`$ has the parity of $`b`$ and gives one of the two shifts, $`U`$.
+- $`G = U\,T`$ has the other parity and gives the other shift.
+
+Call the shifts $`U_1(x) = x + b - 1`$ and $`U_2(x) = x + b - 2`$. Then
+$`S = E\,(E U_2)^{-1}\,U_1`$.
+
+**$`S`$ for $`X = E`$, $`b = 1`$.**
+- $`\hat P = E\,(E^{-1}T)^{+1}`$ is a predecessor: $`E^{-1}(2x+1) + x + 1 = (x+2)^2 + (x-1)`$. Also
+  $`\hat P(0) = 2`$.
+- $`D = \hat P T`$ doubles.
+- $`S = E\,\hat P^{-1}(E^{-1}D)^{+1}`$. Indeed $`(E^{-1}D)^{+1}(x) = x^2 + 3x + 1 \ne 2`$, its
+  $`\hat P`$-preimage is $`x^2 + 3x + 2 = (x+1)^2 + (x+1)`$, and $`E`$ of that is $`x + 1`$.
+
+**$`S`$ for $`X = K`$, $`b \ge 2`$.** Let $`Z = K^{-1}`$.
+- $`U = K\,(ZT)^{+b}`$ gives $`U(x) = x + b - 1`$, because
+  $`Z(2x+b) + x + b = A(2x + b + 1) + (x + b - 1)`$.
+- $`P_1 = K\,(KU)^{-1}`$ subtracts $`b - 1`$.
+- $`C = K\,(Z P_1)^{+b}\,U^3`$ is the constant $`2b - 4`$. With $`g = x + 2b - 2`$, the argument of
+  $`K`$ is $`A(g) + g + (g + b - 1) + b = A(g+2) + 2b - 4`$.
+- $`C^{+b}(x) = x + 3b - 4`$. Subtracting $`3b - 4`$ by inversion gives
+  $`S = K\,(K C^{+b})^{-1}\,U^3`$.
+
+**$`S`$ for $`X = K`$, $`b = 1`$.**
+- $`\hat P = K\,(Z^{+1})^{+1}`$ is a predecessor: $`Z(x) + 2x + 2 = A(x+2) + (x - 1)`$. Also
+  $`\hat P(0) = 1`$.
+- $`S = K\,\hat P^{-1}(ZT)^{+1}`$. Indeed $`(ZT)^{+1}(x) = A(2x+2) + x \ge 3`$, its
+  $`\hat P`$-preimage is $`A(2x+2) + x + 1`$, and $`K`$ of that is $`x + 1`$.
+
+**$`S`$ for $`X = L`$, any $`b \ge 1`$.** Here $`L^{-1} = A`$. Applying the operator $`n`$ times
+to $`A`$ gives $`A(x) + n(x + b)`$.
+- For $`n = 2b - 2`$ this is $`A(x + 2b - 2) + (b - 1)`$, since
+  $`(2b-2)\,b - A(2b-2) = b - 1`$. So $`L`$ of it is $`U(x) = x + b - 1`$.
+- For $`n = 1`$ it is $`A(y) + y + b = A(y + 1) + (b - 1)`$. So $`L\,A^{+b}(y) = y + 2 - b`$ for
+  $`y \ge b - 2`$.
+
+Hence $`S = L\,A^{+b}\,U`$. $`\blacksquare`$
+
 ---
 
 ## 3. Problems that remain open
@@ -255,28 +475,6 @@ Partial progress:
   techniques (Gladstone's comparisons, Georgieva's $`\dot-`$-conditionals, Mazzanti's operators)
   do not reach it: they rely on a specific difference function.
 
-### 3.2 General recursive functions with the unary operator $`F^+`$
-
-Julia Robinson (*General recursive functions*, Proc. AMS 1 (1950), §4, Theorem 3) proved:
-
-> $`\mathrm{clos}\langle S, X, F+G, FG, F^{-1}\rangle`$, for $`X \in \{E, K, L\}`$, is the set of
-> all unary general recursive functions. Here $`F^{-1}(x) = \mu y\,[F(y) = x]`$, applied to onto
-> functions only.
-
-This is the exact analogue of R. M. Robinson's primitive recursive basis, with inversion in place
-of iteration. She also showed that $`S`$ can be replaced by the constant $`\bar 1`$.
-
-> **Open problem.** Can the binary operator $`F + G`$ be replaced by the unary operator
-> $`F^+(x) = F(x) + x`$, as Section 6 of the paper does for primitive recursion? That is, is
-> $`\mathrm{clos}\langle \bar 1, X, F^+, FG, F^{-1}\rangle`$ ($`X \in \{E, K, L\}`$) the set of
-> unary general recursive functions? One may also ask whether the constant can be dropped, as in
-> Remark 6.9 and §2.2.
-
-The techniques of Section 6 do not transfer directly. Lemmas 6.2–6.6 rebuild $`F + G`$ from
-$`F^+`$ using iteration in an essential way: $`\mathrm{Sq}`$, $`\mathrm{Hf}`$ and $`\mathrm{Rt}`$
-all come from $`F^\square`$. In the general recursive setting only inversion is available, and it
-can only be applied to onto functions, so those constructions would have to be redone.
-
 ---
 
 ## 4. The formalizations
@@ -287,7 +485,9 @@ All five formalize **Section 6**:
 - Lemmas 6.2–6.6;
 - Theorem 6.7, and Lemma 3.3 where it is used;
 - Theorem 6.8;
-- Remark 6.9.
+- Remark 6.9;
+
+and the solved problems of §2 (§2.1, §2.2 and §2.3; see the table at the start of §2).
 
 They use the same names wherever the language allows:
 - a function X of the paper is `funX` (`funS`, `funE`, `funRt`, `funK`, …), and `cst n` is the
@@ -322,24 +522,26 @@ A good reading order is:
 |---|---|---|---|---|---|
 | Sources | `isabelle/UPRF/*.thy` | `mizar/text/uprf.miz` | `lean/UPRF/*.lean` | `rocq/theories/*.v` | `z/uprf.tex` |
 | Start with | `UPRF_Sec2_Notation.thy`, `UPRF_Sec6.thy` | the table in `mizar/README.md` | `Basic.lean`, `Sec6.lean` | `Basic.v`, `Sec6.v` | the table in `z/README.md` |
-| Main theorems | `Theorem_6_7`, `Theorem_6_8`, `Remark_6_9_I/II/III`, `Robinson_1947_sec7_thm3`, `Ext_a_all`, `Ext_Vb_iff` | `Theorem67`, `Theorem68`, `Remark69`, `ExtA`, `ExtVbIff` | `Theorem_6_7`, `Theorem_6_8`, `Remark_6_9_I/II/III`, `Robinson_1947_sec7_thm3`, `Ext_a_all`, `Ext_Vb_iff` | same names as Lean | `Theorem67`, `Theorem68`, `Remark69`, `ExtAAll`, `ExtVbIff` |
+| Main theorems | `Theorem_6_7`, `Theorem_6_8`, `Remark_6_9_I/II/III`, `Robinson_1947_sec7_thm3`, `Ext_a_all`, `Ext_Vb_iff`, `Ext_GR`, `Ext_GR0`, `Ext_GRS`, `Ext_GRb_iff`, `Ext_Cn_suitable`, `Ext_GRCn` | `Theorem67`, `Theorem68`, `Remark69`, `ExtA`, `ExtVbIff`, `GREqJR`, `GR0Neq`, `GRSEq`, `GRbIff`, `CnBox`, `CnInv` | `Theorem_6_7`, `Theorem_6_8`, `Remark_6_9_I/II/III`, `Robinson_1947_sec7_thm3`, `Ext_a_all`, `Ext_Vb_iff`, `Ext_GR`, `Ext_GR0`, `Ext_GRS`, `Ext_GRb_iff`, `Ext_Cn_suitable`, `Ext_GRCn` | same names as Lean | `Theorem67`, `Theorem68`, `Remark69`, `ExtAAll`, `ExtVbIff`, `GREqJR`, `ExtGR0`, `GRSEq`, `ExtGRbIff`, `CnBox`, `CnInv` |
 | Prim(ℕ,ℕ) | AFP `PrimRec1` | not connected | Mathlib `Nat.Primrec` | own inductive `PrimNN` (unary Cantor characterization) | not defined |
 
 ### 4.3 Comparison
 
 Line counts cover Sections 2–6, including Robinson's theorem where it is proved (comments
-included). The extensions of §2 add 675 more lines in Isabelle, 1 505 in Mizar, 511 in Lean,
-513 in Rocq and 2 654 in Z/EVES. Z/EVES proves Remark 6.9 as the case a = 1 of the extension
-§2.1, so its lines are counted there.
+included). The extensions of §2.1 and §2.2 add 675 more lines in Isabelle, 1 505 in Mizar,
+511 in Lean, 513 in Rocq and 2 654 in Z/EVES. Z/EVES proves Remark 6.9 as the case a = 1 of
+the extension §2.1, so its lines are counted there. §2.3 adds 2 116 lines in Isabelle, 3 566 in
+Mizar, 1 600 in Lean, 1 776 in Rocq and 5 336 in Z/EVES. The check times below are for the whole
+development, including §2.
 
 | | Isabelle/HOL | Mizar | Lean 4 | Rocq | Z/EVES |
 |---|---|---|---|---|---|
 | Lines | 2 011 (1 710 without Robinson; 84 are proof methods) | 4 094 | 1 405 (97 are proof automation) | 1 556 (160 are proof automation) | 5 666 |
-| Check time from clean | ~15 s (after the AFP session) | ~11 s | ~95 s (loading Mathlib and proof search) | ~35 s | ~45 s (on macOS, in a Linux VM) |
-| What is proved | everything; `suitable` means equal to Prim | everything **at closure level**: every basis generates the same closure as Robinson's ⟨S, E, F + G, FG, F^□⟩; Robinson's theorem itself is not proved | everything; `suitable` means equal to Prim | everything; `suitable` means equal to Prim | everything **at closure level**, as in Mizar; Robinson's theorem itself is not proved |
+| Check time from clean | ~30 s (after the AFP session) | ~25 s | ~2 min (loading Mathlib and proof search) | ~1 min | ~3 min (on macOS, in a Linux VM) |
+| What is proved | everything; `suitable` means equal to Prim; for §2.3, J. Robinson's 1950 theorem is a hypothesis | everything **at closure level**: every basis generates the same closure as Robinson's ⟨S, E, F + G, FG, F^□⟩ (for §2.3, as J. Robinson's ⟨S, E, F + G, FG, F⁻¹⟩); neither Robinson theorem is proved | as in Isabelle | as in Isabelle | everything **at closure level**, as in Mizar |
 | Robinson's theorem | proved, using the AFP characterization `PrimRec1'` | missing | proved against Mathlib's `Nat.Primrec` (Szudzik pairing) | proved against its own `PrimNN` (Cantor pairing) | missing |
 | Soundness (closure ⊆ Prim) | AFP `prec` tactic | not applicable | Mathlib `Primrec` API (`nat_iterate`, `nat_sqrt`, …) | bootstrapped by hand in `Prim.v` (+, ∸, ×, =, √, E, Hf, iteration) | not applicable |
-| Axioms | HOL | Tarski–Grothendieck set theory | `propext`, `Classical.choice`, `Quot.sound` | functional extensionality only | ZF set theory (the Z mathematical toolkit) |
+| Axioms | HOL | Tarski–Grothendieck set theory | `propext`, `Classical.choice`, `Quot.sound` | functional extensionality only; §2.3 also uses excluded middle and indefinite description (`ClassicalEpsilon`), since inversion must decide whether a function is onto | ZF set theory (the Z mathematical toolkit) |
 | Arithmetic automation | `simp`, `algebra_simps`, `presburger`, `arith` | none beyond the checker's polynomial normalization; every inequality step needs a library lemma | `omega`, `nlinarith`, `ring`, `simp` | `lia`, `nia` (through mczify) | linear arithmetic and polynomial normalization in the simplifier; nonlinear steps through `timesMonotonic2` |
 
 ### 4.4 Findings
@@ -367,9 +569,9 @@ included). The extensions of §2 add 675 more lines in Isabelle, 1 505 in Mizar,
 
   | Prover | Mechanism | Automation |
   |---|---|---|
-  | Rocq | Ltac2 (`Tactics.v`) | `clos_solve`, `sound`, `simulate` |
-  | Isabelle | Eisbach methods with named theorems (`UPRF_Methods.thy`) | `clos_solve`, `clos_sound_m`, `clos_subset_m`, `simulate` |
-  | Lean | tactic macros, extensible through `macro_rules` (`Tactics.lean`) | `clos_solve`, `prim_sound`, `simulate` |
+  | Rocq | Ltac2 (`Tactics.v`, `ExtGR.v`) | `clos_solve`, `sound`, `simulate`; for §2.3 `inv_eq`, `eval_at` |
+  | Isabelle | Eisbach methods with named theorems (`UPRF_Methods.thy`, `UPRF_Ext_GR.thy`) | `clos_solve`, `clos_sound_m`, `clos_subset_m`, `simulate`; `eval`; for §2.3 `inv_eq` |
+  | Lean | tactic macros, extensible through `macro_rules` (`Tactics.lean`, `ExtGR.lean`) | `clos_solve`, `prim_sound`, `simulate`; for §2.3 `inv_eq`, `eval` |
   | Z/EVES | closure rules stated as rewrite rules, applied by the simplifier; a Python generator (`z/gen/zgen.py`) for the repetitive definitions | `prove` with `ClosInit`, `ClosUnop`, `ClosBinop` |
 
   In Rocq, Isabelle and Lean, most membership lemmas and every suitability theorem of 6.8 and
@@ -380,6 +582,14 @@ included). The extensions of §2 add 675 more lines in Isabelle, 1 505 in Mizar,
   operator. Without it, unification unfolds √ and the Cantor functions and can hang. In Z/EVES
   the rewrite rules close short membership goals by themselves, but long chains of memberships
   have to be built one step at a time.
+
+  §2.3 brought two more recurring patterns, automated in Isabelle, Lean and Rocq:
+  - `inv_eq` proves F⁻¹(x) = v from: F is onto, F(v) = x, and v is at most every preimage of x;
+  - `eval` (`eval_at` in Rocq) computes the value of an expression at a point.
+
+  A third pattern became a generic lemma, `sub_inv`, in the same three provers: "X (X V)⁻¹
+  subtracts c when V(y) = y + c". It holds for every X with a decomposition
+  y = base(t) + X(y), X(y) ≤ bound(t). E and K are instances.
 - **Closures as inductive predicates** (Lean, Rocq) give structural induction for free.
   Isabelle, Mizar and Z/EVES define the closure as an intersection of closed sets and prove the
   induction principle (Isabelle) or work with "least closed set" arguments (Mizar, Z/EVES).

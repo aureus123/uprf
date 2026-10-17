@@ -7,3 +7,6 @@ import UPRF.Thm68
 import UPRF.Rem69
 import UPRF.ExtA
 import UPRF.ExtVb
+import UPRF.ExtGR
+import UPRF.ExtGRb
+import UPRF.ExtCn

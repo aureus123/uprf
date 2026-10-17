@@ -10,3 +10,6 @@ theories/Thm68.v
 theories/Rem69.v
 theories/ExtA.v
 theories/ExtVb.v
+theories/ExtGR.v
+theories/ExtGRb.v
+theories/ExtCn.v

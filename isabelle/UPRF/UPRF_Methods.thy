@@ -11,6 +11,11 @@
                       primitive recursiveness lemmas collected in prim_intros).
     - clos_subset_m   an inclusion clos B1 \<subseteq> clos B2 (clos_subset followed by clos_solve).
     - simulate S      a whole suitable_by_simulation proof from the suitable basis S.
+    - eval            the value of an expression at a point: the operators and the basic
+                      functions are unfolded (eval_simps, with the value lemmas given with
+                      "add:"), and the arithmetic goal that is left is tried with simp and
+                      linarith.
+    (The method inv_eq, for equalities with the inversion F\<^sup>-\<^sup>1, is in UPRF_Ext_GR.)
 *)
 
 theory UPRF_Methods
@@ -22,6 +27,11 @@ section \<open>Proof methods\<close>
 named_theorems clos_defs "selector equations of the bases (inits B = ..., unops B = ..., binops B = ...)"
 named_theorems clos_rules "introduction rules for membership in a closure"
 named_theorems prim_intros "introduction rules for primitive recursiveness"
+named_theorems eval_simps "unfolding equations of the operators and basic functions, for eval"
+
+declare comp_apply [eval_simps] opPlus_def [eval_simps]
+  funI_def [eval_simps] cst_def [eval_simps] funS_def [eval_simps] funD_def [eval_simps]
+  funSq_def [eval_simps]
 
 subsection \<open>Generic closure rules, one per operator\<close>
 
@@ -74,6 +84,14 @@ text \<open>An inclusion \<open>clos B\<^sub>1 \<subseteq> clos B\<^sub>2\<close
   \<open>B\<^sub>1\<close> are generated in \<open>clos B\<^sub>2\<close> (with the membership facts given with "add:").\<close>
 method clos_subset_m uses add =
   (rule clos_subset; basis_cases; clos_solve add: add)
+
+text \<open>The value of an expression at a point.  Only the unfolding equations are used for the
+  rewriting (so that the value lemmas given with "add:" still match); then the arithmetic goal
+  is tried with \<open>simp\<close> and \<open>linarith\<close>, and left to the user if both fail.\<close>
+method eval uses add =
+  ((simp only: eval_simps add)?;
+     (solves \<open>simp add: add\<close> | solves \<open>linarith\<close> | solves \<open>simp add: algebra_simps add\<close>
+      | succeed))
 
 text \<open>A suitability proof by simulation of the suitable basis \<open>S\<close>: as above, and the
   closure is sound (with the primitive recursiveness facts given with "prim:").\<close>

@@ -5597,3 +5597,3570 @@ proof
   end;
   thus thesis by ExtVb;
 end;
+
+begin
+
+:: Open problem 3.2 of the README: general recursive functions.
+:: J. Robinson (Proc. AMS 1 (1950), Sec. 4, Thm. 3) proved that the unary
+:: general recursive functions are the closure of <S, E, F + G, FG, F^-1>,
+:: F^-1(x) = min y [F(y) = x] (for F onto).  Here F + G is replaced by F^+:
+:: for X in {E, K, L}, <1, X, F^+, FG, F^-1> has the same closure.
+
+reserve e,h,p,z for Nat;
+reserve Y for Subset of Funcs(NAT,NAT);
+
+definition
+  let F be Element of Funcs(NAT,NAT);
+  attr F is surj means :DefSurj:
+  for x being Nat ex y being Nat st F.y = x;
+end;
+
+:: the least preimage of x (F.x when F is not onto)
+definition
+  let F be Element of Funcs(NAT,NAT), x be Nat;
+  func linv(F,x) -> Nat means :DefLinv:
+  F.it = x & for y being Nat st F.y = x holds it <= y if F is surj
+  otherwise it = F.x;
+  existence
+  proof
+    thus F is surj implies ex k being Nat st F.k = x &
+      for y being Nat st F.y = x holds k <= y
+    proof
+      assume F is surj;
+      then A1: ex y being Nat st F.y = x by DefSurj;
+      defpred P[Nat] means F.$1 = x;
+      A2: ex k being Nat st P[k] by A1;
+      consider k being Nat such that
+        A3: P[k] & for n being Nat st P[n] holds k <= n from NAT_1:sch 5(A2);
+      take k;
+      thus thesis by A3;
+    end;
+    thus not F is surj implies ex k being Nat st k = F.x;
+  end;
+  uniqueness
+  proof
+    let k1,k2 be Nat;
+    thus F is surj &
+      (F.k1 = x & for y being Nat st F.y = x holds k1 <= y) &
+      (F.k2 = x & for y being Nat st F.y = x holds k2 <= y) implies k1 = k2
+    proof
+      assume that F is surj and
+        A1: F.k1 = x & for y being Nat st F.y = x holds k1 <= y and
+        A2: F.k2 = x & for y being Nat st F.y = x holds k2 <= y;
+      k1 <= k2 & k2 <= k1 by A1, A2;
+      hence thesis by XXREAL_0:1;
+    end;
+    thus thesis;
+  end;
+  consistency;
+end;
+
+:: inversion: F^-1(x) = min y [F(y) = x] if F is onto, F^-1 = F otherwise
+:: (so a closure under opInv is a closure under Robinson's inversion)
+definition
+  func opInv -> UnOp of Funcs(NAT,NAT) means :DefInv:
+  for F being Element of Funcs(NAT,NAT), x being Nat holds
+    (it.F).x = linv(F,x);
+  existence
+  proof
+    deffunc T(Element of Funcs(NAT,NAT), Nat) = linv($1,$2);
+    thus ex u being UnOp of Funcs(NAT,NAT) st
+      for F being Element of Funcs(NAT,NAT), x being Nat holds
+      (u.F).x = T(F,x) from UOpEx;
+  end;
+  uniqueness
+  proof
+    deffunc T(Element of Funcs(NAT,NAT), Nat) = linv($1,$2);
+    let u,v be UnOp of Funcs(NAT,NAT) such that
+    A1: for F being Element of Funcs(NAT,NAT), x being Nat holds
+      (u.F).x = T(F,x) and
+    A2: for F being Element of Funcs(NAT,NAT), x being Nat holds
+      (v.F).x = T(F,x);
+    thus u = v from UOpUq(A1,A2);
+  end;
+end;
+
+theorem InvRight:
+  F is surj implies F.((opInv.F).x) = x
+proof
+  assume A1: F is surj;
+  (opInv.F).x = linv(F,x) by DefInv;
+  hence thesis by A1, DefLinv;
+end;
+
+theorem InvLeast:
+  F is surj & F.y = x implies (opInv.F).x <= y
+proof
+  assume A1: F is surj & F.y = x;
+  (opInv.F).x = linv(F,x) by DefInv;
+  hence thesis by A1, DefLinv;
+end;
+
+theorem InvNot:
+  not F is surj implies opInv.F = F
+proof
+  assume A1: not F is surj;
+  now
+    let x;
+    thus (opInv.F).x = linv(F,x) by DefInv .= F.x by A1, DefLinv;
+  end;
+  hence thesis by UFunExt;
+end;
+
+:: the bases <S, E, F + G, FG, F^-1> (Robinson) and <1, X, F^+, FG, F^-1>
+definition
+  func ClosJR -> Subset of Funcs(NAT,NAT) equals
+  clos({funS, funE}, {opInv}, {opPlus, opComp});
+  coherence;
+end;
+
+definition
+  let X be Element of Funcs(NAT,NAT);
+  func ClosGR X -> Subset of Funcs(NAT,NAT) equals
+  clos({cst 1, X}, {opPlusI, opInv}, {opComp});
+  coherence;
+end;
+
+theorem JRBasic:
+  funS in ClosJR & funE in ClosJR
+proof
+  funS in {funS, funE} & funE in {funS, funE} by TARSKI:def 2;
+  hence thesis by ClosInit;
+end;
+
+theorem JRInv:
+  F in ClosJR implies opInv.F in ClosJR
+proof
+  assume A1: F in ClosJR;
+  opInv in {opInv} by TARSKI:def 1;
+  hence thesis by A1, ClosUnop;
+end;
+
+theorem JRComp:
+  F in ClosJR & G in ClosJR implies F*G in ClosJR
+proof
+  assume A1: F in ClosJR & G in ClosJR;
+  A2: opComp in {opPlus, opComp} by TARSKI:def 2;
+  opComp.(F,G) = F*G by DefComp;
+  hence thesis by A1, A2, ClosBinop;
+end;
+
+theorem JRPlus:
+  F in ClosJR & G in ClosJR implies opPlus.(F,G) in ClosJR
+proof
+  assume A1: F in ClosJR & G in ClosJR;
+  opPlus in {opPlus, opComp} by TARSKI:def 2;
+  hence thesis by A1, ClosBinop;
+end;
+
+theorem CGOne:
+  cst 1 in ClosGR X & X in ClosGR X
+proof
+  cst 1 in {cst 1, X} & X in {cst 1, X} by TARSKI:def 2;
+  hence thesis by ClosInit;
+end;
+
+theorem CGPlusI:
+  F in ClosGR X implies opPlusI.F in ClosGR X
+proof
+  assume A1: F in ClosGR X;
+  opPlusI in {opPlusI, opInv} by TARSKI:def 2;
+  hence thesis by A1, ClosUnop;
+end;
+
+theorem CGInv:
+  F in ClosGR X implies opInv.F in ClosGR X
+proof
+  assume A1: F in ClosGR X;
+  opInv in {opPlusI, opInv} by TARSKI:def 2;
+  hence thesis by A1, ClosUnop;
+end;
+
+theorem CGComp:
+  F in ClosGR X & G in ClosGR X implies F*G in ClosGR X
+  by CompIn;
+
+theorem CGSub:
+  X in ClosGR W implies ClosGR X c= ClosGR W
+proof
+  assume A1: X in ClosGR W;
+  ClosGR W is_closed_under {cst 1, X}, {opPlusI, opInv}, {opComp}
+  proof
+    thus {cst 1, X} c= ClosGR W
+    proof
+      let z be object;
+      assume z in {cst 1, X};
+      then z = cst 1 or z = X by TARSKI:def 2;
+      hence thesis by A1, CGOne;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opPlusI, opInv} & F in ClosGR W holds u.F in ClosGR W
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A2: u in {opPlusI, opInv} & F in ClosGR W;
+      then u = opPlusI or u = opInv by TARSKI:def 2;
+      hence thesis by A2, CGPlusI, CGInv;
+    end;
+    let c be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A3: c in {opComp} & F in ClosGR W & G in ClosGR W;
+    then c = opComp by TARSKI:def 1;
+    then c.(F,G) = F*G by DefComp;
+    hence thesis by A3, CGComp;
+  end;
+  hence thesis by ClosLeast;
+end;
+
+:: Lemmas 6.2-6.6 only use I, E, S, D, M3, Sq, Hf, Rt, F^+ and FG
+definition
+  let Y be Subset of Funcs(NAT,NAT);
+  attr Y is rich means :DefRich:
+  funI in Y & funE in Y & funS in Y & funD in Y & funM3 in Y &
+  funSq in Y & funHf in Y & funRt in Y &
+  (for F being Element of Funcs(NAT,NAT) st F in Y holds opPlusI.F in Y) &
+  (for F,G being Element of Funcs(NAT,NAT) st F in Y & G in Y
+     holds F*G in Y);
+end;
+
+theorem RBasic:
+  Y is rich implies funI in Y & funE in Y & funS in Y & funD in Y &
+  funM3 in Y & funSq in Y & funHf in Y & funRt in Y
+  by DefRich;
+
+theorem RPlusI:
+  Y is rich & F in Y implies opPlusI.F in Y
+  by DefRich;
+
+theorem RComp:
+  Y is rich & F in Y & G in Y implies F*G in Y
+  by DefRich;
+
+theorem RMinusIIn:
+  Y is rich & F in Y implies exprMinusI F in Y
+proof
+  assume that A0: Y is rich and A1: F in Y;
+  A5: funE in Y & funS in Y & funM3 in Y & funSq in Y by A0, RBasic;
+  then A2: funE*funS in Y by A0, RComp;
+  funM3*F in Y by A0, A1, A5, RComp;
+  then funM3*F*funE in Y by A0, A5, RComp;
+  then opPlusI.(funM3*F*funE) in Y by A0, RPlusI;
+  then A3: funE*funS*(opPlusI.(funM3*F*funE)) in Y by A0, A2, RComp;
+  opPlusI.F in Y by A0, A1, RPlusI;
+  then funSq*(opPlusI.F) in Y by A0, A5, RComp;
+  then opPlusI.(funSq*(opPlusI.F)) in Y by A0, RPlusI;
+  hence thesis by A0, A3, RComp;
+end;
+
+theorem ROplusIn:
+  Y is rich & F in Y & G in Y implies exprOplus(F,G) in Y
+proof
+  assume that A0: Y is rich and A1: F in Y & G in Y;
+  A5: funE in Y & funSq in Y by A0, RBasic;
+  exprMinusI F in Y by A0, A1, RMinusIIn;
+  then (exprMinusI F)*funE in Y by A0, A5, RComp;
+  then A2: opPlusI.((exprMinusI F)*funE) in Y by A0, RPlusI;
+  funSq*G in Y by A0, A1, A5, RComp;
+  then opPlusI.(funSq*G) in Y by A0, RPlusI;
+  hence thesis by A0, A2, RComp;
+end;
+
+theorem ROminusIn:
+  Y is rich & F in Y & G in Y implies exprOminus(F,G) in Y
+proof
+  assume that A0: Y is rich and A1: F in Y & G in Y;
+  A5: funE in Y & funSq in Y by A0, RBasic;
+  opPlusI.F in Y by A0, A1, RPlusI;
+  then (opPlusI.F)*funE in Y by A0, A5, RComp;
+  then A2: exprMinusI((opPlusI.F)*funE) in Y by A0, RMinusIIn;
+  funSq*G in Y by A0, A1, A5, RComp;
+  then opPlusI.(funSq*G) in Y by A0, RPlusI;
+  hence thesis by A0, A2, RComp;
+end;
+
+theorem RPhatIn:
+  Y is rich implies exprPhat in Y
+proof
+  assume A0: Y is rich;
+  then A5: funSq in Y & funS in Y by RBasic;
+  then opPlusI.funSq in Y by A0, RPlusI;
+  then opPlusI.(opPlusI.funSq) in Y by A0, RPlusI;
+  then opPlusI.(opPlusI.(opPlusI.funSq)) in Y by A0, RPlusI;
+  hence thesis by A0, A5, ROminusIn;
+end;
+
+theorem ROtimesIn:
+  Y is rich & F in Y & G in Y implies exprOtimes(F,G) in Y
+proof
+  assume that A0: Y is rich and A1: F in Y & G in Y;
+  A6: funSq in Y & funS in Y & funHf in Y & funRt in Y by A0, RBasic;
+  A2: funSq*F in Y by A0, A1, A6, RComp;
+  A3: funSq*G in Y by A0, A1, A6, RComp;
+  funSq*funS in Y by A0, A6, RComp;
+  then funSq*funS*funSq in Y by A0, A6, RComp;
+  then funSq*funS*funSq*F in Y by A0, A1, RComp;
+  then exprOplus(funSq*funS*funSq*F, G) in Y by A0, A1, ROplusIn;
+  then A4: exprOminus(exprOplus(funSq*funS*funSq*F, G), funSq*F) in Y
+    by A0, A2, ROminusIn;
+  exprPhat in Y by A0, RPhatIn;
+  then funSq*exprPhat in Y by A0, A6, RComp;
+  then funSq*exprPhat*exprOminus(exprOplus(funSq*funS*funSq*F, G), funSq*F)
+    in Y by A0, A4, RComp;
+  then A5: exprOminus(funSq*exprPhat*
+    exprOminus(exprOplus(funSq*funS*funSq*F, G), funSq*F), funSq*G) in Y
+    by A0, A3, ROminusIn;
+  funHf*funHf in Y by A0, A6, RComp;
+  then funHf*funHf*exprOminus(funSq*exprPhat*
+    exprOminus(exprOplus(funSq*funS*funSq*F, G), funSq*F), funSq*G) in Y
+    by A0, A5, RComp;
+  then exprOminus(funHf*funHf*exprOminus(funSq*exprPhat*
+    exprOminus(exprOplus(funSq*funS*funSq*F, G), funSq*F), funSq*G),
+    funSq*F) in Y by A0, A2, ROminusIn;
+  hence thesis by A0, A6, RComp;
+end;
+
+theorem RPlusExprIn:
+  Y is rich & F in Y & G in Y implies exprPlus(F,G) in Y
+proof
+  assume that A0: Y is rich and A1: F in Y & G in Y;
+  A6: funD in Y & funRt in Y by A0, RBasic;
+  A2: opPlusI.F in Y & opPlusI.G in Y by A0, A1, RPlusI;
+  then exprOtimes(opPlusI.F, opPlusI.G) in Y by A0, ROtimesIn;
+  then funD*exprOtimes(opPlusI.F, opPlusI.G) in Y by A0, A6, RComp;
+  then exprOplus(funD*exprOtimes(opPlusI.F, opPlusI.G), opPlusI.F) in Y
+    by A0, A2, ROplusIn;
+  then exprOplus(exprOplus(funD*exprOtimes(opPlusI.F, opPlusI.G),
+    opPlusI.F), opPlusI.G) in Y by A0, A2, ROplusIn;
+  then funRt*exprOplus(exprOplus(funD*exprOtimes(opPlusI.F, opPlusI.G),
+    opPlusI.F), opPlusI.G) in Y by A0, A6, RComp;
+  then exprMinusI(funRt*exprOplus(exprOplus(funD*exprOtimes(
+    opPlusI.F, opPlusI.G), opPlusI.F), opPlusI.G)) in Y by A0, RMinusIIn;
+  hence thesis by A0, RMinusIIn;
+end;
+
+theorem RMinusExprIn:
+  Y is rich & F in Y & G in Y implies exprMinus(F,G) in Y
+proof
+  assume that A0: Y is rich and A1: F in Y & G in Y;
+  A6: funSq in Y & funM3 in Y & funE in Y & funS in Y by A0, RBasic;
+  exprPlus(F,G) in Y by A0, A1, RPlusExprIn;
+  then A2: funSq*exprPlus(F,G) in Y by A0, A6, RComp;
+  funM3*F in Y by A0, A1, A6, RComp;
+  then exprPlus(funSq*exprPlus(F,G), funM3*F) in Y by A0, A2, RPlusExprIn;
+  then A3: exprPlus(exprPlus(funSq*exprPlus(F,G), funM3*F), G) in Y
+    by A0, A1, RPlusExprIn;
+  funE*funS in Y by A0, A6, RComp;
+  hence thesis by A0, A3, RComp;
+end;
+
+:: Lemma 6.6 in a rich set
+theorem RLemma66:
+  Y is rich & F in Y & G in Y implies opPlus.(F,G) in Y &
+  ((for x holds G.x <= F.x) implies opMinus.(F,G) in Y)
+proof
+  assume A1: Y is rich & F in Y & G in Y;
+  then exprPlus(F,G) in Y by RPlusExprIn;
+  hence opPlus.(F,G) in Y by PlusExprEq;
+  exprMinus(F,G) in Y by A1, RMinusExprIn;
+  then A2: opDiffE.(F,G) in Y by MinusExprEq;
+  assume A3: for x holds G.x <= F.x;
+  now
+    let x;
+    thus (opDiffE.(F,G)).x = F.x -' G.x by A3, DiffEIsDifference
+      .= (opMinus.(F,G)).x by DefMinus;
+  end;
+  hence thesis by A2, UFunExt;
+end;
+
+:: The case X = E.  Arithmetic facts
+
+theorem EBound:
+  funE.y <= 2*funRt.y
+proof
+  set r = funRt.y;
+  A1: funE.y + r*r = y by EVal;
+  y < (r+1)*(r+1) by DefRt;
+  then funE.y + r*r < r*r + (2*r + 1) by A1;
+  then funE.y < 2*r + 1 by XREAL_1:6;
+  hence thesis by NAT_1:13;
+end;
+
+theorem TwoELe:
+  2*funE.y <= y + 1
+proof
+  set r = funRt.y, e = funE.y;
+  A1: e + r*r = y by EVal;
+  A2: e <= 2*r by EBound;
+  per cases by NAT_1:14;
+  suppose r = 0;
+    then e <= 0 by A2;
+    then e = 0;
+    hence thesis;
+  end;
+  suppose 1 <= r;
+    then consider r1 being Nat such that A3: r = 1 + r1 by NAT_1:10;
+    A4: r*r + 1 = 2*r + r1*r1 by A3;
+    2*r <= 2*r + r1*r1 by NAT_1:11;
+    then e + 2*r <= e + (r*r + 1) by A4, XREAL_1:6;
+    then A5: e + 2*r <= y + 1 by A1;
+    e + e <= e + 2*r by A2, XREAL_1:6;
+    hence thesis by A5, XXREAL_0:2;
+  end;
+end;
+
+theorem Parity:
+  ex q st y = 2*q or y = 2*q + 1
+proof
+  set q = y div 2;
+  A1: y = 2*q + (y mod 2) by NAT_D:2;
+  take q;
+  y mod 2 = 0 or y mod 2 = 1 by NAT_D:12;
+  hence thesis by A1;
+end;
+
+theorem DivTwo:
+  (2*q) div 2 = q & (2*q + 1) div 2 = q
+proof
+  thus (2*q) div 2 = q by NAT_D:18;
+  2*q + 1 = 2*q + 1 & 1 < 2;
+  hence thesis by NAT_D:def 1;
+end;
+
+theorem ESurj:
+  funE is surj
+proof
+  let x;
+  take x*x + x;
+  2*x = x + x;
+  then x <= 2*x by NAT_1:11;
+  hence thesis by ESqAdd;
+end;
+
+:: E^-1(x) = c^2 + x where c = ceil(x/2)
+theorem EinvVal:
+  x <= 2*c & 2*c <= x + 1 implies (opInv.funE).x = c*c + x
+proof
+  assume that A1: x <= 2*c and A2: 2*c <= x + 1;
+  set y = (opInv.funE).x, r = funRt.y;
+  funE.(c*c + x) = x by A1, ESqAdd;
+  then A3: y <= c*c + x by ESurj, InvLeast;
+  A4: funE.y = x by ESurj, InvRight;
+  then x <= 2*r by EBound;
+  then x + 1 <= 2*r + 1 by XREAL_1:6;
+  then 2*c <= 2*r + 1 by A2, XXREAL_0:2;
+  then 2*c < 2*r + 1 + 1 by NAT_1:13;
+  then 2*c < 2*(r + 1);
+  then c < r + 1 by XREAL_1:64;
+  then c <= r by NAT_1:13;
+  then A5: c*c <= r*r by XREAL_1:66;
+  funE.y + r*r = y by EVal;
+  then c*c + x <= y by A4, A5, XREAL_1:6;
+  hence thesis by A3, XXREAL_0:1;
+end;
+
+theorem EinvD:
+  (opInv.funE).(2*z) = z*z + 2*z
+proof
+  2*z <= 2*z & 2*z <= 2*z + 1 by NAT_1:11;
+  hence thesis by EinvVal;
+end;
+
+:: The basis <1, E, F^+, FG, F^-1>: first functions
+
+theorem IExpr0:
+  opPlusI.(cst 0) = funI
+proof
+  opPlusI.(funM 0) = funM (0+1) by MVals;
+  hence thesis by MVals;
+end;
+
+theorem GEFirst:
+  funS in ClosGR funE & cst 0 in ClosGR funE & funI in ClosGR funE &
+  funD in ClosGR funE & funM3 in ClosGR funE
+proof
+  A1: cst 1 in ClosGR funE & funE in ClosGR funE by CGOne;
+  hence funS in ClosGR funE by CGPlusI, SExpr;
+  thus A2: cst 0 in ClosGR funE by A1, CGComp, ZeroExpr;
+  hence funI in ClosGR funE by CGPlusI, IExpr0;
+  opPlusI.(cst 0) in ClosGR funE by A2, CGPlusI;
+  hence A3: funD in ClosGR funE by CGPlusI, DExpr;
+  thus thesis by A3, CGPlusI, M3Expr;
+end;
+
+:: F^- = E (S S S M3 F E)^+ S (E^-1 D F^+)^+ (without Sq)
+definition
+  let F be Element of Funcs(NAT,NAT);
+  func exprMinusIE F -> Element of Funcs(NAT,NAT) equals
+  funE*(opPlusI.(funS*funS*funS*funM3*F*funE))*funS*
+    (opPlusI.((opInv.funE)*funD*(opPlusI.F)));
+  coherence;
+end;
+
+theorem MinusIEIn:
+  F in ClosGR funE implies exprMinusIE F in ClosGR funE
+proof
+  assume A1: F in ClosGR funE;
+  A2: funS in ClosGR funE & funD in ClosGR funE & funM3 in ClosGR funE
+    by GEFirst;
+  A3: funE in ClosGR funE by CGOne;
+  funS*funS in ClosGR funE by A2, CGComp;
+  then funS*funS*funS in ClosGR funE by A2, CGComp;
+  then funS*funS*funS*funM3 in ClosGR funE by A2, CGComp;
+  then funS*funS*funS*funM3*F in ClosGR funE by A1, CGComp;
+  then funS*funS*funS*funM3*F*funE in ClosGR funE by A3, CGComp;
+  then opPlusI.(funS*funS*funS*funM3*F*funE) in ClosGR funE by CGPlusI;
+  then funE*(opPlusI.(funS*funS*funS*funM3*F*funE)) in ClosGR funE
+    by A3, CGComp;
+  then A4: funE*(opPlusI.(funS*funS*funS*funM3*F*funE))*funS in ClosGR funE
+    by A2, CGComp;
+  opInv.funE in ClosGR funE by A3, CGInv;
+  then A5: (opInv.funE)*funD in ClosGR funE by A2, CGComp;
+  opPlusI.F in ClosGR funE by A1, CGPlusI;
+  then (opInv.funE)*funD*(opPlusI.F) in ClosGR funE by A5, CGComp;
+  then opPlusI.((opInv.funE)*funD*(opPlusI.F)) in ClosGR funE by CGPlusI;
+  hence thesis by A4, CGComp;
+end;
+
+theorem MinusIEVal:
+  x <= F.x implies (exprMinusIE F).x = F.x -' x
+proof
+  assume A1: x <= F.x;
+  set d = F.x -' x;
+  A2: F.x = d + x by A1, XREAL_1:235;
+  set s = F.x + x;
+  set G1 = (opInv.funE)*funD*(opPlusI.F);
+  set G2 = funS*funS*funS*funM3*F*funE;
+  set v = (s+1)*(s+1) + x;
+  A3: G1.x = ((opInv.funE)*funD).((opPlusI.F).x) by CompVal
+    .= ((opInv.funE)*funD).s by DefPlusI
+    .= (opInv.funE).(funD.s) by CompVal
+    .= (opInv.funE).(2*s) by DefD
+    .= s*s + 2*s by EinvD;
+  A4: funS.((opPlusI.G1).x) = (opPlusI.G1).x + 1 by DefS
+    .= G1.x + x + 1 by DefPlusI
+    .= v by A3;
+  2*(s+1) = x + (2*F.x + x + 2);
+  then x <= 2*(s+1) by NAT_1:11;
+  then A5: funE.v = x by ESqAdd;
+  A6: G2.v = (funS*funS*funS*funM3*F).(funE.v) by CompVal
+    .= (funS*funS*funS*funM3).(F.x) by A5, CompVal
+    .= (funS*funS*funS).(funM3.(F.x)) by CompVal
+    .= (funS*funS*funS).(3*F.x) by DefM3
+    .= (funS*funS).(funS.(3*F.x)) by CompVal
+    .= (funS*funS).(3*F.x + 1) by DefS
+    .= funS.(funS.(3*F.x + 1)) by CompVal
+    .= funS.(3*F.x + 1 + 1) by DefS
+    .= 3*F.x + 1 + 1 + 1 by DefS;
+  A7: (opPlusI.G2).v = G2.v + v by DefPlusI
+    .= (s+2)*(s+2) + d by A2, A6;
+  2*(s+2) = d + (d + 4*x + 4) by A2;
+  then d <= 2*(s+2) by NAT_1:11;
+  then A8: funE.((s+2)*(s+2) + d) = d by ESqAdd;
+  thus (exprMinusIE F).x
+      = (funE*(opPlusI.G2)*funS).((opPlusI.G1).x) by CompVal
+     .= (funE*(opPlusI.G2)).(funS.((opPlusI.G1).x)) by CompVal
+     .= funE.((opPlusI.G2).v) by A4, CompVal
+     .= d by A7, A8;
+end;
+
+theorem SqExprGE:
+  exprMinusIE (exprMinusIE ((opInv.funE)*funD)) = funSq
+proof
+  set G = (opInv.funE)*funD;
+  now
+    let x;
+    A1: G.x = (opInv.funE).(funD.x) by CompVal
+      .= (opInv.funE).(2*x) by DefD
+      .= x*x + 2*x by EinvD;
+    then G.x = x + (x*x + x);
+    then x <= G.x by NAT_1:11;
+    then A2: (exprMinusIE G).x = x*x + x + x -' x by A1, MinusIEVal
+      .= x*x + x by NAT_D:34;
+    then x <= (exprMinusIE G).x by NAT_1:11;
+    hence (exprMinusIE (exprMinusIE G)).x = x*x + x -' x by A2, MinusIEVal
+      .= x*x by NAT_D:34
+      .= funSq.x by DefSq;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem GESq:
+  funSq in ClosGR funE
+proof
+  funE in ClosGR funE by CGOne;
+  then A1: opInv.funE in ClosGR funE by CGInv;
+  funD in ClosGR funE by GEFirst;
+  then (opInv.funE)*funD in ClosGR funE by A1, CGComp;
+  then exprMinusIE ((opInv.funE)*funD) in ClosGR funE by MinusIEIn;
+  then exprMinusIE (exprMinusIE ((opInv.funE)*funD)) in ClosGR funE
+    by MinusIEIn;
+  hence thesis by SqExprGE;
+end;
+
+:: I - F = E (S (F^+)^+ E)^+ (Sq F^+)^+ (if F(x) <= x)
+definition
+  let F be Element of Funcs(NAT,NAT);
+  func exprIminusE F -> Element of Funcs(NAT,NAT) equals
+  funE*(opPlusI.(funS*(opPlusI.(opPlusI.F))*funE))*
+    (opPlusI.(funSq*(opPlusI.F)));
+  coherence;
+end;
+
+theorem IminusEIn:
+  F in ClosGR funE implies exprIminusE F in ClosGR funE
+proof
+  assume A1: F in ClosGR funE;
+  A2: funS in ClosGR funE by GEFirst;
+  A3: funE in ClosGR funE by CGOne;
+  A4: funSq in ClosGR funE by GESq;
+  A5: opPlusI.F in ClosGR funE by A1, CGPlusI;
+  then opPlusI.(opPlusI.F) in ClosGR funE by CGPlusI;
+  then funS*(opPlusI.(opPlusI.F)) in ClosGR funE by A2, CGComp;
+  then funS*(opPlusI.(opPlusI.F))*funE in ClosGR funE by A3, CGComp;
+  then opPlusI.(funS*(opPlusI.(opPlusI.F))*funE) in ClosGR funE by CGPlusI;
+  then A6: funE*(opPlusI.(funS*(opPlusI.(opPlusI.F))*funE)) in ClosGR funE
+    by A3, CGComp;
+  funSq*(opPlusI.F) in ClosGR funE by A4, A5, CGComp;
+  then opPlusI.(funSq*(opPlusI.F)) in ClosGR funE by CGPlusI;
+  hence thesis by A6, CGComp;
+end;
+
+theorem IminusEVal:
+  F.x <= x implies (exprIminusE F).x = x -' F.x
+proof
+  assume A1: F.x <= x;
+  set a = F.x;
+  set y = (a + x)*(a + x) + x;
+  set G = funS*(opPlusI.(opPlusI.F))*funE;
+  A2: (opPlusI.(funSq*(opPlusI.F))).x = (funSq*(opPlusI.F)).x + x
+      by DefPlusI
+    .= funSq.((opPlusI.F).x) + x by CompVal
+    .= funSq.(a + x) + x by DefPlusI
+    .= y by DefSq;
+  2*(a + x) = x + (2*a + x);
+  then x <= 2*(a + x) by NAT_1:11;
+  then A3: funE.y = x by ESqAdd;
+  A4: G.y = (funS*(opPlusI.(opPlusI.F))).(funE.y) by CompVal
+    .= funS.((opPlusI.(opPlusI.F)).x) by A3, CompVal
+    .= (opPlusI.(opPlusI.F)).x + 1 by DefS
+    .= (opPlusI.F).x + x + 1 by DefPlusI
+    .= a + x + x + 1 by DefPlusI;
+  A5: (opPlusI.G).y = G.y + y by DefPlusI
+    .= (x + a)*(x + a) + 3*x + a + 1 by A4;
+  thus (exprIminusE F).x = (funE*(opPlusI.G)).y by A2, CompVal
+    .= funE.((opPlusI.G).y) by CompVal
+    .= x -' a by A1, A5, RobDiffE;
+end;
+
+:: W = E (S S D E E)^+ E^-1, W(2q) = 2E(2q) + 1 and W(2q+1) = 2E(2q+1)
+definition
+  func exprW -> Element of Funcs(NAT,NAT) equals
+  funE*(opPlusI.(funS*funS*funD*funE*funE))*(opInv.funE);
+  coherence;
+end;
+
+theorem WIn:
+  exprW in ClosGR funE
+proof
+  A1: funS in ClosGR funE & funD in ClosGR funE by GEFirst;
+  A2: funE in ClosGR funE by CGOne;
+  funS*funS in ClosGR funE by A1, CGComp;
+  then funS*funS*funD in ClosGR funE by A1, CGComp;
+  then funS*funS*funD*funE in ClosGR funE by A2, CGComp;
+  then funS*funS*funD*funE*funE in ClosGR funE by A2, CGComp;
+  then opPlusI.(funS*funS*funD*funE*funE) in ClosGR funE by CGPlusI;
+  then A3: funE*(opPlusI.(funS*funS*funD*funE*funE)) in ClosGR funE
+    by A2, CGComp;
+  opInv.funE in ClosGR funE by A2, CGInv;
+  hence thesis by A3, CGComp;
+end;
+
+:: if E(y) = e and E(c^2 + y) = y then W-like step value
+theorem WStep:
+  funE.(c*c + y) = y implies
+  (opPlusI.(funS*funS*funD*funE*funE)).(c*c + y) = 2*funE.y + 2 + (c*c + y)
+proof
+  assume A1: funE.(c*c + y) = y;
+  set w = c*c + y;
+  (funS*funS*funD*funE*funE).w = (funS*funS*funD*funE).(funE.w) by CompVal
+    .= (funS*funS*funD).(funE.y) by A1, CompVal
+    .= (funS*funS).(funD.(funE.y)) by CompVal
+    .= (funS*funS).(2*funE.y) by DefD
+    .= funS.(funS.(2*funE.y)) by CompVal
+    .= funS.(2*funE.y + 1) by DefS
+    .= 2*funE.y + 1 + 1 by DefS;
+  hence thesis by DefPlusI;
+end;
+
+theorem WVal:
+  exprW.(2*q) = 2*funE.(2*q) + 1 & exprW.(2*q + 1) = 2*funE.(2*q + 1)
+proof
+  set G = opPlusI.(funS*funS*funD*funE*funE);
+  thus exprW.(2*q) = 2*funE.(2*q) + 1
+  proof
+    set y = 2*q, e = funE.y;
+    A1: (opInv.funE).y = q*q + y by EinvD;
+    A2: funE.(q*q + y) = y by ESqAdd;
+    then A3: G.(q*q + y) = 2*e + 2 + (q*q + y) by WStep
+      .= (q+1)*(q+1) + (2*e + 1);
+    2*e <= y + 1 by TwoELe;
+    then 2*e + 1 <= 2*q + 1 + 1 by XREAL_1:6;
+    then 2*e + 1 <= 2*(q+1);
+    then A4: funE.((q+1)*(q+1) + (2*e + 1)) = 2*e + 1 by ESqAdd;
+    thus exprW.y = (funE*G).((opInv.funE).y) by CompVal
+      .= funE.(G.(q*q + y)) by A1, CompVal
+      .= 2*e + 1 by A3, A4;
+  end;
+  set y = 2*q + 1, e = funE.y;
+  set c = q + 1;
+  A0: 2*c = y + 1;
+  then A01: y <= 2*c by NAT_1:11;
+  then A1: (opInv.funE).y = c*c + y by A0, EinvVal;
+  funE.(c*c + y) = y by A01, ESqAdd;
+  then A3: G.(c*c + y) = 2*e + 2 + (c*c + y) by WStep
+    .= (c+1)*(c+1) + 2*e;
+  2*e <= y + 1 by TwoELe;
+  then A02: 2*e <= 2*c by A0;
+  2*(c+1) = 2*c + 2;
+  then 2*c <= 2*(c+1) by NAT_1:11;
+  then 2*e <= 2*(c+1) by A02, XXREAL_0:2;
+  then A4: funE.((c+1)*(c+1) + 2*e) = 2*e by ESqAdd;
+  thus exprW.y = (funE*G).((opInv.funE).y) by CompVal
+    .= funE.(G.(c*c + y)) by A1, CompVal
+    .= 2*e by A3, A4;
+end;
+
+theorem WSurj:
+  exprW is surj
+proof
+  let x;
+  consider k such that A1: x = 2*k or x = 2*k + 1 by Parity;
+  per cases by A1;
+  suppose A2: x = 2*k;
+    take y = 2*(funZ.k) + 1;
+    A3: y = k*(k+3) + 1 by TwoZ
+      .= (k+1)*(k+1) + k;
+    2*(k+1) = k + (k+2);
+    then k <= 2*(k+1) by NAT_1:11;
+    then funE.y = k by A3, ESqAdd;
+    hence exprW.y = x by A2, WVal;
+  end;
+  suppose A2: x = 2*k + 1;
+    take y = 2*(funH.k);
+    A3: y = (k+1)*(k+4) by TwoH
+      .= (k+2)*(k+2) + k;
+    2*(k+2) = k + (k+4);
+    then k <= 2*(k+2) by NAT_1:11;
+    then funE.y = k by A3, ESqAdd;
+    hence exprW.y = x by A2, WVal;
+  end;
+end;
+
+theorem HfExprGE:
+  funE*(opInv.exprW) = funHf
+proof
+  now
+    let x;
+    set y = (opInv.exprW).x;
+    A1: exprW.y = x by WSurj, InvRight;
+    consider q such that A2: y = 2*q or y = 2*q + 1 by Parity;
+    A3: (funE*(opInv.exprW)).x = funE.y by CompVal;
+    per cases by A2;
+    suppose y = 2*q;
+      then x = 2*funE.y + 1 by A1, WVal;
+      then x div 2 = funE.y by DivTwo;
+      hence (funE*(opInv.exprW)).x = funHf.x by A3, DefHf;
+    end;
+    suppose y = 2*q + 1;
+      then x = 2*funE.y by A1, WVal;
+      then x div 2 = funE.y by DivTwo;
+      hence (funE*(opInv.exprW)).x = funHf.x by A3, DefHf;
+    end;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem GEHf:
+  funHf in ClosGR funE
+proof
+  funE in ClosGR funE by CGOne;
+  then A1: funE in ClosGR funE & opInv.exprW in ClosGR funE by WIn, CGInv;
+  then funE*(opInv.exprW) in ClosGR funE by CGComp;
+  hence thesis by HfExprGE;
+end;
+
+:: Rt(4x+1) is 2 Rt(x) or 2 Rt(x) + 1
+theorem Rt4:
+  funRt.(4*x + 1) = 2*funRt.x or funRt.(4*x + 1) = 2*funRt.x + 1
+proof
+  set m = funRt.x, z = 4*x + 1;
+  A1: m*m <= x & x < (m+1)*(m+1) by DefRt;
+  then 4*(m*m) <= 4*x by XREAL_1:64;
+  then A2: (2*m)*(2*m) <= z by NAT_1:13;
+  x + 1 <= (m+1)*(m+1) by A1, NAT_1:13;
+  then 4*(x + 1) <= 4*((m+1)*(m+1)) by XREAL_1:64;
+  then A3: z + 3 <= (2*m+1+1)*(2*m+1+1);
+  z < z + 3 by XREAL_1:29;
+  then A4: z < (2*m+1+1)*(2*m+1+1) by A3, XXREAL_0:2;
+  per cases;
+  suppose z < (2*m+1)*(2*m+1);
+    hence thesis by A2, RtI;
+  end;
+  suppose (2*m+1)*(2*m+1) <= z;
+    hence thesis by A4, RtI;
+  end;
+end;
+
+:: Rt = Hf Hf S S E (I - 1) (I - E) S M4, with M4 = M3^+
+definition
+  func exprRtGE -> Element of Funcs(NAT,NAT) equals
+  funHf*funHf*funS*funS*funE*(exprIminusE (cst 1))*(exprIminusE funE)*
+    funS*(opPlusI.funM3);
+  coherence;
+end;
+
+theorem RtExprGE:
+  exprRtGE = funRt
+proof
+  now
+    let x;
+    set z = 4*x + 1, n = funRt.z, m = funRt.x;
+    set H4 = funHf*funHf*funS*funS*funE;
+    A1: funS.((opPlusI.funM3).x) = (opPlusI.funM3).x + 1 by DefS
+      .= funM3.x + x + 1 by DefPlusI
+      .= 3*x + x + 1 by DefM3
+      .= z;
+    n <> 0
+    proof
+      assume n = 0;
+      then z < (0+1)*(0+1) by DefRt;
+      hence contradiction by NAT_1:11;
+    end;
+    then 1 <= n by NAT_1:14;
+    then consider n1 being Nat such that A2: n = 1 + n1 by NAT_1:10;
+    A3: funE.z + n*n = z by EVal;
+    then funE.z <= z by NAT_1:11;
+    then A4: (exprIminusE funE).z = z -' funE.z by IminusEVal
+      .= n*n by A3, NAT_D:34;
+    A5: (cst 1).(n*n) = 1 by DefCst;
+    n*n = 1 + (n1*n1 + 2*n1) by A2;
+    then 1 <= n*n by NAT_1:11;
+    then (cst 1).(n*n) <= n*n by A5;
+    then A6: (exprIminusE (cst 1)).(n*n) = n*n -' 1 by A5, IminusEVal
+      .= n1*n1 + 2*n1 + 1 -' 1 by A2
+      .= n1*n1 + 2*n1 by NAT_D:34;
+    2*n1 <= 2*n1;
+    then A7: funE.(n1*n1 + 2*n1) = 2*n1 by ESqAdd;
+    A8: H4.(n1*n1 + 2*n1) = (funHf*funHf*funS*funS).(funE.(n1*n1 + 2*n1))
+        by CompVal
+      .= (funHf*funHf*funS).(funS.(2*n1)) by A7, CompVal
+      .= (funHf*funHf*funS).(2*n1 + 1) by DefS
+      .= (funHf*funHf).(funS.(2*n1 + 1)) by CompVal
+      .= (funHf*funHf).(2*n1 + 1 + 1) by DefS
+      .= funHf.(funHf.(2*n)) by A2, CompVal
+      .= funHf.((2*n) div 2) by DefHf
+      .= funHf.n by DivTwo
+      .= n div 2 by DefHf;
+    A9: n div 2 = m
+    proof
+      per cases by Rt4;
+      suppose n = 2*m;
+        hence thesis by DivTwo;
+      end;
+      suppose n = 2*m + 1;
+        hence thesis by DivTwo;
+      end;
+    end;
+    thus exprRtGE.x
+        = (H4*(exprIminusE (cst 1))*(exprIminusE funE)*funS).
+          ((opPlusI.funM3).x) by CompVal
+      .= (H4*(exprIminusE (cst 1))*(exprIminusE funE)).
+          (funS.((opPlusI.funM3).x)) by CompVal
+      .= (H4*(exprIminusE (cst 1))).((exprIminusE funE).z) by A1, CompVal
+      .= H4.((exprIminusE (cst 1)).(n*n)) by A4, CompVal
+      .= funRt.x by A6, A8, A9;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem GERt:
+  funRt in ClosGR funE
+proof
+  A1: funHf in ClosGR funE by GEHf;
+  A2: funS in ClosGR funE & cst 1 in ClosGR funE & funE in ClosGR funE &
+    funM3 in ClosGR funE by GEFirst, CGOne;
+  funHf*funHf in ClosGR funE by A1, CGComp;
+  then funHf*funHf*funS in ClosGR funE by A2, CGComp;
+  then funHf*funHf*funS*funS in ClosGR funE by A2, CGComp;
+  then A3: funHf*funHf*funS*funS*funE in ClosGR funE by A2, CGComp;
+  exprIminusE (cst 1) in ClosGR funE by A2, IminusEIn;
+  then A4: funHf*funHf*funS*funS*funE*(exprIminusE (cst 1)) in ClosGR funE
+    by A3, CGComp;
+  exprIminusE funE in ClosGR funE by A2, IminusEIn;
+  then funHf*funHf*funS*funS*funE*(exprIminusE (cst 1))*(exprIminusE funE)
+    in ClosGR funE by A4, CGComp;
+  then A5: funHf*funHf*funS*funS*funE*(exprIminusE (cst 1))*
+    (exprIminusE funE)*funS in ClosGR funE by A2, CGComp;
+  opPlusI.funM3 in ClosGR funE by A2, CGPlusI;
+  then exprRtGE in ClosGR funE by A5, CGComp;
+  hence thesis by RtExprGE;
+end;
+
+theorem GERich:
+  ClosGR funE is rich
+proof
+  thus funI in ClosGR funE & funE in ClosGR funE & funS in ClosGR funE &
+    funD in ClosGR funE & funM3 in ClosGR funE & funSq in ClosGR funE &
+    funHf in ClosGR funE & funRt in ClosGR funE
+    by GEFirst, CGOne, GESq, GEHf, GERt;
+  thus thesis by CGPlusI, CGComp;
+end;
+
+:: A, V, K and L are in every rich set (as in AIn ... LIn)
+theorem RichAVKL:
+  Y is rich implies funA in Y & funV in Y & funK in Y & funL in Y
+proof
+  assume A0: Y is rich;
+  then A10: funI in Y & funS in Y & funD in Y & funSq in Y & funHf in Y &
+    funRt in Y by RBasic;
+  now
+    let x;
+    thus (funHf*(opPlusI.funSq)).x = funHf.((opPlusI.funSq).x) by CompVal
+      .= funHf.(funSq.x + x) by DefPlusI
+      .= funHf.(x*x + x) by DefSq
+      .= (x*x + x) div 2 by DefHf
+      .= funA.x by DefA;
+  end;
+  then A1: funHf*(opPlusI.funSq) = funA by UFunExt;
+  opPlusI.funSq in Y by A0, A10, RPlusI;
+  hence A11: funA in Y by A0, A1, A10, RComp;
+  set G = funHf*exprPhat*funRt*funS*funD*funD*funD;
+  now
+    let x;
+    set s = funRt.(8*x + 1);
+    A2: (funD*funD*funD).x = (funD*funD).(funD.x) by CompVal
+      .= funD.(funD.(funD.x)) by CompVal
+      .= funD.(funD.(2*x)) by DefD
+      .= funD.(2*(2*x)) by DefD
+      .= 2*(2*(2*x)) by DefD
+      .= 8*x;
+    A3: G.x = (funHf*exprPhat*funRt*funS*funD*funD).(funD.x) by CompVal
+      .= (funHf*exprPhat*funRt*funS*funD).(funD.(funD.x)) by CompVal
+      .= (funHf*exprPhat*funRt*funS).(funD.(funD.(funD.x))) by CompVal
+      .= (funHf*exprPhat*funRt*funS).((funD*funD).(funD.x)) by CompVal
+      .= (funHf*exprPhat*funRt*funS).(8*x) by A2, CompVal
+      .= (funHf*exprPhat*funRt).(funS.(8*x)) by CompVal
+      .= (funHf*exprPhat*funRt).(8*x + 1) by DefS
+      .= (funHf*exprPhat).s by CompVal
+      .= funHf.(exprPhat.s) by CompVal;
+    s <> 0
+    proof
+      assume s = 0;
+      then 8*x + 1 < (0+1)*(0+1) by DefRt;
+      hence contradiction by NAT_1:11;
+    end;
+    then 1 <= s by NAT_1:14;
+    then A4: (s -' 1) + 1 = s by XREAL_1:235;
+    thus G.x = funHf.(exprPhat.((s -' 1) + 1)) by A3, A4
+      .= funHf.(s -' 1) by PhatVal
+      .= (s -' 1) div 2 by DefHf
+      .= funV.x by DefV;
+  end;
+  then A5: G = funV by UFunExt;
+  exprPhat in Y by A0, RPhatIn;
+  then funHf*exprPhat in Y by A0, A10, RComp;
+  then funHf*exprPhat*funRt in Y by A0, A10, RComp;
+  then funHf*exprPhat*funRt*funS in Y by A0, A10, RComp;
+  then funHf*exprPhat*funRt*funS*funD in Y by A0, A10, RComp;
+  then funHf*exprPhat*funRt*funS*funD*funD in Y by A0, A10, RComp;
+  hence A12: funV in Y by A0, A5, A10, RComp;
+  A6: funA*funV in Y by A0, A11, A12, RComp;
+  A7: for x holds (funA*funV).x <= funI.x
+  proof
+    let x;
+    A8: (funA*funV).x = funA.(funV.x) by CompVal;
+    funI.x = x by DefI .= funA.(funV.x) + funK.x by Decomp;
+    hence thesis by A8, NAT_1:11;
+  end;
+  now
+    let x;
+    thus (opMinus.(funI, funA*funV)).x = funI.x -' (funA*funV).x by DefMinus
+      .= x -' (funA*funV).x by DefI
+      .= x -' funA.(funV.x) by CompVal
+      .= funK.x by DefK;
+  end;
+  then opMinus.(funI, funA*funV) = funK by UFunExt;
+  hence A13: funK in Y by A0, A6, A7, A10, RLemma66;
+  A9: for x holds funK.x <= funV.x by Decomp;
+  now
+    let x;
+    thus (opMinus.(funV, funK)).x = funV.x -' funK.x by DefMinus
+      .= funL.x by LEq;
+  end;
+  then opMinus.(funV, funK) = funL by UFunExt;
+  hence thesis by A0, A9, A12, A13, RLemma66;
+end;
+
+:: Inclusions between <1, E, F^+, FG, F^-1> and Robinson's basis
+
+theorem JRFirst:
+  funI in ClosJR & cst 0 in ClosJR & cst 1 in ClosJR
+proof
+  A1: funS in ClosJR & funE in ClosJR by JRBasic;
+  then A2: opInv.funE in ClosJR by JRInv;
+  now
+    let x;
+    thus (funE*(opInv.funE)).x = funE.((opInv.funE).x) by CompVal
+      .= x by ESurj, InvRight
+      .= funI.x by DefI;
+  end;
+  then A3: funE*(opInv.funE) = funI by UFunExt;
+  hence A4: funI in ClosJR by A1, A2, JRComp;
+  set G = funE*funS*(opInv.funE);
+  now
+    let x;
+    A5: (opPlus.(funI,funI)).x = funI.x + funI.x by DefPlus
+      .= x + funI.x by DefI
+      .= x + x by DefI
+      .= 2*x;
+    0 <= 2*(x+1);
+    then A6: funE.((x+1)*(x+1) + 0) = 0 by ESqAdd;
+    thus (G*(opPlus.(funI,funI))).x = G.(2*x) by A5, CompVal
+      .= (funE*funS).((opInv.funE).(2*x)) by CompVal
+      .= (funE*funS).(x*x + 2*x) by EinvD
+      .= funE.(funS.(x*x + 2*x)) by CompVal
+      .= funE.(x*x + 2*x + 1) by DefS
+      .= 0 by A6
+      .= (cst 0).x by DefCst;
+  end;
+  then A7: G*(opPlus.(funI,funI)) = cst 0 by UFunExt;
+  funE*funS in ClosJR by A1, JRComp;
+  then A8: G in ClosJR by A2, JRComp;
+  opPlus.(funI,funI) in ClosJR by A4, JRPlus;
+  hence A9: cst 0 in ClosJR by A7, A8, JRComp;
+  thus thesis by A1, A9, JRComp, OneExpr;
+end;
+
+theorem GESubJR:
+  ClosGR funE c= ClosJR
+proof
+  ClosJR is_closed_under {cst 1, funE}, {opPlusI, opInv}, {opComp}
+  proof
+    thus {cst 1, funE} c= ClosJR
+    proof
+      let z be object;
+      assume z in {cst 1, funE};
+      then z = cst 1 or z = funE by TARSKI:def 2;
+      hence thesis by JRBasic, JRFirst;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opPlusI, opInv} & F in ClosJR holds u.F in ClosJR
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A1: u in {opPlusI, opInv} & F in ClosJR;
+      then A2: u = opPlusI or u = opInv by TARSKI:def 2;
+      opPlus.(F, funI) in ClosJR by A1, JRFirst, JRPlus;
+      then opPlusI.F in ClosJR by PlusIEq;
+      hence thesis by A1, A2, JRInv;
+    end;
+    let c be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A3: c in {opComp} & F in ClosJR & G in ClosJR;
+    then c = opComp by TARSKI:def 1;
+    then c.(F,G) = F*G by DefComp;
+    hence thesis by A3, JRComp;
+  end;
+  hence thesis by ClosLeast;
+end;
+
+:: a rich closure under inversion containing S and E contains ClosJR
+theorem JRSubRich:
+  Y is rich & (for F st F in Y holds opInv.F in Y) implies ClosJR c= Y
+proof
+  assume that A0: Y is rich and A1: for F st F in Y holds opInv.F in Y;
+  Y is_closed_under {funS, funE}, {opInv}, {opPlus, opComp}
+  proof
+    thus {funS, funE} c= Y
+    proof
+      let z be object;
+      assume z in {funS, funE};
+      then z = funS or z = funE by TARSKI:def 2;
+      hence thesis by A0, RBasic;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opInv} & F in Y holds u.F in Y
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A2: u in {opInv} & F in Y;
+      then u = opInv by TARSKI:def 1;
+      hence thesis by A1, A2;
+    end;
+    let c be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A3: c in {opPlus, opComp} & F in Y & G in Y;
+    then A4: c = opPlus or c = opComp by TARSKI:def 2;
+    A5: opComp.(F,G) = F*G by DefComp;
+    F*G in Y by A0, A3, RComp;
+    hence thesis by A0, A3, A4, A5, RLemma66;
+  end;
+  hence thesis by ClosLeast;
+end;
+
+theorem GREqJRE:
+  ClosGR funE = ClosJR
+proof
+  for F st F in ClosGR funE holds opInv.F in ClosGR funE by CGInv;
+  then ClosJR c= ClosGR funE by GERich, JRSubRich;
+  hence thesis by GESubJR, XBOOLE_0:def 10;
+end;
+
+:: The case X = K: Z = K^-1, A = K S S S ((Z Z^+ K)^+ Z K)^+ Z,
+:: F^- = K (S S S M3 F K)^+ (A F^+)^+, Sq = (((D Z)^-)^-)^-, P = K (K S)^-1,
+:: U = I - A K P (I - K) (U = V + K), Hf = K U^-1,
+:: B = I - (I - Sq (I - Hf) U) (I - K) (B = K + ceil(V/2)^2), E = K B^-1
+
+theorem GKFirst:
+  funS in ClosGR funK & cst 0 in ClosGR funK & funI in ClosGR funK &
+  funD in ClosGR funK & funM3 in ClosGR funK
+proof
+  A1: cst 1 in ClosGR funK & funK in ClosGR funK by CGOne;
+  hence funS in ClosGR funK by CGPlusI, SExpr;
+  thus A2: cst 0 in ClosGR funK by A1, CGComp, ZeroExprK;
+  hence funI in ClosGR funK by CGPlusI, IExpr0;
+  opPlusI.(cst 0) in ClosGR funK by A2, CGPlusI;
+  hence A3: funD in ClosGR funK by CGPlusI, DExpr;
+  thus thesis by A3, CGPlusI, M3Expr;
+end;
+
+theorem KSurj:
+  funK is surj
+proof
+  let x;
+  take funA.x + x;
+  thus thesis by Diag;
+end;
+
+theorem KZ:
+  funK.(funZ.x) = x
+proof
+  funZ.x = funA.x + x by DefZ;
+  hence thesis by Diag;
+end;
+
+theorem KinvZ:
+  opInv.funK = funZ
+proof
+  now
+    let x;
+    set y = (opInv.funK).x;
+    funK.(funA.x + x) = x by Diag;
+    then A1: y <= funA.x + x by KSurj, InvLeast;
+    A2: funK.y = x by KSurj, InvRight;
+    A3: y = funA.(funV.y) + funK.y & funK.y <= funV.y by Decomp;
+    then funA.x <= funA.(funV.y) by A2, AMono;
+    then funA.x + x <= y by A2, A3, XREAL_1:6;
+    hence y = funA.x + x by A1, XXREAL_0:1
+      .= funZ.x by DefZ;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem GKZ:
+  funZ in ClosGR funK
+proof
+  funK in ClosGR funK by CGOne;
+  then opInv.funK in ClosGR funK by CGInv;
+  hence thesis by KinvZ;
+end;
+
+definition
+  func exprAK -> Element of Funcs(NAT,NAT) equals
+  funK*funS*funS*funS*
+    (opPlusI.((opPlusI.(funZ*(opPlusI.funZ)*funK))*funZ*funK))*funZ;
+  coherence;
+end;
+
+theorem AExprK:
+  exprAK = funA
+proof
+  now
+    let x;
+    set z = funZ.x;
+    set G0 = funZ*(opPlusI.funZ)*funK;
+    set G1 = (opPlusI.G0)*funZ*funK;
+    A1: z = funA.x + x by DefZ;
+    A2: G0.z = (funZ*(opPlusI.funZ)).(funK.z) by CompVal
+      .= (funZ*(opPlusI.funZ)).x by KZ
+      .= funZ.((opPlusI.funZ).x) by CompVal
+      .= funZ.(z + x) by DefPlusI;
+    A3: G1.z = ((opPlusI.G0)*funZ).(funK.z) by CompVal
+      .= ((opPlusI.G0)*funZ).x by KZ
+      .= (opPlusI.G0).z by CompVal
+      .= funZ.(z + x) + z by A2, DefPlusI;
+    A4: (opPlusI.G1).z = G1.z + z by DefPlusI
+      .= funZ.(z + x) + 2*z by A3;
+    x <= z by A1, NAT_1:11;
+    then A5: funK.(funZ.(z + x) + 2*z + 3) = z -' x by RobDiffK;
+    thus exprAK.x = (funK*funS*funS*funS*(opPlusI.G1)).z by CompVal
+      .= (funK*funS*funS*funS).((opPlusI.G1).z) by CompVal
+      .= funK.(funZ.(z + x) + 2*z + 3) by A4, KSSSVal
+      .= funA.x by A1, A5, NAT_D:34;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem GKA:
+  funA in ClosGR funK
+proof
+  A1: funZ in ClosGR funK by GKZ;
+  A2: funK in ClosGR funK & funS in ClosGR funK by CGOne, GKFirst;
+  opPlusI.funZ in ClosGR funK by A1, CGPlusI;
+  then funZ*(opPlusI.funZ) in ClosGR funK by A1, CGComp;
+  then funZ*(opPlusI.funZ)*funK in ClosGR funK by A2, CGComp;
+  then opPlusI.(funZ*(opPlusI.funZ)*funK) in ClosGR funK by CGPlusI;
+  then (opPlusI.(funZ*(opPlusI.funZ)*funK))*funZ in ClosGR funK
+    by A1, CGComp;
+  then (opPlusI.(funZ*(opPlusI.funZ)*funK))*funZ*funK in ClosGR funK
+    by A2, CGComp;
+  then A3: opPlusI.((opPlusI.(funZ*(opPlusI.funZ)*funK))*funZ*funK)
+    in ClosGR funK by CGPlusI;
+  funK*funS in ClosGR funK by A2, CGComp;
+  then funK*funS*funS in ClosGR funK by A2, CGComp;
+  then funK*funS*funS*funS in ClosGR funK by A2, CGComp;
+  then funK*funS*funS*funS*
+    (opPlusI.((opPlusI.(funZ*(opPlusI.funZ)*funK))*funZ*funK))
+    in ClosGR funK by A3, CGComp;
+  then exprAK in ClosGR funK by A1, CGComp;
+  hence thesis by AExprK;
+end;
+
+definition
+  let F be Element of Funcs(NAT,NAT);
+  func exprMinusIK F -> Element of Funcs(NAT,NAT) equals
+  funK*(opPlusI.(funS*funS*funS*funM3*F*funK))*
+    (opPlusI.(funA*(opPlusI.F)));
+  coherence;
+end;
+
+theorem MinusIKIn:
+  F in ClosGR funK implies exprMinusIK F in ClosGR funK
+proof
+  assume A1: F in ClosGR funK;
+  A2: funS in ClosGR funK & funM3 in ClosGR funK by GKFirst;
+  A3: funK in ClosGR funK & funA in ClosGR funK by CGOne, GKA;
+  funS*funS in ClosGR funK by A2, CGComp;
+  then funS*funS*funS in ClosGR funK by A2, CGComp;
+  then funS*funS*funS*funM3 in ClosGR funK by A2, CGComp;
+  then funS*funS*funS*funM3*F in ClosGR funK by A1, CGComp;
+  then funS*funS*funS*funM3*F*funK in ClosGR funK by A3, CGComp;
+  then opPlusI.(funS*funS*funS*funM3*F*funK) in ClosGR funK by CGPlusI;
+  then A4: funK*(opPlusI.(funS*funS*funS*funM3*F*funK)) in ClosGR funK
+    by A3, CGComp;
+  opPlusI.F in ClosGR funK by A1, CGPlusI;
+  then funA*(opPlusI.F) in ClosGR funK by A3, CGComp;
+  then opPlusI.(funA*(opPlusI.F)) in ClosGR funK by CGPlusI;
+  hence thesis by A4, CGComp;
+end;
+
+theorem MinusIKVal:
+  x <= F.x implies (exprMinusIK F).x = F.x -' x
+proof
+  assume A1: x <= F.x;
+  set d = F.x -' x;
+  A2: F.x = d + x by A1, XREAL_1:235;
+  set s = F.x + x;
+  set G2 = funS*funS*funS*funM3*F*funK;
+  set w = funA.s + x;
+  A3: (opPlusI.(funA*(opPlusI.F))).x = (funA*(opPlusI.F)).x + x by DefPlusI
+    .= funA.((opPlusI.F).x) + x by CompVal
+    .= w by DefPlusI;
+  x <= s by NAT_1:11;
+  then A4: funK.w = x by Diag;
+  A5: G2.w = (funS*funS*funS*funM3*F).(funK.w) by CompVal
+    .= (funS*funS*funS*funM3).(F.x) by A4, CompVal
+    .= (funS*funS*funS).(funM3.(F.x)) by CompVal
+    .= (funS*funS*funS).(3*F.x) by DefM3
+    .= (funS*funS).(funS.(3*F.x)) by CompVal
+    .= (funS*funS).(3*F.x + 1) by DefS
+    .= funS.(funS.(3*F.x + 1)) by CompVal
+    .= funS.(3*F.x + 1 + 1) by DefS
+    .= 3*F.x + 1 + 1 + 1 by DefS;
+  A6: funA.(s+1+1) = funA.(s+1) + (s+1) + 1 by ASuc
+    .= funA.s + s + 1 + (s+1) + 1 by ASuc;
+  A7: (opPlusI.G2).w = G2.w + w by DefPlusI
+    .= funA.(s+1+1) + d by A2, A5, A6;
+  s+1+1 = d + (2*x + 2) by A2;
+  then d <= s+1+1 by NAT_1:11;
+  then A8: funK.(funA.(s+1+1) + d) = d by Diag;
+  thus (exprMinusIK F).x
+      = (funK*(opPlusI.G2)).((opPlusI.(funA*(opPlusI.F))).x) by CompVal
+     .= funK.((opPlusI.G2).w) by A3, CompVal
+     .= d by A7, A8;
+end;
+
+theorem SqExprGK:
+  exprMinusIK (exprMinusIK (exprMinusIK (funD*funZ))) = funSq
+proof
+  set G = funD*funZ;
+  now
+    let x;
+    A1: G.x = funD.(funZ.x) by CompVal
+      .= 2*(funZ.x) by DefD
+      .= x*(x+3) by TwoZ
+      .= x + (x*x + 2*x);
+    then x <= G.x by NAT_1:11;
+    then A2: (exprMinusIK G).x = x + (x*x + 2*x) -' x by A1, MinusIKVal
+      .= x*x + 2*x by NAT_D:34
+      .= x + (x*x + x);
+    then x <= (exprMinusIK G).x by NAT_1:11;
+    then A3: (exprMinusIK (exprMinusIK G)).x = x + (x*x + x) -' x
+        by A2, MinusIKVal
+      .= x*x + x by NAT_D:34;
+    then x <= (exprMinusIK (exprMinusIK G)).x by NAT_1:11;
+    hence (exprMinusIK (exprMinusIK (exprMinusIK G))).x = x*x + x -' x
+        by A3, MinusIKVal
+      .= x*x by NAT_D:34
+      .= funSq.x by DefSq;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem GKSq:
+  funSq in ClosGR funK
+proof
+  funD in ClosGR funK & funZ in ClosGR funK by GKFirst, GKZ;
+  then funD*funZ in ClosGR funK by CGComp;
+  then exprMinusIK (funD*funZ) in ClosGR funK by MinusIKIn;
+  then exprMinusIK (exprMinusIK (funD*funZ)) in ClosGR funK by MinusIKIn;
+  then exprMinusIK (exprMinusIK (exprMinusIK (funD*funZ))) in ClosGR funK
+    by MinusIKIn;
+  hence thesis by SqExprGK;
+end;
+
+:: the predecessor P = K (K S)^-1
+definition
+  func exprPK -> Element of Funcs(NAT,NAT) equals
+  funK*(opInv.(funK*funS));
+  coherence;
+end;
+
+theorem KSSurj:
+  funK*funS is surj
+proof
+  let x;
+  take y = funA.x + 2*x;
+  funA.(x+1) = funA.x + x + 1 by ASuc;
+  then A1: y + 1 = funA.(x+1) + x;
+  x <= x + 1 by NAT_1:11;
+  then A2: funK.(funA.(x+1) + x) = x by Diag;
+  thus (funK*funS).y = funK.(funS.y) by CompVal
+    .= x by A1, A2, DefS;
+end;
+
+theorem PKVal:
+  exprPK.0 = 0 & exprPK.(x+1) = x
+proof
+  set Q = opInv.(funK*funS);
+  (funK*funS).0 = funK.(funS.0) by CompVal
+    .= funK.(0 + 1) by DefS
+    .= 0 by KSmall;
+  then Q.0 <= 0 by KSSurj, InvLeast;
+  then A1: Q.0 = 0;
+  thus exprPK.0 = funK.(Q.0) by CompVal .= 0 by A1, KSmall;
+  set y = Q.(x+1);
+  A2: (funK*funS).y = x + 1 by KSSurj, InvRight;
+  A3: funK.(y + 1) = funK.(funS.y) by DefS
+    .= x + 1 by A2, CompVal;
+  set t = funV.(y+1);
+  A4: y + 1 = funA.t + funK.(y+1) & funK.(y+1) <= t by Decomp;
+  then A5: y = funA.t + x by A3;
+  x <= x + 1 by NAT_1:11;
+  then x <= t by A3, A4, XXREAL_0:2;
+  then funK.(funA.t + x) = x by Diag;
+  hence thesis by A5, CompVal;
+end;
+
+theorem GKP:
+  exprPK in ClosGR funK
+proof
+  A1: funK in ClosGR funK & funS in ClosGR funK by CGOne, GKFirst;
+  then funK*funS in ClosGR funK by CGComp;
+  then opInv.(funK*funS) in ClosGR funK by CGInv;
+  hence thesis by A1, CGComp;
+end;
+
+theorem GKIminusF:
+  F in ClosGR funK implies exprIminusF F in ClosGR funK
+proof
+  assume A1: F in ClosGR funK;
+  A2: funK in ClosGR funK & funS in ClosGR funK & funZ in ClosGR funK
+    by CGOne, GKFirst, GKZ;
+  opPlusI.F in ClosGR funK by A1, CGPlusI;
+  then funZ*(opPlusI.F) in ClosGR funK by A2, CGComp;
+  then opPlusI.(funZ*(opPlusI.F)) in ClosGR funK by CGPlusI;
+  then A3: opPlusI.(opPlusI.(funZ*(opPlusI.F))) in ClosGR funK by CGPlusI;
+  funK*funS in ClosGR funK by A2, CGComp;
+  then funK*funS*funS in ClosGR funK by A2, CGComp;
+  then funK*funS*funS*funS in ClosGR funK by A2, CGComp;
+  hence thesis by A3, CGComp;
+end;
+
+theorem IminusKVal:
+  (exprIminusF funK).y = funA.(funV.y)
+proof
+  A1: y = funA.(funV.y) + funK.y by Decomp;
+  then funK.y <= y by NAT_1:11;
+  hence (exprIminusF funK).y = y -' funK.y by IminusFVal
+    .= funA.(funV.y) by A1, NAT_D:34;
+end;
+
+definition
+  func exprU -> Element of Funcs(NAT,NAT) equals
+  exprIminusF (funA*funK*exprPK*(exprIminusF funK));
+  coherence;
+end;
+
+theorem UIn:
+  exprU in ClosGR funK
+proof
+  A1: funA in ClosGR funK & funK in ClosGR funK & exprPK in ClosGR funK
+    by GKA, CGOne, GKP;
+  then funA*funK in ClosGR funK by CGComp;
+  then A2: funA*funK*exprPK in ClosGR funK by A1, CGComp;
+  exprIminusF funK in ClosGR funK by A1, GKIminusF;
+  then funA*funK*exprPK*(exprIminusF funK) in ClosGR funK by A2, CGComp;
+  hence thesis by GKIminusF;
+end;
+
+theorem UVal:
+  exprU.y = funV.y + funK.y
+proof
+  set t = funV.y, k = funK.y;
+  set Q = funA*funK*exprPK*(exprIminusF funK);
+  A1: y = funA.t + k & k <= t by Decomp;
+  A2: Q.y = (funA*funK*exprPK).((exprIminusF funK).y) by CompVal
+    .= (funA*funK*exprPK).(funA.t) by IminusKVal
+    .= (funA*funK).(exprPK.(funA.t)) by CompVal
+    .= funA.(funK.(exprPK.(funA.t))) by CompVal;
+  per cases by NAT_1:14;
+  suppose A3: t = 0;
+    then A4: funA.t = 0 by AZero;
+    then A5: Q.y = 0 by A2, PKVal, KSmall, AZero;
+    A7: k = 0 by A1, A3;
+    then A6: y = 0 by A1, A4;
+    Q.y <= y by A5;
+    hence exprU.y = y -' Q.y by IminusFVal
+      .= 0 -' 0 by A5, A6
+      .= 0 by XREAL_1:232
+      .= t + k by A3, A7;
+  end;
+  suppose 1 <= t;
+    then consider t1 being Nat such that A3: t = 1 + t1 by NAT_1:10;
+    A4: funA.t = funA.t1 + t1 + 1 by A3, ASuc;
+    t1 <= t1;
+    then A5: funK.(funA.t1 + t1) = t1 by Diag;
+    A6: Q.y = funA.t1 by A2, A4, A5, PKVal;
+    A7: y = funA.t1 + (t + k) by A1, A3, A4;
+    then Q.y <= y by A6, NAT_1:11;
+    hence exprU.y = y -' Q.y by IminusFVal
+      .= t + k by A6, A7, NAT_D:34;
+  end;
+end;
+
+theorem UPair:
+  k <= t implies exprU.(funA.t + k) = t + k
+proof
+  assume k <= t;
+  then funV.(funA.t + k) = t & funK.(funA.t + k) = k by Diag;
+  hence thesis by UVal;
+end;
+
+theorem USurj:
+  exprU is surj
+proof
+  let x;
+  consider h such that A1: x = 2*h or x = 2*h + 1 by Parity;
+  per cases by A1;
+  suppose A2: x = 2*h;
+    take funA.h + h;
+    h <= h;
+    then exprU.(funA.h + h) = h + h by UPair;
+    hence thesis by A2;
+  end;
+  suppose A2: x = 2*h + 1;
+    take funA.(h+1) + h;
+    h <= h + 1 by NAT_1:11;
+    then exprU.(funA.(h+1) + h) = h + 1 + h by UPair;
+    hence thesis by A2;
+  end;
+end;
+
+:: Hf = K U^-1: the least y = A(t) + k with t + k = x has k = floor(x/2)
+theorem HfExprK:
+  funK*(opInv.exprU) = funHf
+proof
+  now
+    let x;
+    set y = (opInv.exprU).x, t = funV.y, k = funK.y;
+    A0: exprU.y = x by USurj, InvRight;
+    A1: t + k = x by A0, UVal;
+    A2: y = funA.t + k & k <= t by Decomp;
+    consider h such that A3: x = 2*h or x = 2*h + 1 by Parity;
+    ex r st (r = 0 or r = 1) & x = 2*h + r
+    proof
+      per cases by A3;
+      suppose A31: x = 2*h;
+        take 0;
+        thus thesis by A31;
+      end;
+      suppose A31: x = 2*h + 1;
+        take 1;
+        thus thesis by A31;
+      end;
+    end;
+    then consider r such that A4: (r = 0 or r = 1) & x = 2*h + r;
+    A5: funHf.x = x div 2 by DefHf .= h by A3, DivTwo;
+    A6: k <= h
+    proof
+      assume not k <= h;
+      then h + 1 <= k by NAT_1:13;
+      then 2*(h + 1) <= 2*k by XREAL_1:64;
+      then A7: 2*h + 2 <= 2*k;
+      k + k <= t + k by A2, XREAL_1:6;
+      then 2*h + 2 <= 2*h + r by A1, A4, A7, XXREAL_0:2;
+      then 2 <= r by XREAL_1:6;
+      hence contradiction by A4;
+    end;
+    h <= k
+    proof
+      assume not h <= k;
+      then k + 1 <= h by NAT_1:13;
+      then t + (k + 1) <= t + h by XREAL_1:6;
+      then (h + r + 1) + h <= t + h by A1, A4;
+      then A8: h + r + 1 <= t by XREAL_1:6;
+      set y0 = funA.(h + r) + h;
+      h <= h + r by NAT_1:11;
+      then exprU.y0 = h + r + h by UPair .= x by A4;
+      then A9: y <= y0 by USurj, InvLeast;
+      A10: funA.(h + r + 1) = funA.(h + r) + (h + r) + 1 by ASuc;
+      h <= h + r by NAT_1:11;
+      then A13: h < h + r + 1 by NAT_1:13;
+      funA.(h + r) <= funA.(h + r);
+      then funA.(h + r) + h < funA.(h + r) + (h + r + 1) by A13, XREAL_1:8;
+      then A11: y0 < funA.(h + r + 1) by A10;
+      A12: funA.(h + r + 1) <= funA.t by A8, AMono;
+      funA.t <= y by A2, NAT_1:11;
+      then funA.(h + r + 1) <= y by A12, XXREAL_0:2;
+      hence contradiction by A9, A11, XXREAL_0:2;
+    end;
+    then k = h by A6, XXREAL_0:1;
+    hence (funK*(opInv.exprU)).x = funHf.x by A5, CompVal;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem GKHf:
+  funHf in ClosGR funK
+proof
+  funK in ClosGR funK & opInv.exprU in ClosGR funK by CGOne, UIn, CGInv;
+  then funK*(opInv.exprU) in ClosGR funK by CGComp;
+  hence thesis by HfExprK;
+end;
+
+definition
+  func exprB -> Element of Funcs(NAT,NAT) equals
+  exprIminusF ((exprIminusF (funSq*(exprIminusF funHf)*exprU))*
+    (exprIminusF funK));
+  coherence;
+end;
+
+theorem BIn:
+  exprB in ClosGR funK
+proof
+  A1: funSq in ClosGR funK & funHf in ClosGR funK & funK in ClosGR funK &
+    exprU in ClosGR funK by GKSq, GKHf, CGOne, UIn;
+  then exprIminusF funHf in ClosGR funK by GKIminusF;
+  then funSq*(exprIminusF funHf) in ClosGR funK by A1, CGComp;
+  then funSq*(exprIminusF funHf)*exprU in ClosGR funK by A1, CGComp;
+  then A2: exprIminusF (funSq*(exprIminusF funHf)*exprU) in ClosGR funK
+    by GKIminusF;
+  exprIminusF funK in ClosGR funK by A1, GKIminusF;
+  then (exprIminusF (funSq*(exprIminusF funHf)*exprU))*(exprIminusF funK)
+    in ClosGR funK by A2, CGComp;
+  hence thesis by GKIminusF;
+end;
+
+theorem AHalf:
+  (r = 0 or r = 1) implies funA.(2*h + r) = (h + r)*(h + r) + (h*h + h)
+proof
+  assume A1: r = 0 or r = 1;
+  set t = 2*h + r;
+  A2: 2*(funA.t) = t*t + t by TwoA;
+  per cases by A1;
+  suppose r = 0;
+    then 2*(funA.t) = 2*((h + r)*(h + r) + (h*h + h)) by A2;
+    hence thesis;
+  end;
+  suppose r = 1;
+    then 2*(funA.t) = 2*((h + r)*(h + r) + (h*h + h)) by A2;
+    hence thesis;
+  end;
+end;
+
+:: B(y) = K(y) + ceil(V(y)/2)^2
+theorem BVal:
+  (r = 0 or r = 1) & funV.y = 2*h + r implies
+  exprB.y = funK.y + (h + r)*(h + r)
+proof
+  assume that A1: r = 0 or r = 1 and A2: funV.y = 2*h + r;
+  set t = funV.y, k = funK.y, c = h + r;
+  set Q = funSq*(exprIminusF funHf)*exprU;
+  A3: y = funA.t + k by Decomp;
+  A4: funA.t = c*c + (h*h + h) by A1, A2, AHalf;
+  A5: exprU.(funA.t + 0) = t + 0 by UPair;
+  A6: funHf.t = t div 2 by DefHf .= h by A1, A2, DivTwo;
+  A12: t = c + h by A2;
+  then h <= t by NAT_1:11;
+  then funHf.t <= t by A6;
+  then A7: (exprIminusF funHf).t = t -' h by A6, IminusFVal
+    .= c by A12, NAT_D:34;
+  A8: Q.(funA.t) = (funSq*(exprIminusF funHf)).t by A5, CompVal
+    .= funSq.((exprIminusF funHf).t) by CompVal
+    .= c*c by A7, DefSq;
+  then Q.(funA.t) <= funA.t by A4, NAT_1:11;
+  then A9: (exprIminusF Q).(funA.t) = funA.t -' c*c by A8, IminusFVal
+    .= h*h + h by A4, NAT_D:34;
+  A10: ((exprIminusF Q)*(exprIminusF funK)).y
+      = (exprIminusF Q).((exprIminusF funK).y) by CompVal
+    .= h*h + h by A9, IminusKVal;
+  A11: y = (h*h + h) + (k + c*c) by A3, A4;
+  then h*h + h <= y by NAT_1:11;
+  hence exprB.y = y -' (h*h + h) by A10, IminusFVal
+    .= k + c*c by A11, NAT_D:34;
+end;
+
+theorem BSurj:
+  exprB is surj
+proof
+  let x;
+  set m = funRt.x, e = funE.x;
+  take y = funA.(2*m + 0) + e;
+  e <= 2*m by EBound;
+  then A1: funV.y = 2*m + 0 & funK.y = e by Diag;
+  thus exprB.y = e + (m + 0)*(m + 0) by A1, BVal
+    .= x by EVal;
+end;
+
+theorem EExprK:
+  funK*(opInv.exprB) = funE
+proof
+  now
+    let x;
+    set y = (opInv.exprB).x, t = funV.y, k = funK.y;
+    A1: exprB.y = x by BSurj, InvRight;
+    A2: k <= t by Decomp;
+    consider h such that A3: t = 2*h or t = 2*h + 1 by Parity;
+    ex r st (r = 0 or r = 1) & t = 2*h + r
+    proof
+      per cases by A3;
+      suppose A31: t = 2*h;
+        take 0;
+        thus thesis by A31;
+      end;
+      suppose A31: t = 2*h + 1;
+        take 1;
+        thus thesis by A31;
+      end;
+    end;
+    then consider r such that A4: (r = 0 or r = 1) & t = 2*h + r;
+    A5: x = k + (h + r)*(h + r) by A1, A4, BVal;
+    2*(h + r) = t + r by A4;
+    then t <= 2*(h + r) by NAT_1:11;
+    then k <= 2*(h + r) by A2, XXREAL_0:2;
+    then funE.((h + r)*(h + r) + k) = k by ESqAdd;
+    hence (funK*(opInv.exprB)).x = funE.x by A5, CompVal;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem GKE:
+  funE in ClosGR funK
+proof
+  funK in ClosGR funK & opInv.exprB in ClosGR funK by CGOne, BIn, CGInv;
+  then funK*(opInv.exprB) in ClosGR funK by CGComp;
+  hence thesis by EExprK;
+end;
+
+theorem GREqJR:
+  ClosGR funE = ClosJR & ClosGR funK = ClosJR & ClosGR funL = ClosJR
+proof
+  thus A1: ClosGR funE = ClosJR by GREqJRE;
+  A2: funK in ClosGR funE & funL in ClosGR funE by GERich, RichAVKL;
+  then A3: ClosGR funK c= ClosGR funE by CGSub;
+  A4: ClosGR funE c= ClosGR funK by GKE, CGSub;
+  hence ClosGR funK = ClosJR by A1, A3, XBOOLE_0:def 10;
+  A5: cst 1 in ClosGR funL & funL in ClosGR funL by CGOne;
+  then A6: opPlusI.(cst 1) in ClosGR funL by CGPlusI;
+  then opPlusI.(opPlusI.(cst 1)) in ClosGR funL by CGPlusI;
+  then (opPlusI.(opPlusI.(cst 1)))*funL in ClosGR funL by A5, CGComp;
+  then A7: opPlusI.((opPlusI.(opPlusI.(cst 1)))*funL) in ClosGR funL
+    by CGPlusI;
+  funL*(opPlusI.(cst 1)) in ClosGR funL by A5, A6, CGComp;
+  then funK in ClosGR funL by A7, CGComp, KExprL;
+  then ClosGR funK c= ClosGR funL by CGSub;
+  then A8: ClosGR funE c= ClosGR funL by A4, XBOOLE_1:1;
+  ClosGR funL c= ClosGR funE by A2, CGSub;
+  hence thesis by A1, A8, XBOOLE_0:def 10;
+end;
+
+:: The constant 1 cannot be dropped: when every initial function fixes 0
+:: and every operator preserves this, so does every generated function.
+
+theorem Fix0Clos:
+  I c= Funcs(NAT,NAT) & (for F st F in I holds F.0 = 0) &
+  (for u being UnOp of Funcs(NAT,NAT), F st u in U & F.0 = 0
+     holds (u.F).0 = 0) &
+  F in clos(I,U,{opComp}) implies F.0 = 0
+proof
+  assume that A1: I c= Funcs(NAT,NAT) and
+    A2: for F st F in I holds F.0 = 0 and
+    A3: for u being UnOp of Funcs(NAT,NAT), F st u in U & F.0 = 0
+      holds (u.F).0 = 0 and
+    A4: F in clos(I,U,{opComp});
+  defpred P[object] means ex G st G = $1 & G.0 = 0;
+  consider Y such that
+    A5: for G holds G in Y iff P[G] from SUBSET_1:sch 3;
+  A6: for G holds G in Y iff G.0 = 0
+  proof
+    let G;
+    thus G in Y implies G.0 = 0
+    proof
+      assume G in Y;
+      then ex H st H = G & H.0 = 0 by A5;
+      hence thesis;
+    end;
+    assume G.0 = 0;
+    hence thesis by A5;
+  end;
+  Y is_closed_under I, U, {opComp}
+  proof
+    thus I c= Y
+    proof
+      let z be object;
+      assume A7: z in I;
+      then reconsider G = z as Element of Funcs(NAT,NAT) by A1;
+      G.0 = 0 by A2, A7;
+      hence thesis by A6;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), G being Element of Funcs(NAT,NAT)
+      st u in U & G in Y holds u.G in Y
+    proof
+      let u be UnOp of Funcs(NAT,NAT), G be Element of Funcs(NAT,NAT);
+      assume A8: u in U & G in Y;
+      then G.0 = 0 by A6;
+      then (u.G).0 = 0 by A3, A8;
+      hence thesis by A6;
+    end;
+    let d be BinOp of Funcs(NAT,NAT), G,H be Element of Funcs(NAT,NAT);
+    assume A9: d in {opComp} & G in Y & H in Y;
+    then d = opComp by TARSKI:def 1;
+    then A10: d.(G,H) = G*H by DefComp;
+    (G*H).0 = G.(H.0) by CompVal .= G.0 by A6, A9 .= 0 by A6, A9;
+    hence thesis by A6, A10;
+  end;
+  then clos(I,U,{opComp}) c= Y by ClosLeast;
+  hence thesis by A4, A6;
+end;
+
+theorem InvFix0:
+  F.0 = 0 implies (opInv.F).0 = 0
+proof
+  assume A1: F.0 = 0;
+  per cases;
+  suppose F is surj;
+    then (opInv.F).0 <= 0 by A1, InvLeast;
+    hence thesis;
+  end;
+  suppose not F is surj;
+    hence thesis by A1, InvNot;
+  end;
+end;
+
+theorem PlusIFix0:
+  F.0 = 0 implies (opPlusI.F).0 = 0
+proof
+  assume A1: F.0 = 0;
+  thus (opPlusI.F).0 = F.0 + 0 by DefPlusI .= 0 by A1;
+end;
+
+theorem BoxFix0:
+  (opBox.F).0 = 0 by DefBox;
+
+theorem SingleFuncs:
+  {X} c= Funcs(NAT,NAT) & {W, X} c= Funcs(NAT,NAT)
+proof
+  thus {X} c= Funcs(NAT,NAT)
+  proof
+    let z be object;
+    assume z in {X};
+    then z = X by TARSKI:def 1;
+    hence thesis;
+  end;
+  let z be object;
+  assume z in {W, X};
+  then z = W or z = X by TARSKI:def 2;
+  hence thesis;
+end;
+
+theorem XFix0:
+  funE.0 = 0 & funK.0 = 0 & funL.0 = 0
+  by ESmall, KSmall, LZero;
+
+:: the basis <X, F^+, FG, F^-1>
+definition
+  let X be Element of Funcs(NAT,NAT);
+  func ClosGR0 X -> Subset of Funcs(NAT,NAT) equals
+  clos({X}, {opPlusI, opInv}, {opComp});
+  coherence;
+end;
+
+theorem GR0Fix:
+  X.0 = 0 & F in ClosGR0 X implies F.0 = 0
+proof
+  assume that A1: X.0 = 0 and A2: F in ClosGR0 X;
+  A3: for G st G in {X} holds G.0 = 0 by A1, TARSKI:def 1;
+  A4: for u being UnOp of Funcs(NAT,NAT), G st u in {opPlusI, opInv} &
+    G.0 = 0 holds (u.G).0 = 0
+  proof
+    let u be UnOp of Funcs(NAT,NAT), G;
+    assume A5: u in {opPlusI, opInv} & G.0 = 0;
+    then u = opPlusI or u = opInv by TARSKI:def 2;
+    hence thesis by A5, PlusIFix0, InvFix0;
+  end;
+  {X} c= Funcs(NAT,NAT) by SingleFuncs;
+  hence thesis by A2, A3, A4, Fix0Clos;
+end;
+
+theorem GR0Neq:
+  ClosGR0 funE <> ClosJR & ClosGR0 funK <> ClosJR & ClosGR0 funL <> ClosJR
+proof
+  A1: (cst 1).0 = 1 by DefCst;
+  A2: cst 1 in ClosJR by JRFirst;
+  thus ClosGR0 funE <> ClosJR by A1, A2, XFix0, GR0Fix;
+  thus ClosGR0 funK <> ClosJR by A1, A2, XFix0, GR0Fix;
+  thus thesis by A1, A2, XFix0, GR0Fix;
+end;
+
+:: Remark: 1 and S are interchangeable: <S, X, F^+, FG, F^-1> with
+:: 0 = (E S E^-1)(E S E^-1), 0 = K S K^-1 and 0 = L (L S)^-1 S
+definition
+  let X be Element of Funcs(NAT,NAT);
+  func ClosGRS X -> Subset of Funcs(NAT,NAT) equals
+  clos({funS, X}, {opPlusI, opInv}, {opComp});
+  coherence;
+end;
+
+theorem CSBasic:
+  funS in ClosGRS X & X in ClosGRS X &
+  (F in ClosGRS X implies opPlusI.F in ClosGRS X & opInv.F in ClosGRS X) &
+  (F in ClosGRS X & G in ClosGRS X implies F*G in ClosGRS X)
+proof
+  funS in {funS, X} & X in {funS, X} by TARSKI:def 2;
+  hence funS in ClosGRS X & X in ClosGRS X by ClosInit;
+  thus F in ClosGRS X implies opPlusI.F in ClosGRS X & opInv.F in ClosGRS X
+  proof
+    assume A1: F in ClosGRS X;
+    opPlusI in {opPlusI, opInv} & opInv in {opPlusI, opInv} by TARSKI:def 2;
+    hence thesis by A1, ClosUnop;
+  end;
+  thus thesis by CompIn;
+end;
+
+theorem GRSOne:
+  cst 0 in ClosGRS X implies ClosGRS X = ClosGR X
+proof
+  assume A1: cst 0 in ClosGRS X;
+  ClosGR X is_closed_under {funS, X}, {opPlusI, opInv}, {opComp}
+  proof
+    thus {funS, X} c= ClosGR X
+    proof
+      let z be object;
+      assume z in {funS, X};
+      then A2: z = funS or z = X by TARSKI:def 2;
+      cst 1 in ClosGR X by CGOne;
+      then funS in ClosGR X by CGPlusI, SExpr;
+      hence thesis by A2, CGOne;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opPlusI, opInv} & F in ClosGR X holds u.F in ClosGR X
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A3: u in {opPlusI, opInv} & F in ClosGR X;
+      then u = opPlusI or u = opInv by TARSKI:def 2;
+      hence thesis by A3, CGPlusI, CGInv;
+    end;
+    let c be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A4: c in {opComp} & F in ClosGR X & G in ClosGR X;
+    then c = opComp by TARSKI:def 1;
+    then c.(F,G) = F*G by DefComp;
+    hence thesis by A4, CGComp;
+  end;
+  then A5: ClosGRS X c= ClosGR X by ClosLeast;
+  ClosGRS X is_closed_under {cst 1, X}, {opPlusI, opInv}, {opComp}
+  proof
+    thus {cst 1, X} c= ClosGRS X
+    proof
+      let z be object;
+      assume z in {cst 1, X};
+      then A6: z = cst 1 or z = X by TARSKI:def 2;
+      funS in ClosGRS X by CSBasic;
+      then funS*(cst 0) in ClosGRS X by A1, CSBasic;
+      hence thesis by A6, CSBasic, OneExpr;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opPlusI, opInv} & F in ClosGRS X holds u.F in ClosGRS X
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A7: u in {opPlusI, opInv} & F in ClosGRS X;
+      then u = opPlusI or u = opInv by TARSKI:def 2;
+      hence thesis by A7, CSBasic;
+    end;
+    let c be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A8: c in {opComp} & F in ClosGRS X & G in ClosGRS X;
+    then c = opComp by TARSKI:def 1;
+    then c.(F,G) = F*G by DefComp;
+    hence thesis by A8, CSBasic;
+  end;
+  then ClosGR X c= ClosGRS X by ClosLeast;
+  hence thesis by A5, XBOOLE_0:def 10;
+end;
+
+:: (E S E^-1)(2q) = 0 and (E S E^-1)(2q+1) = 2q+2
+theorem ESEinvVal:
+  (funE*funS*(opInv.funE)).(2*q) = 0 &
+  (funE*funS*(opInv.funE)).(2*q + 1) = 2*(q + 1)
+proof
+  set G = funE*funS*(opInv.funE);
+  0 <= 2*(q + 1);
+  then A1: funE.((q+1)*(q+1) + 0) = 0 by ESqAdd;
+  thus G.(2*q) = (funE*funS).((opInv.funE).(2*q)) by CompVal
+    .= (funE*funS).(q*q + 2*q) by EinvD
+    .= funE.(funS.(q*q + 2*q)) by CompVal
+    .= funE.(q*q + 2*q + 1) by DefS
+    .= 0 by A1;
+  set y = 2*q + 1, c = q + 1;
+  A2: 2*c = y + 1;
+  then y <= 2*c by NAT_1:11;
+  then A3: (opInv.funE).y = c*c + y by A2, EinvVal;
+  2*c <= 2*c;
+  then A4: funE.(c*c + 2*c) = 2*c by ESqAdd;
+  thus G.y = (funE*funS).((opInv.funE).y) by CompVal
+    .= funE.(funS.(c*c + y)) by A3, CompVal
+    .= funE.(c*c + y + 1) by DefS
+    .= 2*c by A2, A4;
+end;
+
+theorem LSSurj:
+  funL*funS is surj
+proof
+  let x;
+  take funA.(x+1);
+  1 <= x + 1 by NAT_1:11;
+  then A1: funL.(funA.(x+1) + 1) = x + 1 -' 1 by Diag;
+  thus (funL*funS).(funA.(x+1)) = funL.(funS.(funA.(x+1))) by CompVal
+    .= funL.(funA.(x+1) + 1) by DefS
+    .= x by A1, NAT_D:34;
+end;
+
+theorem LSinvSuc:
+  (opInv.(funL*funS)).(x+1) = funA.x + x
+proof
+  set y = (opInv.(funL*funS)).(x+1);
+  A1: funA.(x+1) = funA.x + x + 1 by ASuc;
+  0 <= x + 1;
+  then funL.(funA.(x+1) + 0) = x + 1 -' 0 by Diag;
+  then A2: funL.(funA.(x+1)) = x + 1 by NAT_D:40;
+  (funL*funS).(funA.x + x) = funL.(funS.(funA.x + x)) by CompVal
+    .= funL.(funA.x + x + 1) by DefS
+    .= x + 1 by A1, A2;
+  then A3: y <= funA.x + x by LSSurj, InvLeast;
+  (funL*funS).y = x + 1 by LSSurj, InvRight;
+  then A4: funL.(funS.y) = x + 1 by CompVal;
+  set t = funV.(y+1), k = funK.(y+1);
+  A5: y + 1 = funA.t + k & k <= t by Decomp;
+  funL.(funS.y) = funL.(y+1) by DefS
+    .= t -' k by A5, Diag;
+  then x + 1 <= t by A4, NAT_D:35;
+  then A6: funA.(x+1) <= funA.t by AMono;
+  funA.t <= y + 1 by A5, NAT_1:11;
+  then funA.x + x + 1 <= y + 1 by A1, A6, XXREAL_0:2;
+  then funA.x + x <= y by XREAL_1:6;
+  hence thesis by A3, XXREAL_0:1;
+end;
+
+theorem GRSZero:
+  cst 0 in ClosGRS funE & cst 0 in ClosGRS funK & cst 0 in ClosGRS funL
+proof
+  set G = funE*funS*(opInv.funE);
+  now
+    let x;
+    consider q such that A1: x = 2*q or x = 2*q + 1 by Parity;
+    per cases by A1;
+    suppose x = 2*q;
+      then A2: G.x = 2*0 by ESEinvVal;
+      thus (G*G).x = G.(G.x) by CompVal .= 0 by A2, ESEinvVal
+        .= (cst 0).x by DefCst;
+    end;
+    suppose x = 2*q + 1;
+      then A2: G.x = 2*(q + 1) by ESEinvVal;
+      thus (G*G).x = G.(G.x) by CompVal .= 0 by A2, ESEinvVal
+        .= (cst 0).x by DefCst;
+    end;
+  end;
+  then A3: G*G = cst 0 by UFunExt;
+  A4: funS in ClosGRS funE & funE in ClosGRS funE by CSBasic;
+  then A5: funE*funS in ClosGRS funE by CSBasic;
+  opInv.funE in ClosGRS funE by A4, CSBasic;
+  then G in ClosGRS funE by A5, CSBasic;
+  hence cst 0 in ClosGRS funE by A3, CSBasic;
+  now
+    let x;
+    A6: funA.(x+1) = funA.x + x + 1 by ASuc;
+    0 <= x + 1;
+    then A7: funK.(funA.(x+1) + 0) = 0 by Diag;
+    thus (funK*funS*(opInv.funK)).x = (funK*funS).((opInv.funK).x) by CompVal
+      .= (funK*funS).(funZ.x) by KinvZ
+      .= funK.(funS.(funZ.x)) by CompVal
+      .= funK.(funZ.x + 1) by DefS
+      .= funK.(funA.x + x + 1) by DefZ
+      .= 0 by A6, A7
+      .= (cst 0).x by DefCst;
+  end;
+  then A8: funK*funS*(opInv.funK) = cst 0 by UFunExt;
+  A9: funS in ClosGRS funK & funK in ClosGRS funK by CSBasic;
+  then A10: funK*funS in ClosGRS funK by CSBasic;
+  opInv.funK in ClosGRS funK by A9, CSBasic;
+  hence cst 0 in ClosGRS funK by A8, A10, CSBasic;
+  now
+    let x;
+    x <= x;
+    then A11: funL.(funA.x + x) = x -' x by Diag;
+    thus (funL*(opInv.(funL*funS))*funS).x
+        = (funL*(opInv.(funL*funS))).(funS.x) by CompVal
+      .= (funL*(opInv.(funL*funS))).(x + 1) by DefS
+      .= funL.((opInv.(funL*funS)).(x + 1)) by CompVal
+      .= funL.(funA.x + x) by LSinvSuc
+      .= 0 by A11, XREAL_1:232
+      .= (cst 0).x by DefCst;
+  end;
+  then A12: funL*(opInv.(funL*funS))*funS = cst 0 by UFunExt;
+  A13: funS in ClosGRS funL & funL in ClosGRS funL by CSBasic;
+  then funL*funS in ClosGRS funL by CSBasic;
+  then opInv.(funL*funS) in ClosGRS funL by CSBasic;
+  then funL*(opInv.(funL*funS)) in ClosGRS funL by A13, CSBasic;
+  hence thesis by A12, A13, CSBasic;
+end;
+
+theorem GRSEq:
+  ClosGRS funE = ClosJR & ClosGRS funK = ClosJR & ClosGRS funL = ClosJR
+proof
+  ClosGRS funE = ClosGR funE & ClosGRS funK = ClosGR funK &
+    ClosGRS funL = ClosGR funL by GRSZero, GRSOne;
+  hence thesis by GREqJR;
+end;
+
+:: The shifted operator with inversion: <X, F^+b, FG, F^-1> generates
+:: ClosJR if and only if b >= 1 (X in {E, K, L}).  A successor S is generated
+:: first; a predecessor P then gives F^+ = P^b F^+b and the constant 1.
+
+reserve g,v,n1,c1 for Nat;
+
+definition
+  let X be Element of Funcs(NAT,NAT), b be Nat;
+  func ClosGRb(X,b) -> Subset of Funcs(NAT,NAT) equals
+  clos({X}, {opPlusIb b, opInv}, {opComp});
+  coherence;
+end;
+
+theorem CbBasic:
+  X in ClosGRb(X,b) &
+  (F in ClosGRb(X,b) implies
+     (opPlusIb b).F in ClosGRb(X,b) & opInv.F in ClosGRb(X,b)) &
+  (F in ClosGRb(X,b) & G in ClosGRb(X,b) implies F*G in ClosGRb(X,b))
+proof
+  X in {X} by TARSKI:def 1;
+  hence X in ClosGRb(X,b) by ClosInit;
+  thus F in ClosGRb(X,b) implies
+     (opPlusIb b).F in ClosGRb(X,b) & opInv.F in ClosGRb(X,b)
+  proof
+    assume A1: F in ClosGRb(X,b);
+    opPlusIb b in {opPlusIb b, opInv} & opInv in {opPlusIb b, opInv}
+      by TARSKI:def 2;
+    hence thesis by A1, ClosUnop;
+  end;
+  thus thesis by CompIn;
+end;
+
+:: F^+ = P^b F^+b for a predecessor P
+theorem CbPlusI:
+  W in ClosGRb(X,b) & (for x holds W.(x+1) = x) & F in ClosGRb(X,b)
+  implies opPlusI.F in ClosGRb(X,b)
+proof
+  assume that A1: W in ClosGRb(X,b) and A2: for x holds W.(x+1) = x and
+    A3: F in ClosGRb(X,b);
+  (opPlusIb b).F in ClosGRb(X,b) by A3, CbBasic;
+  then consider H such that A4: H in ClosGRb(X,b) and
+    A5: for x,y st ((opPlusIb b).F).x = y + b holds H.x = y
+    by A1, A2, PowPred;
+  now
+    let x;
+    ((opPlusIb b).F).x = (F.x + x) + b by DefPlusIb;
+    hence H.x = F.x + x by A5
+      .= (opPlusI.F).x by DefPlusI;
+  end;
+  hence thesis by A4, UFunExt;
+end;
+
+theorem CbSub:
+  cst 1 in ClosGRb(X,b) & W in ClosGRb(X,b) & (for x holds W.(x+1) = x)
+  implies ClosGR X c= ClosGRb(X,b)
+proof
+  assume that A1: cst 1 in ClosGRb(X,b) and A2: W in ClosGRb(X,b) and
+    A3: for x holds W.(x+1) = x;
+  ClosGRb(X,b) is_closed_under {cst 1, X}, {opPlusI, opInv}, {opComp}
+  proof
+    thus {cst 1, X} c= ClosGRb(X,b)
+    proof
+      let z be object;
+      assume z in {cst 1, X};
+      then z = cst 1 or z = X by TARSKI:def 2;
+      hence thesis by A1, CbBasic;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opPlusI, opInv} & F in ClosGRb(X,b) holds u.F in ClosGRb(X,b)
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A4: u in {opPlusI, opInv} & F in ClosGRb(X,b);
+      then A5: u = opPlusI or u = opInv by TARSKI:def 2;
+      opPlusI.F in ClosGRb(X,b) by A2, A3, A4, CbPlusI;
+      hence thesis by A4, A5, CbBasic;
+    end;
+    let c be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A6: c in {opComp} & F in ClosGRb(X,b) & G in ClosGRb(X,b);
+    then c = opComp by TARSKI:def 1;
+    then c.(F,G) = F*G by DefComp;
+    hence thesis by A6, CbBasic;
+  end;
+  hence thesis by ClosLeast;
+end;
+
+:: soundness: F^+b = F^+ + M_b 1
+theorem GEPlusIb:
+  F in ClosGR funE implies (opPlusIb b).F in ClosGR funE
+proof
+  assume A1: F in ClosGR funE;
+  opPlusI in {opPlusI, opInv} by TARSKI:def 2;
+  then A0: funM b in ClosGR funE by GEFirst, MInClos;
+  cst 1 in ClosGR funE by CGOne;
+  then A2: (funM b)*(cst 1) in ClosGR funE by A0, CGComp;
+  opPlusI.F in ClosGR funE by A1, CGPlusI;
+  then A3: opPlus.(opPlusI.F, (funM b)*(cst 1)) in ClosGR funE
+    by A2, GERich, RLemma66;
+  now
+    let x;
+    thus (opPlus.(opPlusI.F, (funM b)*(cst 1))).x
+        = (opPlusI.F).x + ((funM b)*(cst 1)).x by DefPlus
+      .= F.x + x + ((funM b)*(cst 1)).x by DefPlusI
+      .= F.x + x + (funM b).((cst 1).x) by CompVal
+      .= F.x + x + (funM b).1 by DefCst
+      .= F.x + x + b*1 by DefM
+      .= ((opPlusIb b).F).x by DefPlusIb;
+  end;
+  hence thesis by A3, UFunExt;
+end;
+
+theorem GRbSubGE:
+  X in ClosGR funE implies ClosGRb(X,b) c= ClosGR funE
+proof
+  assume A1: X in ClosGR funE;
+  ClosGR funE is_closed_under {X}, {opPlusIb b, opInv}, {opComp}
+  proof
+    thus {X} c= ClosGR funE
+    proof
+      let z be object;
+      assume z in {X};
+      hence thesis by A1, TARSKI:def 1;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in {opPlusIb b, opInv} & F in ClosGR funE holds u.F in ClosGR funE
+    proof
+      let u be UnOp of Funcs(NAT,NAT), F be Element of Funcs(NAT,NAT);
+      assume A2: u in {opPlusIb b, opInv} & F in ClosGR funE;
+      then u = opPlusIb b or u = opInv by TARSKI:def 2;
+      hence thesis by A2, GEPlusIb, CGInv;
+    end;
+    let c be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A3: c in {opComp} & F in ClosGR funE & G in ClosGR funE;
+    then c = opComp by TARSKI:def 1;
+    then c.(F,G) = F*G by DefComp;
+    hence thesis by A3, CGComp;
+  end;
+  hence thesis by ClosLeast;
+end;
+
+theorem TVal:
+  ((opPlusIb b).funI).x = 2*x + b
+proof
+  thus ((opPlusIb b).funI).x = funI.x + x + b by DefPlusIb
+    .= x + x + b by DefI
+    .= 2*x + b;
+end;
+
+theorem EEinv:
+  funE*(opInv.funE) = funI
+proof
+  now
+    let x;
+    thus (funE*(opInv.funE)).x = funE.((opInv.funE).x) by CompVal
+      .= x by ESurj, InvRight
+      .= funI.x by DefI;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem EinvOdd:
+  (opInv.funE).(2*m + 1) = (m+1)*(m+1) + (2*m + 1)
+proof
+  A1: 2*(m+1) = (2*m + 1) + 1;
+  then 2*m + 1 <= 2*(m+1) by NAT_1:11;
+  hence thesis by A1, EinvVal;
+end;
+
+:: subtraction by inversion: if V(y) = y + c then E (E V)^-1 subtracts c
+theorem ESubInv:
+  (for y holds W.y = y + c) & c <= x implies
+  funE*W is surj & funE.((opInv.(funE*W)).x) = x -' c
+proof
+  assume that A1: for y holds W.y = y + c and A2: c <= x;
+  thus A3: funE*W is surj
+  proof
+    let x;
+    set n = x + c;
+    A4: n <= n*n by LeSq;
+    c <= n by NAT_1:11;
+    then c <= n*n by A4, XXREAL_0:2;
+    then A5: c <= n*n + x by NAT_1:12;
+    take y = n*n + x -' c;
+    A6: W.y = y + c by A1 .= n*n + x by A5, XREAL_1:235;
+    2*n = x + (x + 2*c);
+    then A7: x <= 2*n by NAT_1:11;
+    thus (funE*W).y = funE.(W.y) by CompVal .= x by A6, A7, ESqAdd;
+  end;
+  set y = (opInv.(funE*W)).x;
+  (funE*W).y = x by A3, InvRight;
+  then A8: funE.(W.y) = x by CompVal;
+  set r = funRt.(y + c);
+  A9: funE.(y + c) = x by A1, A8;
+  then A10: x + r*r = y + c by EVal;
+  A11: x <= 2*r by A9, EBound;
+  set d = x -' c;
+  A12: x = d + c by A2, XREAL_1:235;
+  then A13: y = r*r + d by A10;
+  d <= x by A12, NAT_1:11;
+  then d <= 2*r by A11, XXREAL_0:2;
+  hence thesis by A13, ESqAdd;
+end;
+
+:: E(E^-1(2m) + x + c + 1) = x + c and E(E^-1(2m+1) + x + c + 2) = x + c
+theorem EShift:
+  (x + c <= 2*(m+1) implies
+     funE.((opInv.funE).(2*m) + x + (c + 1)) = x + c) &
+  (x + c <= 2*(m+2) implies
+     funE.((opInv.funE).(2*m + 1) + x + (c + 2)) = x + c)
+proof
+  thus x + c <= 2*(m+1) implies
+     funE.((opInv.funE).(2*m) + x + (c + 1)) = x + c
+  proof
+    assume A1: x + c <= 2*(m+1);
+    (opInv.funE).(2*m) + x + (c + 1) = m*m + 2*m + x + (c + 1) by EinvD
+      .= (m+1)*(m+1) + (x + c);
+    hence thesis by A1, ESqAdd;
+  end;
+  assume A1: x + c <= 2*(m+2);
+  (opInv.funE).(2*m + 1) + x + (c + 2)
+      = (m+1)*(m+1) + (2*m + 1) + x + (c + 2) by EinvOdd
+    .= (m+2)*(m+2) + (x + c);
+  hence thesis by A1, ESqAdd;
+end;
+
+:: b >= 2: W1 = E (E^-1 T)^+b and W2 = E (E^-1 W1 T)^+b (T = I^+b) are the
+:: shifts x + b - 1 and x + b - 2 in an order given by the parity of b
+definition
+  let b be Nat;
+  func exprW1 b -> Element of Funcs(NAT,NAT) equals
+  funE*((opPlusIb b).((opInv.funE)*((opPlusIb b).funI)));
+  coherence;
+end;
+
+definition
+  let b be Nat;
+  func exprW2 b -> Element of Funcs(NAT,NAT) equals
+  funE*((opPlusIb b).((opInv.funE)*(exprW1 b)*((opPlusIb b).funI)));
+  coherence;
+end;
+
+theorem W12Unfold:
+  (exprW1 b).x = funE.((opInv.funE).(2*x + b) + x + b) &
+  (exprW2 b).x = funE.((opInv.funE).((exprW1 b).(2*x + b)) + x + b)
+proof
+  set T = (opPlusIb b).funI;
+  thus (exprW1 b).x = funE.(((opPlusIb b).((opInv.funE)*T)).x) by CompVal
+    .= funE.(((opInv.funE)*T).x + x + b) by DefPlusIb
+    .= funE.((opInv.funE).(T.x) + x + b) by CompVal
+    .= funE.((opInv.funE).(2*x + b) + x + b) by TVal;
+  thus (exprW2 b).x
+      = funE.(((opPlusIb b).((opInv.funE)*(exprW1 b)*T)).x) by CompVal
+    .= funE.(((opInv.funE)*(exprW1 b)*T).x + x + b) by DefPlusIb
+    .= funE.(((opInv.funE)*(exprW1 b)).(T.x) + x + b) by CompVal
+    .= funE.((opInv.funE).((exprW1 b).(T.x)) + x + b) by CompVal
+    .= funE.((opInv.funE).((exprW1 b).(2*x + b)) + x + b) by TVal;
+end;
+
+theorem W12Val:
+  (b = 2*p + 2 implies
+     (exprW1 b).x = x + (2*p + 1) & (exprW2 b).x = x + 2*p) &
+  (b = 2*p + 3 implies
+     (exprW1 b).x = x + (2*p + 1) & (exprW2 b).x = x + (2*p + 2))
+proof
+  thus b = 2*p + 2 implies
+     (exprW1 b).x = x + (2*p + 1) & (exprW2 b).x = x + 2*p
+  proof
+    assume A1: b = 2*p + 2;
+    A10: for x holds (exprW1 b).x = x + (2*p + 1)
+    proof
+      let x;
+      A2: 2*x + b = 2*(x + p + 1) by A1;
+      2*(x + p + 1 + 1) = (x + (2*p + 1)) + (x + 3);
+      then A3: x + (2*p + 1) <= 2*(x + p + 1 + 1) by NAT_1:11;
+      thus (exprW1 b).x = funE.((opInv.funE).(2*x + b) + x + b) by W12Unfold
+        .= funE.((opInv.funE).(2*(x + p + 1)) + x + ((2*p + 1) + 1))
+          by A1, A2
+        .= x + (2*p + 1) by A3, EShift;
+    end;
+    hence (exprW1 b).x = x + (2*p + 1);
+    A4: (exprW1 b).(2*x + b) = 2*x + b + (2*p + 1) by A10
+      .= 2*(x + 2*p + 1) + 1 by A1;
+    2*(x + 2*p + 1 + 2) = (x + 2*p) + (x + 2*p + 6);
+    then A5: x + 2*p <= 2*(x + 2*p + 1 + 2) by NAT_1:11;
+    thus (exprW2 b).x
+        = funE.((opInv.funE).((exprW1 b).(2*x + b)) + x + b) by W12Unfold
+      .= funE.((opInv.funE).(2*(x + 2*p + 1) + 1) + x + (2*p + 2)) by A1, A4
+      .= x + 2*p by A5, EShift;
+  end;
+  assume A1: b = 2*p + 3;
+  A10: for x holds (exprW1 b).x = x + (2*p + 1)
+  proof
+    let x;
+    A2: 2*x + b = 2*(x + p + 1) + 1 by A1;
+    2*(x + p + 1 + 2) = (x + (2*p + 1)) + (x + 5);
+    then A3: x + (2*p + 1) <= 2*(x + p + 1 + 2) by NAT_1:11;
+    thus (exprW1 b).x = funE.((opInv.funE).(2*x + b) + x + b) by W12Unfold
+      .= funE.((opInv.funE).(2*(x + p + 1) + 1) + x + ((2*p + 1) + 2))
+        by A1, A2
+      .= x + (2*p + 1) by A3, EShift;
+  end;
+  hence (exprW1 b).x = x + (2*p + 1);
+  A4: (exprW1 b).(2*x + b) = 2*x + b + (2*p + 1) by A10
+    .= 2*(x + 2*p + 2) by A1;
+  2*(x + 2*p + 2 + 1) = (x + (2*p + 2)) + (x + 2*p + 4);
+  then A5: x + (2*p + 2) <= 2*(x + 2*p + 2 + 1) by NAT_1:11;
+  thus (exprW2 b).x
+      = funE.((opInv.funE).((exprW1 b).(2*x + b)) + x + b) by W12Unfold
+    .= funE.((opInv.funE).(2*(x + 2*p + 2)) + x + ((2*p + 2) + 1)) by A1, A4
+    .= x + (2*p + 2) by A5, EShift;
+end;
+
+theorem CbEFirst:
+  funI in ClosGRb(funE,b) & exprW1 b in ClosGRb(funE,b) &
+  exprW2 b in ClosGRb(funE,b)
+proof
+  A1: funE in ClosGRb(funE,b) by CbBasic;
+  then A2: opInv.funE in ClosGRb(funE,b) by CbBasic;
+  hence A3: funI in ClosGRb(funE,b) by A1, CbBasic, EEinv;
+  then A4: (opPlusIb b).funI in ClosGRb(funE,b) by CbBasic;
+  then (opInv.funE)*((opPlusIb b).funI) in ClosGRb(funE,b) by A2, CbBasic;
+  then (opPlusIb b).((opInv.funE)*((opPlusIb b).funI)) in ClosGRb(funE,b)
+    by CbBasic;
+  hence A5: exprW1 b in ClosGRb(funE,b) by A1, CbBasic;
+  (opInv.funE)*(exprW1 b) in ClosGRb(funE,b) by A2, A5, CbBasic;
+  then (opInv.funE)*(exprW1 b)*((opPlusIb b).funI) in ClosGRb(funE,b)
+    by A4, CbBasic;
+  then (opPlusIb b).((opInv.funE)*(exprW1 b)*((opPlusIb b).funI))
+    in ClosGRb(funE,b) by CbBasic;
+  hence thesis by A1, CbBasic;
+end;
+
+theorem CbEShifts:
+  b = d + 2 implies ex G,H st G in ClosGRb(funE,b) & H in ClosGRb(funE,b) &
+  for x holds G.x = x + (d + 1) & H.x = x + d
+proof
+  assume A1: b = d + 2;
+  consider p such that A2: d = 2*p or d = 2*p + 1 by Parity;
+  A3: exprW1 b in ClosGRb(funE,b) & exprW2 b in ClosGRb(funE,b) by CbEFirst;
+  per cases by A2;
+  suppose A4: d = 2*p;
+    then A5: b = 2*p + 2 by A1;
+    take exprW1 b, exprW2 b;
+    thus exprW1 b in ClosGRb(funE,b) & exprW2 b in ClosGRb(funE,b) by A3;
+    let x;
+    (exprW1 b).x = x + (2*p + 1) & (exprW2 b).x = x + 2*p by A5, W12Val;
+    hence thesis by A4;
+  end;
+  suppose A4: d = 2*p + 1;
+    then A5: b = 2*p + 3 by A1;
+    take exprW2 b, exprW1 b;
+    thus exprW2 b in ClosGRb(funE,b) & exprW1 b in ClosGRb(funE,b) by A3;
+    let x;
+    (exprW1 b).x = x + (2*p + 1) & (exprW2 b).x = x + (2*p + 2) by A5, W12Val;
+    hence thesis by A4;
+  end;
+end;
+
+:: b = 1: P^ = E (E^-1 T)^+1 (P^(y+1) = y, P^(0) = 2) and
+:: S = E P^^-1 (E^-1 P^ T)^+1
+definition
+  func exprPE1 -> Element of Funcs(NAT,NAT) equals
+  exprW1 1;
+  coherence;
+end;
+
+definition
+  func exprSE1 -> Element of Funcs(NAT,NAT) equals
+  funE*(opInv.exprPE1)*((opPlusIb 1).((opInv.funE)*exprPE1*
+    ((opPlusIb 1).funI)));
+  coherence;
+end;
+
+theorem PE1Val:
+  exprPE1.0 = 2 & exprPE1.(y+1) = y
+proof
+  A1: for x holds exprPE1.x = funE.((opInv.funE).(2*x + 1) + x + 1)
+    by W12Unfold;
+  thus exprPE1.0 = funE.((opInv.funE).(2*0 + 1) + 0 + 1) by A1
+    .= funE.((0+1)*(0+1) + (2*0 + 1) + 0 + 1) by EinvOdd
+    .= 2 by ESmall;
+  2*(y + 3) = y + (y + 6);
+  then A2: y <= 2*(y + 3) by NAT_1:11;
+  thus exprPE1.(y+1) = funE.((opInv.funE).(2*(y+1) + 1) + (y+1) + 1) by A1
+    .= funE.((y+1+1)*(y+1+1) + (2*(y+1) + 1) + (y+1) + 1) by EinvOdd
+    .= funE.((y+3)*(y+3) + y)
+    .= y by A2, ESqAdd;
+end;
+
+theorem PE1Inv:
+  v <> 2 implies (opInv.exprPE1).v = v + 1
+proof
+  assume A1: v <> 2;
+  A2: exprPE1 is surj
+  proof
+    let x;
+    take x + 1;
+    thus thesis by PE1Val;
+  end;
+  set y = (opInv.exprPE1).v;
+  A3: exprPE1.y = v by A2, InvRight;
+  per cases by NAT_1:14;
+  suppose y = 0;
+    hence thesis by A1, A3, PE1Val;
+  end;
+  suppose 1 <= y;
+    then consider y1 being Nat such that A4: y = 1 + y1 by NAT_1:10;
+    thus thesis by A3, A4, PE1Val;
+  end;
+end;
+
+theorem SE1Val:
+  exprSE1 = funS
+proof
+  now
+    let x;
+    set G = (opInv.funE)*exprPE1*((opPlusIb 1).funI);
+    set v = x*x + 3*x + 1;
+    A1: exprPE1.(2*x + 1) = 2*x by PE1Val;
+    A2: ((opPlusIb 1).G).x = G.x + x + 1 by DefPlusIb
+      .= ((opInv.funE)*exprPE1).(((opPlusIb 1).funI).x) + x + 1 by CompVal
+      .= ((opInv.funE)*exprPE1).(2*x + 1) + x + 1 by TVal
+      .= (opInv.funE).(exprPE1.(2*x + 1)) + x + 1 by CompVal
+      .= x*x + 2*x + x + 1 by A1, EinvD
+      .= v;
+    A3: v <> 2
+    proof
+      assume A4: v = 2;
+      per cases by NAT_1:14;
+      suppose x = 0;
+        hence contradiction by A4;
+      end;
+      suppose 1 <= x;
+        then 3*1 <= 3*x by XREAL_1:64;
+        then 3 + 1 <= 3*x + 1 by XREAL_1:6;
+        then 4 <= x*x + (3*x + 1) by NAT_1:12;
+        hence contradiction by A4;
+      end;
+    end;
+    2*(x+1) = (x+1) + (x+1);
+    then A5: x + 1 <= 2*(x+1) by NAT_1:11;
+    thus exprSE1.x = (funE*(opInv.exprPE1)).(((opPlusIb 1).G).x) by CompVal
+      .= funE.((opInv.exprPE1).v) by A2, CompVal
+      .= funE.(v + 1) by A3, PE1Inv
+      .= funE.((x+1)*(x+1) + (x+1))
+      .= x + 1 by A5, ESqAdd
+      .= funS.x by DefS;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem CbES:
+  1 <= b implies funS in ClosGRb(funE,b)
+proof
+  assume A1: 1 <= b;
+  A2: funE in ClosGRb(funE,b) & funI in ClosGRb(funE,b) by CbBasic, CbEFirst;
+  then A3: opInv.funE in ClosGRb(funE,b) by CbBasic;
+  per cases by A1, XXREAL_0:1;
+  suppose A4: b = 1;
+    A9: (opPlusIb 1).funI in ClosGRb(funE,b) by A2, A4, CbBasic;
+    then A5: (opInv.funE)*((opPlusIb 1).funI) in ClosGRb(funE,b)
+      by A3, CbBasic;
+    then A6: (opPlusIb 1).((opInv.funE)*((opPlusIb 1).funI))
+      in ClosGRb(funE,b) by A4, CbBasic;
+    then A7: exprPE1 in ClosGRb(funE,b) by A2, CbBasic;
+    then opInv.exprPE1 in ClosGRb(funE,b) by CbBasic;
+    then A8: funE*(opInv.exprPE1) in ClosGRb(funE,b) by A2, CbBasic;
+    (opInv.funE)*exprPE1 in ClosGRb(funE,b) by A3, A7, CbBasic;
+    then (opInv.funE)*exprPE1*((opPlusIb 1).funI) in ClosGRb(funE,b)
+      by A9, CbBasic;
+    then (opPlusIb 1).((opInv.funE)*exprPE1*((opPlusIb 1).funI))
+      in ClosGRb(funE,b) by A4, CbBasic;
+    then exprSE1 in ClosGRb(funE,b) by A8, CbBasic;
+    hence thesis by SE1Val;
+  end;
+  suppose 1 < b;
+    then 1 + 1 <= b by NAT_1:13;
+    then consider d such that A4: b = 2 + d by NAT_1:10;
+    consider G,H such that A5: G in ClosGRb(funE,b) & H in ClosGRb(funE,b)
+      and A6: for x holds G.x = x + (d + 1) & H.x = x + d by A4, CbEShifts;
+    A7: for y holds H.y = y + d by A6;
+    funE*H in ClosGRb(funE,b) by A2, A5, CbBasic;
+    then opInv.(funE*H) in ClosGRb(funE,b) by CbBasic;
+    then funE*(opInv.(funE*H)) in ClosGRb(funE,b) by A2, CbBasic;
+    then A8: funE*(opInv.(funE*H))*G in ClosGRb(funE,b) by A5, CbBasic;
+    now
+      let x;
+      d <= x + 1 + d by NAT_1:11;
+      then A9: funE.((opInv.(funE*H)).(x + 1 + d)) = x + 1 + d -' d
+        by A7, ESubInv;
+      thus (funE*(opInv.(funE*H))*G).x = (funE*(opInv.(funE*H))).(G.x)
+          by CompVal
+        .= (funE*(opInv.(funE*H))).(x + (d + 1)) by A6
+        .= funE.((opInv.(funE*H)).(x + 1 + d)) by CompVal
+        .= x + 1 by A9, NAT_D:34
+        .= funS.x by DefS;
+    end;
+    hence thesis by A8, UFunExt;
+  end;
+end;
+
+theorem ZeroExprE:
+  funE*funS*(opInv.funE)*(opPlusI.funI) = cst 0
+proof
+  now
+    let x;
+    A1: (opPlusI.funI).x = funI.x + x by DefPlusI .= x + x by DefI
+      .= 2*x;
+    0 <= 2*(x+1);
+    then A2: funE.((x+1)*(x+1) + 0) = 0 by ESqAdd;
+    thus (funE*funS*(opInv.funE)*(opPlusI.funI)).x
+        = (funE*funS*(opInv.funE)).(2*x) by A1, CompVal
+      .= (funE*funS).((opInv.funE).(2*x)) by CompVal
+      .= (funE*funS).(x*x + 2*x) by EinvD
+      .= funE.(funS.(x*x + 2*x)) by CompVal
+      .= funE.(x*x + 2*x + 1) by DefS
+      .= 0 by A2
+      .= (cst 0).x by DefCst;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem GRbE:
+  1 <= b implies ClosGRb(funE,b) = ClosJR
+proof
+  assume A1: 1 <= b;
+  A2: funS in ClosGRb(funE,b) & funE in ClosGRb(funE,b) &
+    funI in ClosGRb(funE,b) by A1, CbES, CbBasic, CbEFirst;
+  then funE*funS in ClosGRb(funE,b) by CbBasic;
+  then opInv.(funE*funS) in ClosGRb(funE,b) by CbBasic;
+  then A3: funE*(opInv.(funE*funS)) in ClosGRb(funE,b) by A2, CbBasic;
+  A4: for y holds funS.y = y + 1 by DefS;
+  A5: for x holds (funE*(opInv.(funE*funS))).(x+1) = x
+  proof
+    let x;
+    1 <= x + 1 by NAT_1:11;
+    then funE.((opInv.(funE*funS)).(x+1)) = x + 1 -' 1 by A4, ESubInv;
+    hence (funE*(opInv.(funE*funS))).(x+1) = x + 1 -' 1 by CompVal
+      .= x by NAT_D:34;
+  end;
+  then A6: opPlusI.funI in ClosGRb(funE,b) by A2, A3, CbPlusI;
+  A9: opInv.funE in ClosGRb(funE,b) by A2, CbBasic;
+  funE*funS in ClosGRb(funE,b) by A2, CbBasic;
+  then A7: funE*funS*(opInv.funE) in ClosGRb(funE,b) by A9, CbBasic;
+  then funE*funS*(opInv.funE)*(opPlusI.funI) in ClosGRb(funE,b)
+    by A6, CbBasic;
+  then funS*(cst 0) in ClosGRb(funE,b) by A2, CbBasic, ZeroExprE;
+  then ClosGR funE c= ClosGRb(funE,b) by A3, A5, OneExpr, CbSub;
+  then A8: ClosJR c= ClosGRb(funE,b) by GREqJR;
+  ClosGRb(funE,b) c= ClosGR funE by CGOne, GRbSubGE;
+  then ClosGRb(funE,b) c= ClosJR by GREqJR;
+  hence thesis by A8, XBOOLE_0:def 10;
+end;
+
+:: The case X = K.  Z = K^-1, U = K (Z T)^+b (U(x) = x + b - 1);
+:: b >= 2: P1 = K (K U)^-1 subtracts b - 1, C = K (Z P1)^+b U U U is the
+:: constant 2b - 4 and S = K (K C^+b)^-1 U U U;
+:: b = 1: P^ = K (Z^+1)^+1 (P^(y+1) = y, P^(0) = 1), S = K P^^-1 (Z T)^+1
+
+theorem ALe:
+  n <= funA.n
+proof
+  A1: n <= n*n by LeSq;
+  2*(funA.n) = n*n + n by TwoA;
+  then n + n <= 2*(funA.n) by A1, XREAL_1:6;
+  then 2*n <= 2*(funA.n);
+  hence thesis by XREAL_1:68;
+end;
+
+:: subtraction by inversion: if V(y) = y + c then K (K V)^-1 subtracts c
+theorem KSubInv:
+  (for y holds W.y = y + c) & c <= x implies
+  funK*W is surj & funK.((opInv.(funK*W)).x) = x -' c
+proof
+  assume that A1: for y holds W.y = y + c and A2: c <= x;
+  thus A3: funK*W is surj
+  proof
+    let x;
+    set n = x + c;
+    A4: c <= n by NAT_1:11;
+    n <= funA.n by ALe;
+    then c <= funA.n by A4, XXREAL_0:2;
+    then A5: c <= funA.n + x by NAT_1:12;
+    take y = funA.n + x -' c;
+    A6: W.y = y + c by A1 .= funA.n + x by A5, XREAL_1:235;
+    x <= n by NAT_1:11;
+    then A7: funK.(funA.n + x) = x by Diag;
+    thus (funK*W).y = funK.(W.y) by CompVal .= x by A6, A7;
+  end;
+  set y = (opInv.(funK*W)).x;
+  (funK*W).y = x by A3, InvRight;
+  then A8: funK.(W.y) = x by CompVal;
+  set t = funV.(y + c);
+  A9: funK.(y + c) = x by A1, A8;
+  then A10: y + c = funA.t + x & x <= t by Decomp;
+  set d = x -' c;
+  A11: x = d + c by A2, XREAL_1:235;
+  then A12: y = funA.t + d by A10;
+  d <= x by A11, NAT_1:11;
+  then d <= t by A10, XXREAL_0:2;
+  hence thesis by A12, Diag;
+end;
+
+definition
+  let b be Nat;
+  func exprUK b -> Element of Funcs(NAT,NAT) equals
+  funK*((opPlusIb b).(funZ*((opPlusIb b).funI)));
+  coherence;
+end;
+
+theorem UKVal:
+  b = c + 1 implies (exprUK b).x = x + c
+proof
+  assume A1: b = c + 1;
+  set n = 2*x + b;
+  A2: funA.(n+1) = funA.n + n + 1 by ASuc;
+  A3: (exprUK b).x = funK.(((opPlusIb b).(funZ*((opPlusIb b).funI))).x)
+      by CompVal
+    .= funK.((funZ*((opPlusIb b).funI)).x + x + b) by DefPlusIb
+    .= funK.(funZ.(((opPlusIb b).funI).x) + x + b) by CompVal
+    .= funK.(funZ.n + x + b) by TVal
+    .= funK.(funA.n + n + x + b) by DefZ
+    .= funK.(funA.(n+1) + (x + c)) by A1, A2;
+  n + 1 = (x + c) + (x + 2) by A1;
+  then x + c <= n + 1 by NAT_1:11;
+  hence thesis by A3, Diag;
+end;
+
+theorem CbKFirst:
+  funZ in ClosGRb(funK,b) & funI in ClosGRb(funK,b) &
+  exprUK b in ClosGRb(funK,b)
+proof
+  A1: funK in ClosGRb(funK,b) by CbBasic;
+  then opInv.funK in ClosGRb(funK,b) by CbBasic;
+  hence A2: funZ in ClosGRb(funK,b) by KinvZ;
+  now
+    let x;
+    thus (funK*funZ).x = funK.(funZ.x) by CompVal .= x by KZ
+      .= funI.x by DefI;
+  end;
+  then funK*funZ = funI by UFunExt;
+  hence funI in ClosGRb(funK,b) by A1, A2, CbBasic;
+  then (opPlusIb b).funI in ClosGRb(funK,b) by CbBasic;
+  then funZ*((opPlusIb b).funI) in ClosGRb(funK,b) by A2, CbBasic;
+  then (opPlusIb b).(funZ*((opPlusIb b).funI)) in ClosGRb(funK,b)
+    by CbBasic;
+  hence thesis by A1, CbBasic;
+end;
+
+definition
+  let b be Nat;
+  func exprP1K b -> Element of Funcs(NAT,NAT) equals
+  funK*(opInv.(funK*(exprUK b)));
+  coherence;
+end;
+
+definition
+  let b be Nat;
+  func exprCK b -> Element of Funcs(NAT,NAT) equals
+  funK*((opPlusIb b).(funZ*(exprP1K b)))*(exprUK b)*(exprUK b)*(exprUK b);
+  coherence;
+end;
+
+theorem U3Val:
+  b = c + 1 implies
+  ((exprUK b)*(exprUK b)*(exprUK b)).x = x + 3*c &
+  for G holds (G*(exprUK b)*(exprUK b)*(exprUK b)).x = G.(x + 3*c)
+proof
+  assume A1: b = c + 1;
+  set U = exprUK b;
+  A2: (U*U*U).x = (U*U).(U.x) by CompVal
+    .= U.(U.(U.x)) by CompVal
+    .= U.(U.(x + c)) by A1, UKVal
+    .= U.(x + c + c) by A1, UKVal
+    .= x + c + c + c by A1, UKVal;
+  hence (U*U*U).x = x + 3*c;
+  let G;
+  thus (G*U*U*U).x = (G*U*U).(U.x) by CompVal
+    .= (G*U).(U.(U.x)) by CompVal
+    .= G.(U.(U.(U.x))) by CompVal
+    .= G.((U*U).(U.x)) by CompVal
+    .= G.(x + 3*c) by A2, CompVal;
+end;
+
+theorem CKVal:
+  b = d + 2 implies (exprCK b).x = 2*d
+proof
+  assume A1: b = d + 2;
+  set c = d + 1;
+  A2: b = c + 1 by A1;
+  set y = x + 3*c, g = x + 2*c;
+  set G = funK*((opPlusIb b).(funZ*(exprP1K b)));
+  A3: for y holds (exprUK b).y = y + c by A2, UKVal;
+  y = c + (x + 2*c);
+  then c <= y by NAT_1:11;
+  then funK.((opInv.(funK*(exprUK b))).y) = y -' c by A3, KSubInv;
+  then A4: (exprP1K b).y = y -' c by CompVal
+    .= g + c -' c
+    .= g by NAT_D:34;
+  A5: funA.(g+1+1) = funA.(g+1) + (g+1) + 1 by ASuc
+    .= funA.g + g + 1 + (g+1) + 1 by ASuc;
+  A6: G.y = funK.(((opPlusIb b).(funZ*(exprP1K b))).y) by CompVal
+    .= funK.((funZ*(exprP1K b)).y + y + b) by DefPlusIb
+    .= funK.(funZ.((exprP1K b).y) + y + b) by CompVal
+    .= funK.(funA.g + g + y + b) by A4, DefZ
+    .= funK.(funA.(g+1+1) + 2*d) by A1, A5;
+  g+1+1 = 2*d + (x + 4);
+  then 2*d <= g+1+1 by NAT_1:11;
+  then A7: funK.(funA.(g+1+1) + 2*d) = 2*d by Diag;
+  thus (exprCK b).x = G.y by A2, U3Val .= 2*d by A6, A7;
+end;
+
+definition
+  let b be Nat;
+  func exprSK2 b -> Element of Funcs(NAT,NAT) equals
+  funK*(opInv.(funK*((opPlusIb b).(exprCK b))))*
+    (exprUK b)*(exprUK b)*(exprUK b);
+  coherence;
+end;
+
+theorem SK2Val:
+  b = d + 2 implies exprSK2 b = funS
+proof
+  assume A1: b = d + 2;
+  set c = d + 1;
+  A2: b = c + 1 by A1;
+  set V = (opPlusIb b).(exprCK b);
+  A3: for y holds V.y = y + (3*d + 2)
+  proof
+    let y;
+    thus V.y = (exprCK b).y + y + b by DefPlusIb
+      .= 2*d + y + b by A1, CKVal
+      .= y + (3*d + 2) by A1;
+  end;
+  now
+    let x;
+    3*d + 2 <= 3*d + 2 + (x + 1) by NAT_1:11;
+    then A4: funK.((opInv.(funK*V)).(x + 1 + (3*d + 2))) =
+      x + 1 + (3*d + 2) -' (3*d + 2) by A3, KSubInv;
+    thus (exprSK2 b).x = (funK*(opInv.(funK*V))).(x + 3*c) by A2, U3Val
+      .= funK.((opInv.(funK*V)).(x + 1 + (3*d + 2))) by CompVal
+      .= x + 1 by A4, NAT_D:34
+      .= funS.x by DefS;
+  end;
+  hence thesis by UFunExt;
+end;
+
+definition
+  func exprPK1 -> Element of Funcs(NAT,NAT) equals
+  funK*((opPlusIb 1).((opPlusIb 1).funZ));
+  coherence;
+end;
+
+definition
+  func exprSK1 -> Element of Funcs(NAT,NAT) equals
+  funK*(opInv.exprPK1)*((opPlusIb 1).(funZ*((opPlusIb 1).funI)));
+  coherence;
+end;
+
+theorem PK1Val:
+  exprPK1.0 = 1 & exprPK1.(y+1) = y
+proof
+  A1: for x holds exprPK1.x = funK.(funA.x + 3*x + 2)
+  proof
+    let x;
+    thus exprPK1.x = funK.(((opPlusIb 1).((opPlusIb 1).funZ)).x) by CompVal
+      .= funK.(((opPlusIb 1).funZ).x + x + 1) by DefPlusIb
+      .= funK.(funZ.x + x + 1 + x + 1) by DefPlusIb
+      .= funK.(funA.x + x + x + 1 + x + 1) by DefZ
+      .= funK.(funA.x + 3*x + 2);
+  end;
+  A2: funA.(0+1) = funA.0 + 0 + 1 by ASuc .= 1 by AZero;
+  1 <= 1;
+  then A3: funK.(funA.1 + 1) = 1 by Diag;
+  thus exprPK1.0 = funK.(funA.0 + 3*0 + 2) by A1
+    .= funK.(funA.1 + 1) by A2, AZero
+    .= 1 by A3;
+  A4: funA.(y+1+1) = funA.(y+1) + (y+1) + 1 by ASuc;
+  A5: funA.(y+1+1+1) = funA.(y+1+1) + (y+1+1) + 1 by ASuc;
+  y + 3 = y + 3;
+  then y <= y+1+1+1 by NAT_1:11;
+  then A6: funK.(funA.(y+1+1+1) + y) = y by Diag;
+  thus exprPK1.(y+1) = funK.(funA.(y+1) + 3*(y+1) + 2) by A1
+    .= y by A4, A5, A6;
+end;
+
+theorem PK1Inv:
+  v <> 1 implies (opInv.exprPK1).v = v + 1
+proof
+  assume A1: v <> 1;
+  A2: exprPK1 is surj
+  proof
+    let x;
+    take x + 1;
+    thus thesis by PK1Val;
+  end;
+  set y = (opInv.exprPK1).v;
+  A3: exprPK1.y = v by A2, InvRight;
+  per cases by NAT_1:14;
+  suppose y = 0;
+    hence thesis by A1, A3, PK1Val;
+  end;
+  suppose 1 <= y;
+    then consider y1 being Nat such that A4: y = 1 + y1 by NAT_1:10;
+    thus thesis by A3, A4, PK1Val;
+  end;
+end;
+
+theorem SK1Val:
+  exprSK1 = funS
+proof
+  now
+    let x;
+    set n = 2*x + 1;
+    set v = funA.(n+1) + x;
+    A1: funA.(n+1) = funA.n + n + 1 by ASuc;
+    A2: ((opPlusIb 1).(funZ*((opPlusIb 1).funI))).x
+        = (funZ*((opPlusIb 1).funI)).x + x + 1 by DefPlusIb
+      .= funZ.(((opPlusIb 1).funI).x) + x + 1 by CompVal
+      .= funZ.n + x + 1 by TVal
+      .= funA.n + n + x + 1 by DefZ
+      .= v by A1;
+    A3: v <> 1
+    proof
+      assume A4: v = 1;
+      A5: n + 1 <= funA.(n+1) by ALe;
+      funA.(n+1) <= v by NAT_1:11;
+      then n + 1 <= v by A5, XXREAL_0:2;
+      then 2*x + 1 + 1 <= 0 + 1 by A4;
+      hence contradiction by XREAL_1:6;
+    end;
+    n + 1 = (x + 1) + (x + 1);
+    then A6: x + 1 <= n + 1 by NAT_1:11;
+    thus exprSK1.x
+        = (funK*(opInv.exprPK1)).(((opPlusIb 1).(funZ*((opPlusIb 1).funI))).x)
+          by CompVal
+      .= funK.((opInv.exprPK1).v) by A2, CompVal
+      .= funK.(v + 1) by A3, PK1Inv
+      .= funK.(funA.(n+1) + (x + 1))
+      .= x + 1 by A6, Diag
+      .= funS.x by DefS;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem CbKS:
+  1 <= b implies funS in ClosGRb(funK,b)
+proof
+  assume A1: 1 <= b;
+  A2: funK in ClosGRb(funK,b) & funZ in ClosGRb(funK,b) &
+    funI in ClosGRb(funK,b) & exprUK b in ClosGRb(funK,b)
+    by CbBasic, CbKFirst;
+  per cases by A1, XXREAL_0:1;
+  suppose A3: b = 1;
+    (opPlusIb 1).funZ in ClosGRb(funK,b) by A2, A3, CbBasic;
+    then (opPlusIb 1).((opPlusIb 1).funZ) in ClosGRb(funK,b) by A3, CbBasic;
+    then exprPK1 in ClosGRb(funK,b) by A2, CbBasic;
+    then opInv.exprPK1 in ClosGRb(funK,b) by CbBasic;
+    then A4: funK*(opInv.exprPK1) in ClosGRb(funK,b) by A2, CbBasic;
+    (opPlusIb 1).funI in ClosGRb(funK,b) by A2, A3, CbBasic;
+    then funZ*((opPlusIb 1).funI) in ClosGRb(funK,b) by A2, CbBasic;
+    then (opPlusIb 1).(funZ*((opPlusIb 1).funI)) in ClosGRb(funK,b)
+      by A3, CbBasic;
+    then exprSK1 in ClosGRb(funK,b) by A4, CbBasic;
+    hence thesis by SK1Val;
+  end;
+  suppose 1 < b;
+    then 1 + 1 <= b by NAT_1:13;
+    then consider d such that A3: b = 2 + d by NAT_1:10;
+    set U = exprUK b;
+    funK*U in ClosGRb(funK,b) by A2, CbBasic;
+    then opInv.(funK*U) in ClosGRb(funK,b) by CbBasic;
+    then funK*(opInv.(funK*U)) in ClosGRb(funK,b) by A2, CbBasic;
+    then funZ*(exprP1K b) in ClosGRb(funK,b) by A2, CbBasic;
+    then (opPlusIb b).(funZ*(exprP1K b)) in ClosGRb(funK,b) by CbBasic;
+    then funK*((opPlusIb b).(funZ*(exprP1K b))) in ClosGRb(funK,b)
+      by A2, CbBasic;
+    then funK*((opPlusIb b).(funZ*(exprP1K b)))*U in ClosGRb(funK,b)
+      by A2, CbBasic;
+    then funK*((opPlusIb b).(funZ*(exprP1K b)))*U*U in ClosGRb(funK,b)
+      by A2, CbBasic;
+    then exprCK b in ClosGRb(funK,b) by A2, CbBasic;
+    then (opPlusIb b).(exprCK b) in ClosGRb(funK,b) by CbBasic;
+    then funK*((opPlusIb b).(exprCK b)) in ClosGRb(funK,b) by A2, CbBasic;
+    then opInv.(funK*((opPlusIb b).(exprCK b))) in ClosGRb(funK,b)
+      by CbBasic;
+    then funK*(opInv.(funK*((opPlusIb b).(exprCK b)))) in ClosGRb(funK,b)
+      by A2, CbBasic;
+    then funK*(opInv.(funK*((opPlusIb b).(exprCK b))))*U in ClosGRb(funK,b)
+      by A2, CbBasic;
+    then funK*(opInv.(funK*((opPlusIb b).(exprCK b))))*U*U
+      in ClosGRb(funK,b) by A2, CbBasic;
+    then exprSK2 b in ClosGRb(funK,b) by A2, CbBasic;
+    hence thesis by A3, SK2Val;
+  end;
+end;
+
+theorem GRbK:
+  1 <= b implies ClosGRb(funK,b) = ClosJR
+proof
+  assume A1: 1 <= b;
+  A2: funS in ClosGRb(funK,b) & funK in ClosGRb(funK,b) &
+    funZ in ClosGRb(funK,b) by A1, CbKS, CbBasic, CbKFirst;
+  funK*funS in ClosGRb(funK,b) by A2, CbBasic;
+  then opInv.(funK*funS) in ClosGRb(funK,b) by CbBasic;
+  then A3: exprPK in ClosGRb(funK,b) by A2, CbBasic;
+  A4: for x holds exprPK.(x+1) = x by PKVal;
+  A5: for F st F in ClosGRb(funK,b) holds opPlusI.F in ClosGRb(funK,b)
+    by A3, A4, CbPlusI;
+  then opPlusI.funZ in ClosGRb(funK,b) by A2;
+  then funZ*(opPlusI.funZ) in ClosGRb(funK,b) by A2, CbBasic;
+  then funZ*(opPlusI.funZ)*funK in ClosGRb(funK,b) by A2, CbBasic;
+  then opPlusI.(funZ*(opPlusI.funZ)*funK) in ClosGRb(funK,b) by A5;
+  then (opPlusI.(funZ*(opPlusI.funZ)*funK))*funZ in ClosGRb(funK,b)
+    by A2, CbBasic;
+  then (opPlusI.(funZ*(opPlusI.funZ)*funK))*funZ*funK in ClosGRb(funK,b)
+    by A2, CbBasic;
+  then A6: opPlusI.((opPlusI.(funZ*(opPlusI.funZ)*funK))*funZ*funK)
+    in ClosGRb(funK,b) by A5;
+  funK*funS in ClosGRb(funK,b) by A2, CbBasic;
+  then funK*funS*funS in ClosGRb(funK,b) by A2, CbBasic;
+  then funK*funS*funS*funS in ClosGRb(funK,b) by A2, CbBasic;
+  then funK*funS*funS*funS*
+    (opPlusI.((opPlusI.(funZ*(opPlusI.funZ)*funK))*funZ*funK))
+    in ClosGRb(funK,b) by A6, CbBasic;
+  then exprAK in ClosGRb(funK,b) by A2, CbBasic;
+  then A7: funK*funA in ClosGRb(funK,b) by A2, AExprK, CbBasic;
+  now
+    let x;
+    0 <= x;
+    then A8: funK.(funA.x + 0) = 0 by Diag;
+    thus (funK*funA).x = funK.(funA.x) by CompVal .= 0 by A8
+      .= (cst 0).x by DefCst;
+  end;
+  then funK*funA = cst 0 by UFunExt;
+  then funS*(cst 0) in ClosGRb(funK,b) by A2, A7, CbBasic;
+  then ClosGR funK c= ClosGRb(funK,b) by A3, A4, OneExpr, CbSub;
+  then A9: ClosJR c= ClosGRb(funK,b) by GREqJR;
+  funK in ClosGR funE by GERich, RichAVKL;
+  then ClosGRb(funK,b) c= ClosGR funE by GRbSubGE;
+  then ClosGRb(funK,b) c= ClosJR by GREqJR;
+  hence thesis by A9, XBOOLE_0:def 10;
+end;
+
+:: The case X = L.  L^-1 = A, U = L (...(A^+b)...)^+b (2b - 2 times) is
+:: x + b - 1, L A^+b subtracts b - 2 and S = L A^+b U; P = L S A, 0 = L A^+
+
+theorem LSurjA:
+  funL is surj & opInv.funL = funA
+proof
+  A1: for x holds funL.(funA.x) = x
+  proof
+    let x;
+    0 <= x;
+    then funL.(funA.x + 0) = x -' 0 by Diag;
+    hence thesis by NAT_D:40;
+  end;
+  thus A2: funL is surj
+  proof
+    let x;
+    take funA.x;
+    thus thesis by A1;
+  end;
+  now
+    let x;
+    set y = (opInv.funL).x, t = funV.y, k = funK.y;
+    funL.(funA.x) = x by A1;
+    then A3: y <= funA.x by A2, InvLeast;
+    A4: funL.y = x by A2, InvRight;
+    A5: y = funA.t + k & k <= t by Decomp;
+    funL.y = t -' k by A5, Diag;
+    then x <= t by A4, NAT_D:35;
+    then A6: funA.x <= funA.t by AMono;
+    funA.t <= y by A5, NAT_1:11;
+    then funA.x <= y by A6, XXREAL_0:2;
+    hence y = funA.x by A3, XXREAL_0:1;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem AAdd:
+  funA.(x + n) = funA.x + n*x + funA.n
+proof
+  A1: 2*(funA.(x + n)) = (x + n)*(x + n) + (x + n) by TwoA;
+  2*(funA.x) = x*x + x & 2*(funA.n) = n*n + n by TwoA;
+  then 2*(funA.(x + n)) = 2*(funA.x + n*x + funA.n) by A1;
+  hence thesis;
+end;
+
+theorem IterA:
+  ex H st H in ClosGRb(funL,b) & for x holds H.x = funA.x + n*(x + b)
+proof
+  defpred P[Nat] means ex H st H in ClosGRb(funL,b) &
+    for x holds H.x = funA.x + $1*(x + b);
+  A1: P[0]
+  proof
+    take funA;
+    funL in ClosGRb(funL,b) by CbBasic;
+    then opInv.funL in ClosGRb(funL,b) by CbBasic;
+    hence funA in ClosGRb(funL,b) by LSurjA;
+    let x;
+    thus thesis;
+  end;
+  A2: for n st P[n] holds P[n+1]
+  proof
+    let n;
+    given H such that A3: H in ClosGRb(funL,b) and
+      A4: for x holds H.x = funA.x + n*(x + b);
+    take (opPlusIb b).H;
+    thus (opPlusIb b).H in ClosGRb(funL,b) by A3, CbBasic;
+    let x;
+    thus ((opPlusIb b).H).x = H.x + x + b by DefPlusIb
+      .= funA.x + n*(x + b) + x + b by A4
+      .= funA.x + (n+1)*(x + b);
+  end;
+  for n holds P[n] from NAT_1:sch 2(A1,A2);
+  hence thesis;
+end;
+
+theorem CbLS:
+  1 <= b implies funS in ClosGRb(funL,b)
+proof
+  assume 1 <= b;
+  then consider c such that A1: b = 1 + c by NAT_1:10;
+  consider H such that A2: H in ClosGRb(funL,b) and
+    A3: for x holds H.x = funA.x + (2*c)*(x + b) by IterA;
+  A4: funL in ClosGRb(funL,b) by CbBasic;
+  then A5: funL*H in ClosGRb(funL,b) by A2, CbBasic;
+  A6: funA in ClosGRb(funL,b) by A4, CbBasic, LSurjA;
+  then (opPlusIb b).funA in ClosGRb(funL,b) by CbBasic;
+  then A7: funL*((opPlusIb b).funA) in ClosGRb(funL,b) by A4, CbBasic;
+  A8: funA.(2*c) = c*c + (c*c + c)
+  proof
+    funA.(2*c + 0) = (c + 0)*(c + 0) + (c*c + c) by AHalf;
+    hence thesis;
+  end;
+  now
+    let x;
+    A9: H.x = funA.x + (2*c)*(x + b) by A3
+      .= funA.x + (2*c)*x + (c*c + (c*c + c)) + c by A1
+      .= funA.x + (2*c)*x + funA.(2*c) + c by A8
+      .= funA.(x + 2*c) + c by AAdd;
+    x + 2*c = c + (x + c);
+    then A10: c <= x + 2*c by NAT_1:11;
+    A11: (funL*H).x = funL.(H.x) by CompVal
+      .= x + 2*c -' c by A9, A10, Diag
+      .= (x + c) + c -' c
+      .= x + c by NAT_D:34;
+    A12: funA.(x + c + 1) = funA.(x + c) + (x + c) + 1 by ASuc;
+    A13: ((opPlusIb b).funA).(x + c) = funA.(x + c) + (x + c) + b
+        by DefPlusIb
+      .= funA.(x + c + 1) + c by A1, A12;
+    x + c + 1 = c + (x + 1);
+    then A14: c <= x + c + 1 by NAT_1:11;
+    thus (funL*((opPlusIb b).funA)*(funL*H)).x
+        = (funL*((opPlusIb b).funA)).(x + c) by A11, CompVal
+      .= funL.(((opPlusIb b).funA).(x + c)) by CompVal
+      .= x + c + 1 -' c by A13, A14, Diag
+      .= (x + 1) + c -' c
+      .= x + 1 by NAT_D:34
+      .= funS.x by DefS;
+  end;
+  then funL*((opPlusIb b).funA)*(funL*H) = funS by UFunExt;
+  hence thesis by A5, A7, CbBasic;
+end;
+
+theorem GRbL:
+  1 <= b implies ClosGRb(funL,b) = ClosJR
+proof
+  assume A1: 1 <= b;
+  A2: funS in ClosGRb(funL,b) & funL in ClosGRb(funL,b) by A1, CbLS, CbBasic;
+  then A3: funA in ClosGRb(funL,b) by CbBasic, LSurjA;
+  funL*funS in ClosGRb(funL,b) by A2, CbBasic;
+  then A4: funL*funS*funA in ClosGRb(funL,b) by A3, CbBasic;
+  A5: for x holds (funL*funS*funA).(x+1) = x
+  proof
+    let x;
+    1 <= x + 1 by NAT_1:11;
+    then A6: funL.(funA.(x+1) + 1) = x + 1 -' 1 by Diag;
+    thus (funL*funS*funA).(x+1) = (funL*funS).(funA.(x+1)) by CompVal
+      .= funL.(funS.(funA.(x+1))) by CompVal
+      .= funL.(funA.(x+1) + 1) by DefS
+      .= x by A6, NAT_D:34;
+  end;
+  then opPlusI.funA in ClosGRb(funL,b) by A3, A4, CbPlusI;
+  then A7: funL*(opPlusI.funA) in ClosGRb(funL,b) by A2, CbBasic;
+  now
+    let x;
+    x <= x;
+    then A8: funL.(funA.x + x) = x -' x by Diag;
+    thus (funL*(opPlusI.funA)).x = funL.((opPlusI.funA).x) by CompVal
+      .= funL.(funA.x + x) by DefPlusI
+      .= 0 by A8, XREAL_1:232
+      .= (cst 0).x by DefCst;
+  end;
+  then funL*(opPlusI.funA) = cst 0 by UFunExt;
+  then funS*(cst 0) in ClosGRb(funL,b) by A2, A7, CbBasic;
+  then ClosGR funL c= ClosGRb(funL,b) by A4, A5, OneExpr, CbSub;
+  then A9: ClosJR c= ClosGRb(funL,b) by GREqJR;
+  funL in ClosGR funE by GERich, RichAVKL;
+  then ClosGRb(funL,b) c= ClosGR funE by GRbSubGE;
+  then ClosGRb(funL,b) c= ClosJR by GREqJR;
+  hence thesis by A9, XBOOLE_0:def 10;
+end;
+
+theorem GRb0Fix:
+  X.0 = 0 & F in ClosGRb(X,0) implies F.0 = 0
+proof
+  assume that A1: X.0 = 0 and A2: F in ClosGRb(X,0);
+  A3: for G st G in {X} holds G.0 = 0 by A1, TARSKI:def 1;
+  A4: for u being UnOp of Funcs(NAT,NAT), G st u in {opPlusIb 0, opInv} &
+    G.0 = 0 holds (u.G).0 = 0
+  proof
+    let u be UnOp of Funcs(NAT,NAT), G;
+    assume A5: u in {opPlusIb 0, opInv} & G.0 = 0;
+    per cases by A5, TARSKI:def 2;
+    suppose A6: u = opPlusIb 0;
+      thus (u.G).0 = G.0 + 0 + 0 by A6, DefPlusIb .= 0 by A5;
+    end;
+    suppose u = opInv;
+      hence thesis by A5, InvFix0;
+    end;
+  end;
+  {X} c= Funcs(NAT,NAT) by SingleFuncs;
+  hence thesis by A2, A3, A4, Fix0Clos;
+end;
+
+theorem GRbIff:
+  (ClosGRb(funE,b) = ClosJR iff 1 <= b) &
+  (ClosGRb(funK,b) = ClosJR iff 1 <= b) &
+  (ClosGRb(funL,b) = ClosJR iff 1 <= b)
+proof
+  A1: (cst 1).0 = 1 & cst 1 in ClosJR by DefCst, JRFirst;
+  A2: b = 0 implies ClosGRb(funE,b) <> ClosJR & ClosGRb(funK,b) <> ClosJR &
+    ClosGRb(funL,b) <> ClosJR by A1, XFix0, GRb0Fix;
+  A3: not 1 <= b implies b = 0 by NAT_1:14;
+  hence ClosGRb(funE,b) = ClosJR iff 1 <= b by A2, GRbE;
+  thus ClosGRb(funK,b) = ClosJR iff 1 <= b by A2, A3, GRbK;
+  thus thesis by A2, A3, GRbL;
+end;
+
+:: Any constant n >= 1 in place of 1: for X in {E, K, L} and a set U of unary
+:: operators with F^+ in U, <n, X, U, FG> and <1, X, U, FG> have the same
+:: closure.  Since n^+(x) = x + n, every constant c + kn is generated from c,
+:: and X steps down from c to c - 1:
+::   E(c + (nc^2 + 2c)n) = c - 1,  K(c + (2nc^2 + 3c)n) = c - 1,
+::   L(c + (2nc^2 + 2c)n) = nc - c and L((nc - c) + 2nc^2 n) = c - 1.
+
+definition
+  let X be Element of Funcs(NAT,NAT), U be set, n be Nat;
+  func ClosC(X,U,n) -> Subset of Funcs(NAT,NAT) equals
+  clos({cst n, X}, U, {opComp});
+  coherence;
+end;
+
+theorem CCBasic:
+  cst n in ClosC(X,U,n) & X in ClosC(X,U,n) &
+  (opPlusI in U & F in ClosC(X,U,n) implies opPlusI.F in ClosC(X,U,n)) &
+  (F in ClosC(X,U,n) & G in ClosC(X,U,n) implies F*G in ClosC(X,U,n))
+proof
+  cst n in {cst n, X} & X in {cst n, X} by TARSKI:def 2;
+  hence cst n in ClosC(X,U,n) & X in ClosC(X,U,n) by ClosInit;
+  thus opPlusI in U & F in ClosC(X,U,n) implies opPlusI.F in ClosC(X,U,n)
+    by ClosUnop;
+  thus thesis by CompIn;
+end;
+
+theorem CstComp:
+  F*(cst m) = cst (F.m)
+proof
+  now
+    let x;
+    thus (F*(cst m)).x = F.((cst m).x) by CompVal .= F.m by DefCst
+      .= (cst (F.m)).x by DefCst;
+  end;
+  hence thesis by UFunExt;
+end;
+
+theorem CstShift:
+  opPlusI in U & cst c in ClosC(X,U,n) implies
+  cst (c + k*n) in ClosC(X,U,n) & cst (X.(c + k*n)) in ClosC(X,U,n)
+proof
+  assume that A1: opPlusI in U and A2: cst c in ClosC(X,U,n);
+  cst n in ClosC(X,U,n) by CCBasic;
+  then A3: opPlusI.(cst n) in ClosC(X,U,n) by A1, CCBasic;
+  A4: for x holds (opPlusI.(cst n)).x = x + n
+  proof
+    let x;
+    thus (opPlusI.(cst n)).x = (cst n).x + x by DefPlusI .= n + x by DefCst
+      .= x + n;
+  end;
+  consider H such that A5: H in ClosC(X,U,n) and
+    A6: for x holds H.x = (cst c).x + k*n by A2, A3, A4, PowShift;
+  now
+    let x;
+    thus H.x = (cst c).x + k*n by A6 .= c + k*n by DefCst
+      .= (cst (c + k*n)).x by DefCst;
+  end;
+  then A7: H = cst (c + k*n) by UFunExt;
+  hence cst (c + k*n) in ClosC(X,U,n) by A5;
+  X in ClosC(X,U,n) by CCBasic;
+  then X*(cst (c + k*n)) in ClosC(X,U,n) by A5, A7, CCBasic;
+  hence thesis by CstComp;
+end;
+
+:: if X steps down from every constant c >= 1, then 1 is generated
+theorem OneByDescent:
+  1 <= n & (for c st cst c in ClosC(X,U,n) & 1 <= c holds
+    cst (c -' 1) in ClosC(X,U,n)) implies cst 1 in ClosC(X,U,n)
+proof
+  assume that A1: 1 <= n and
+    A2: for c st cst c in ClosC(X,U,n) & 1 <= c holds
+      cst (c -' 1) in ClosC(X,U,n);
+  defpred P[Nat] means $1 + 1 <= n implies cst (n -' $1) in ClosC(X,U,n);
+  A3: P[0]
+  proof
+    n -' 0 = n by NAT_D:40;
+    hence thesis by CCBasic;
+  end;
+  A4: for j st P[j] holds P[j+1]
+  proof
+    let j;
+    assume A5: P[j];
+    assume A6: j + 1 + 1 <= n;
+    j + 1 <= j + 1 + 1 by NAT_1:11;
+    then A11: j + 1 <= n by A6, XXREAL_0:2;
+    then consider m such that A7: n = j + 1 + m by NAT_1:10;
+    A8: n -' j = (m + 1) + j -' j by A7 .= m + 1 by NAT_D:34;
+    A9: n -' (j + 1) = m + (j + 1) -' (j + 1) by A7 .= m by NAT_D:34;
+    A10: cst (n -' j) in ClosC(X,U,n) by A5, A11;
+    1 <= m + 1 by NAT_1:11;
+    then cst ((m + 1) -' 1) in ClosC(X,U,n) by A2, A8, A10;
+    hence thesis by A9, NAT_D:34;
+  end;
+  A11: for j holds P[j] from NAT_1:sch 2(A3,A4);
+  consider m such that A12: n = 1 + m by A1, NAT_1:10;
+  A13: n -' m = 1 + m -' m by A12 .= 1 by NAT_D:34;
+  m + 1 <= n by A12;
+  hence thesis by A11, A13;
+end;
+
+theorem CEqC1:
+  opPlusI in U & 1 <= n & cst 1 in ClosC(X,U,n) implies
+  ClosC(X,U,n) = ClosC(X,U,1)
+proof
+  assume that A1: opPlusI in U and A2: 1 <= n and
+    A3: cst 1 in ClosC(X,U,n);
+  ClosC(X,U,n) is_closed_under {cst 1, X}, U, {opComp}
+  proof
+    thus {cst 1, X} c= ClosC(X,U,n)
+    proof
+      let z be object;
+      assume z in {cst 1, X};
+      then z = cst 1 or z = X by TARSKI:def 2;
+      hence thesis by A3, CCBasic;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in U & F in ClosC(X,U,n) holds u.F in ClosC(X,U,n) by ClosUnop;
+    let c be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A4: c in {opComp} & F in ClosC(X,U,n) & G in ClosC(X,U,n);
+    then c = opComp by TARSKI:def 1;
+    then c.(F,G) = F*G by DefComp;
+    hence thesis by A4, CCBasic;
+  end;
+  then A5: ClosC(X,U,1) c= ClosC(X,U,n) by ClosLeast;
+  consider m such that A6: n = 1 + m by A2, NAT_1:10;
+  cst 1 in ClosC(X,U,1) by CCBasic;
+  then cst (1 + m*1) in ClosC(X,U,1) by A1, CstShift;
+  then A7: cst n in ClosC(X,U,1) by A6;
+  ClosC(X,U,1) is_closed_under {cst n, X}, U, {opComp}
+  proof
+    thus {cst n, X} c= ClosC(X,U,1)
+    proof
+      let z be object;
+      assume z in {cst n, X};
+      then z = cst n or z = X by TARSKI:def 2;
+      hence thesis by A7, CCBasic;
+    end;
+    thus for u being UnOp of Funcs(NAT,NAT), F being Element of Funcs(NAT,NAT)
+      st u in U & F in ClosC(X,U,1) holds u.F in ClosC(X,U,1) by ClosUnop;
+    let c be BinOp of Funcs(NAT,NAT), F,G be Element of Funcs(NAT,NAT);
+    assume A8: c in {opComp} & F in ClosC(X,U,1) & G in ClosC(X,U,1);
+    then c = opComp by TARSKI:def 1;
+    then c.(F,G) = F*G by DefComp;
+    hence thesis by A8, CCBasic;
+  end;
+  then ClosC(X,U,n) c= ClosC(X,U,1) by ClosLeast;
+  hence thesis by A5, XBOOLE_0:def 10;
+end;
+
+:: the descent, with n = n1 + 1 and c = c1 + 1
+theorem EDesc:
+  n = n1 + 1 & c = c1 + 1 implies funE.(c + (n*c*c + 2*c)*n) = c1
+proof
+  assume that A1: n = n1 + 1 and A2: c = c1 + 1;
+  A3: c + (n*c*c + 2*c)*n = (n*c + 1)*(n*c + 1) + c1 by A2;
+  2*(n*c + 1) = c1 + (c1 + 2*n1*c + 4) by A1, A2;
+  then c1 <= 2*(n*c + 1) by NAT_1:11;
+  hence thesis by A3, ESqAdd;
+end;
+
+theorem KDesc:
+  n = n1 + 1 & c = c1 + 1 implies funK.(c + (2*n*c*c + 3*c)*n) = c1
+proof
+  assume that A1: n = n1 + 1 and A2: c = c1 + 1;
+  set m = 2*n*c + 1;
+  2*(funA.m) = m*m + m by TwoA;
+  then 2*(funA.m) = 2*((2*n*c + 1)*(n*c + 1));
+  then A3: funA.m = (2*n*c + 1)*(n*c + 1);
+  A4: c + (2*n*c*c + 3*c)*n = funA.m + c1 by A2, A3;
+  m = c1 + (2*n1*c + c + 2) by A1, A2;
+  then c1 <= m by NAT_1:11;
+  hence thesis by A4, Diag;
+end;
+
+theorem LDesc1:
+  n = n1 + 1 implies funL.(c + (2*n*c*c + 2*c)*n) = n1*c
+proof
+  assume A1: n = n1 + 1;
+  set m = 2*n*c, k = n*c + c;
+  2*(funA.m) = m*m + m by TwoA;
+  then 2*(funA.m) = 2*(2*n*n*c*c + n*c);
+  then A2: funA.m = 2*n*n*c*c + n*c;
+  A3: c + (2*n*c*c + 2*c)*n = funA.m + k by A2;
+  A4: m = k + n1*c by A1;
+  then k <= m by NAT_1:11;
+  then funL.(funA.m + k) = m -' k by Diag .= n1*c by A4, NAT_D:34;
+  hence thesis by A3;
+end;
+
+theorem LDesc2:
+  n = n1 + 1 & c = c1 + 1 implies funL.(n1*c + (2*n*c*c)*n) = c1
+proof
+  assume that A1: n = n1 + 1 and A2: c = c1 + 1;
+  set k = (2*n1 + 1)*c, m = k + c1;
+  set q = 2*n1*c1 + 2*n1 + 2*c1 + 1;
+  A5: k = (2*n1 + 1)*(c1 + 1) by A2;
+  then A6: m = q;
+  A7: 2*(funA.m) = m*m + m by TwoA;
+  2*(funA.m + k) = m*m + m + 2*k by A7
+    .= q*q + q + 2*((2*n1 + 1)*(c1 + 1)) by A5, A6
+    .= 2*(n1*(c1 + 1) + (2*(n1 + 1)*(c1 + 1)*(c1 + 1))*(n1 + 1))
+    .= 2*(n1*c + (2*n*c*c)*n) by A1, A2;
+  then A4: funA.m + k = n1*c + (2*n*c*c)*n;
+  k <= m by NAT_1:11;
+  then funL.(funA.m + k) = m -' k by Diag .= c1 by NAT_D:34;
+  hence thesis by A4;
+end;
+
+theorem OneInC:
+  opPlusI in U & 1 <= n implies cst 1 in ClosC(funE,U,n) &
+  cst 1 in ClosC(funK,U,n) & cst 1 in ClosC(funL,U,n)
+proof
+  assume that A1: opPlusI in U and A2: 1 <= n;
+  consider n1 such that A3: n = 1 + n1 by A2, NAT_1:10;
+  for c st cst c in ClosC(funE,U,n) & 1 <= c holds
+    cst (c -' 1) in ClosC(funE,U,n)
+  proof
+    let c;
+    assume A4: cst c in ClosC(funE,U,n) & 1 <= c;
+    then consider c1 such that A5: c = 1 + c1 by NAT_1:10;
+    A6: c -' 1 = c1 by A5, NAT_D:34;
+    cst (funE.(c + (n*c*c + 2*c)*n)) in ClosC(funE,U,n) by A1, A4, CstShift;
+    hence thesis by A3, A5, A6, EDesc;
+  end;
+  hence cst 1 in ClosC(funE,U,n) by A2, OneByDescent;
+  for c st cst c in ClosC(funK,U,n) & 1 <= c holds
+    cst (c -' 1) in ClosC(funK,U,n)
+  proof
+    let c;
+    assume A4: cst c in ClosC(funK,U,n) & 1 <= c;
+    then consider c1 such that A5: c = 1 + c1 by NAT_1:10;
+    A6: c -' 1 = c1 by A5, NAT_D:34;
+    cst (funK.(c + (2*n*c*c + 3*c)*n)) in ClosC(funK,U,n)
+      by A1, A4, CstShift;
+    hence thesis by A3, A5, A6, KDesc;
+  end;
+  hence cst 1 in ClosC(funK,U,n) by A2, OneByDescent;
+  for c st cst c in ClosC(funL,U,n) & 1 <= c holds
+    cst (c -' 1) in ClosC(funL,U,n)
+  proof
+    let c;
+    assume A4: cst c in ClosC(funL,U,n) & 1 <= c;
+    then consider c1 such that A5: c = 1 + c1 by NAT_1:10;
+    A6: c -' 1 = c1 by A5, NAT_D:34;
+    cst (funL.(c + (2*n*c*c + 2*c)*n)) in ClosC(funL,U,n)
+      by A1, A4, CstShift;
+    then cst (n1*c) in ClosC(funL,U,n) by A3, LDesc1;
+    then cst (funL.(n1*c + (2*n*c*c)*n)) in ClosC(funL,U,n) by A1, CstShift;
+    hence thesis by A3, A5, A6, LDesc2;
+  end;
+  hence thesis by A2, OneByDescent;
+end;
+
+theorem CEq:
+  opPlusI in U & 1 <= n implies ClosC(funE,U,n) = ClosC(funE,U,1) &
+  ClosC(funK,U,n) = ClosC(funK,U,1) & ClosC(funL,U,n) = ClosC(funL,U,1)
+proof
+  assume A1: opPlusI in U & 1 <= n;
+  then cst 1 in ClosC(funE,U,n) & cst 1 in ClosC(funK,U,n) &
+    cst 1 in ClosC(funL,U,n) by OneInC;
+  hence thesis by A1, CEqC1;
+end;
+
+theorem C0Fix:
+  X.0 = 0 & (for u being UnOp of Funcs(NAT,NAT), G st u in U & G.0 = 0
+     holds (u.G).0 = 0) & F in ClosC(X,U,0) implies F.0 = 0
+proof
+  assume that A1: X.0 = 0 and
+    A2: for u being UnOp of Funcs(NAT,NAT), G st u in U & G.0 = 0
+      holds (u.G).0 = 0 and A3: F in ClosC(X,U,0);
+  A4: for G st G in {cst 0, X} holds G.0 = 0
+  proof
+    let G;
+    assume G in {cst 0, X};
+    then G = cst 0 or G = X by TARSKI:def 2;
+    hence thesis by A1, DefCst;
+  end;
+  {cst 0, X} c= Funcs(NAT,NAT) by SingleFuncs;
+  hence thesis by A2, A3, A4, Fix0Clos;
+end;
+
+theorem BoxInvFix0:
+  (for u being UnOp of Funcs(NAT,NAT), G st u in {opPlusI, opBox} &
+     G.0 = 0 holds (u.G).0 = 0) &
+  (for u being UnOp of Funcs(NAT,NAT), G st u in {opPlusI, opInv} &
+     G.0 = 0 holds (u.G).0 = 0)
+proof
+  thus for u being UnOp of Funcs(NAT,NAT), G st u in {opPlusI, opBox} &
+     G.0 = 0 holds (u.G).0 = 0
+  proof
+    let u be UnOp of Funcs(NAT,NAT), G;
+    assume A1: u in {opPlusI, opBox} & G.0 = 0;
+    then u = opPlusI or u = opBox by TARSKI:def 2;
+    hence thesis by A1, PlusIFix0, BoxFix0;
+  end;
+  let u be UnOp of Funcs(NAT,NAT), G;
+  assume A1: u in {opPlusI, opInv} & G.0 = 0;
+  then u = opPlusI or u = opInv by TARSKI:def 2;
+  hence thesis by A1, PlusIFix0, InvFix0;
+end;
+
+:: primitive recursive functions: <n, X, F^+, FG, F^box> generates clos F
+:: (Theorems 6.7 and 6.8) if and only if n >= 1
+theorem CnBox:
+  (ClosC(funE,{opPlusI, opBox},n) = C6 iff 1 <= n) &
+  (ClosC(funK,{opPlusI, opBox},n) = C6 iff 1 <= n) &
+  (ClosC(funL,{opPlusI, opBox},n) = C6 iff 1 <= n)
+proof
+  set U = {opPlusI, opBox};
+  A1: opPlusI in U by TARSKI:def 2;
+  A2: (cst 1).0 = 1 & cst 1 in C6 by DefCst, C6One;
+  A3: for u being UnOp of Funcs(NAT,NAT), G st u in U & G.0 = 0
+    holds (u.G).0 = 0 by BoxInvFix0;
+  A4: n = 0 implies ClosC(funE,U,n) <> C6 & ClosC(funK,U,n) <> C6 &
+    ClosC(funL,U,n) <> C6 by A2, A3, XFix0, C0Fix;
+  A5: not 1 <= n implies n = 0 by NAT_1:14;
+  A6: 1 <= n implies ClosC(funE,U,n) = C6 & ClosC(funK,U,n) = C6 &
+    ClosC(funL,U,n) = C6
+  proof
+    assume 1 <= n;
+    then A7: ClosC(funE,U,n) = ClosC(funE,U,1) &
+      ClosC(funK,U,n) = ClosC(funK,U,1) &
+      ClosC(funL,U,n) = ClosC(funL,U,1) by A1, CEq;
+    C6K = C6 & C6L = C6 by Theorem68;
+    hence thesis by A7, C6Eq;
+  end;
+  hence ClosC(funE,U,n) = C6 iff 1 <= n by A4, A5;
+  thus ClosC(funK,U,n) = C6 iff 1 <= n by A4, A5, A6;
+  thus thesis by A4, A5, A6;
+end;
+
+:: general recursive functions: <n, X, F^+, FG, F^-1> generates ClosJR
+:: if and only if n >= 1
+theorem CnInv:
+  (ClosC(funE,{opPlusI, opInv},n) = ClosJR iff 1 <= n) &
+  (ClosC(funK,{opPlusI, opInv},n) = ClosJR iff 1 <= n) &
+  (ClosC(funL,{opPlusI, opInv},n) = ClosJR iff 1 <= n)
+proof
+  set U = {opPlusI, opInv};
+  A1: opPlusI in U by TARSKI:def 2;
+  A2: (cst 1).0 = 1 & cst 1 in ClosJR by DefCst, JRFirst;
+  A3: for u being UnOp of Funcs(NAT,NAT), G st u in U & G.0 = 0
+    holds (u.G).0 = 0 by BoxInvFix0;
+  A4: n = 0 implies ClosC(funE,U,n) <> ClosJR & ClosC(funK,U,n) <> ClosJR &
+    ClosC(funL,U,n) <> ClosJR by A2, A3, XFix0, C0Fix;
+  A5: not 1 <= n implies n = 0 by NAT_1:14;
+  A6: 1 <= n implies ClosC(funE,U,n) = ClosJR & ClosC(funK,U,n) = ClosJR &
+    ClosC(funL,U,n) = ClosJR
+  proof
+    assume 1 <= n;
+    then ClosC(funE,U,n) = ClosC(funE,U,1) &
+      ClosC(funK,U,n) = ClosC(funK,U,1) &
+      ClosC(funL,U,n) = ClosC(funL,U,1) by A1, CEq;
+    hence thesis by GREqJR;
+  end;
+  hence ClosC(funE,U,n) = ClosJR iff 1 <= n by A4, A5;
+  thus ClosC(funK,U,n) = ClosJR iff 1 <= n by A4, A5, A6;
+  thus thesis by A4, A5, A6;
+end;

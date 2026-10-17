@@ -8317,4 +8317,5340 @@ prove;
 next;
 \end{zproof}
 
+\section{General recursive functions (README \S 2.3)}
+
+J.~Robinson (Proc.\ AMS 1 (1950), Sec.~4, Thm.~3) proved that the unary general recursive
+functions are the closure of $\langle S, E, F + G, FG, F^{-1}\rangle$, where
+$F^{-1}(x) = \mu y\,[F(y) = x]$ for $F$ onto.  Here $F + G$ is replaced by $F^+$.
+
+\subsection{Least preimages and inversion}
+
+Every value that is taken is taken at a least argument.
+
+\begin{zed}
+  LeastPreSet == \{ k: \nat | \forall F: \nat \fun \nat; x: \nat @ (\forall j: \nat | j \leq k @ \lnot F~j = x) \lor (\exists m: \nat @ F~m = x \land (\forall n: \nat | F~n = x @ m \leq n)) \}
+\end{zed}
+
+\begin{zproof}[LeastPreSet\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{rule LeastPreBase}
+  0 \in LeastPreSet
+\end{theorem}
+
+\begin{zproof}
+invoke LeastPreSet;
+prove;
+instantiate m == 0;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule LeastPreStep}
+  \forall k: LeastPreSet @ 1 + k \in LeastPreSet
+\end{theorem}
+
+\begin{zproof}
+invoke LeastPreSet;
+prove;
+split j \leq k;
+cases;
+instantiate F\_\_0 == F, j\_\_0 == j;
+prove;
+instantiate m\_\_1 == m;
+prove;
+instantiate n\_\_1 == n;
+prove;
+next;
+split \exists n: \nat | n \leq k @ F~n = F~j;
+cases;
+prove;
+instantiate F\_\_0 == F, j\_\_0 == n;
+prove;
+instantiate m\_\_1 == m;
+prove;
+instantiate n\_\_2 == n\_\_0;
+prove;
+next;
+prove;
+instantiate m\_\_0 == j;
+prove;
+instantiate n\_\_0 == n;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{LeastPreSub}
+  \nat \subseteq LeastPreSet
+\end{theorem}
+
+\begin{zproof}
+apply natInduction to predicate \nat \subseteq LeastPreSet;
+prove;
+invoke LeastPreSet;
+prove;
+\end{zproof}
+
+\begin{theorem}{LeastPre}
+  \forall F: \nat \fun \nat; y: \nat @ \exists m: \nat @ F~m = F~y \land (\forall n: \nat | F~n = F~y @ m \leq n)
+\end{theorem}
+
+\begin{zproof}
+prove;
+use LeastPreSub;
+invoke LeastPreSet;
+with enabled (inPower) prove;
+instantiate e == y;
+prove;
+instantiate F\_\_1 == F, j\_\_0 == y;
+prove;
+instantiate m\_\_2 == m;
+prove;
+instantiate n\_\_2 == n;
+prove;
+\end{zproof}
+
+
+$y$ is the least preimage of $x$ under $F$ (or $0$ if $x$ is not a value).
+
+\begin{zed}
+  IsLeast == \{ F: \nat \fun \nat; x, y: \nat | (\forall v: \nat | F~v = x @ y \leq v) \land (F~y = x \lor ((\forall w: \nat @ \lnot F~w = x) \land y = 0)) \}
+\end{zed}
+
+\begin{zproof}[IsLeast\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{LinvUnique}
+  \forall F: \nat \fun \nat; x, y, z: \nat | (F, x, y) \in IsLeast \land (F, x, z) \in IsLeast @ y = z
+\end{theorem}
+
+\begin{zproof}
+invoke IsLeast;
+prove;
+instantiate v == z, v\_\_0 == y, w == z, w\_\_0 == y;
+prove;
+split F~y = x;
+cases;
+with normalization prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{LinvExists}
+  \forall F: \nat \fun \nat; x: \nat @ \exists y: \nat @ (F, x, y) \in IsLeast
+\end{theorem}
+
+\begin{zproof}
+invoke IsLeast;
+prove;
+split \exists w: \nat @ F~w = x;
+cases;
+prove;
+use LeastPre[F := F, y := w];
+prove;
+instantiate y == m;
+prove;
+instantiate n == v;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{LinvInner}
+  \forall F: \nat \fun \nat @ \{ x, y: \nat | (F, x, y) \in IsLeast @ (x, y) \} \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+apply FunIntro to predicate \{ x, y: \nat | (F, x, y) \in IsLeast @ (x, y) \} \in \nat \fun \nat;
+with enabled (RelPow) prove;
+use LinvExists[F := F, x := x];
+use LinvUnique[F := F, x := x\_\_0, y := y, z := z];
+prove;
+instantiate y\_\_1 == y\_\_0;
+prove;
+\end{zproof}
+
+\begin{zed}
+  LinvWit == (\lambda F: \nat \fun \nat @ \{ x, y: \nat | (F, x, y) \in IsLeast @ (x, y) \})
+\end{zed}
+
+\begin{theorem}{LinvWitFun}
+  LinvWit \in (\nat \fun \nat) \fun (\nat \fun \nat)
+\end{theorem}
+
+\begin{zproof}
+invoke LinvWit;
+apply FunIntro to predicate (\lambda F: \nat \fun \nat @ \{ x, y: \nat | (F, x, y) \in IsLeast @ (x, y) \}) \in (\nat \fun \nat) \fun (\nat \fun \nat);
+with enabled (RelPow, inPower) prove;
+use LinvInner[F := F];
+use LinvInner[F := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{LinvWitApp}
+  \forall F: \nat \fun \nat @ LinvWit~F = \{ x, y: \nat | (F, x, y) \in IsLeast @ (x, y) \}
+\end{theorem}
+
+\begin{zproof}
+use LinvWitFun;
+use pairInFunction[\nat \fun \nat, \nat \fun \nat][f := LinvWit, x := F, y := \{ x, y: \nat | (F, x, y) \in IsLeast @ (x, y) \}];
+invoke LinvWit;
+prove;
+\end{zproof}
+
+\begin{theorem}{LinvWitVal}
+  \forall F: \nat \fun \nat; x: \nat @ (F, x, LinvWit~F~x) \in IsLeast
+\end{theorem}
+
+\begin{zproof}
+prove;
+use LinvWitApp[F := F];
+use LinvInner[F := F];
+use LinvExists[F := F, x := x];
+prove;
+use pairInFunction[\nat, \nat][f := \{ x, y: \nat | (F, x, y) \in IsLeast @ (x, y) \}, x := x, y := y];
+prove;
+\end{zproof}
+
+The least preimage of $x$ (an arbitrary value if $x$ is not a value of $F$).
+
+\begin{axdef}
+  linv: (\nat \fun \nat) \fun (\nat \fun \nat)
+\where
+  \Label{LinvSpec} \forall F: \nat \fun \nat; x: \nat @ (F, x, linv~F~x) \in IsLeast
+\end{axdef}
+
+\begin{zproof}[linv\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{LinvEx}
+  \exists linv: (\nat \fun \nat) \fun (\nat \fun \nat) @ \forall F: \nat \fun \nat; x: \nat @ (F, x, linv~F~x) \in IsLeast
+\end{theorem}
+
+\begin{zproof}
+instantiate linv == LinvWit;
+use LinvWitFun;
+prove;
+use LinvWitVal[F := F, x := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{LinvProp}
+  \forall F: \nat \fun \nat; x, y: \nat | F~y = x @ F~(linv~F~x) = x \land linv~F~x \leq y
+\end{theorem}
+
+\begin{zproof}
+prove;
+use LinvSpec[F := F, x := x];
+invoke IsLeast;
+prove;
+instantiate v == y, w == y;
+prove;
+\end{zproof}
+
+$F$ is onto.  Inversion: $F^{-1}(x) = \mu y\,[F(y) = x]$ if $F$ is onto, and $F^{-1} = F$
+otherwise, so that a closure under \textit{opInv} is a closure under Robinson's inversion.
+
+\begin{zed}
+  Surj == \{ F: \nat \fun \nat | \forall x: \nat @ \exists y: \nat @ F~y = x \}
+\end{zed}
+
+\begin{zproof}[Surj\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{axdef}
+  opInv: (\nat \fun \nat) \fun (\nat \fun \nat)
+\where
+  \Label{disabled rule InvVal} \forall F: \nat \fun \nat; x: \nat @ opInv~F~x = \IF F \in Surj \THEN linv~F~x \ELSE F~x
+\end{axdef}
+
+\begin{zproof}[opInv\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{rule InvInner}
+  \forall F: \nat \fun \nat @ (\lambda x: \nat @ \IF F \in Surj \THEN linv~F~x \ELSE F~x) \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+apply FunIntro to predicate (\lambda x: \nat @ \IF F \in Surj \THEN linv~F~x \ELSE F~x) \in \nat \fun \nat;
+with enabled (RelPow, inPower) prove;
+split F \in Surj;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{zed}
+  InvWit == (\lambda F: \nat \fun \nat @ (\lambda x: \nat @ \IF F \in Surj \THEN linv~F~x \ELSE F~x))
+\end{zed}
+
+\begin{zproof}[InvWit\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{InvWitFun}
+  InvWit \in (\nat \fun \nat) \fun (\nat \fun \nat)
+\end{theorem}
+
+\begin{zproof}
+invoke InvWit;
+apply FunIntro to predicate (\lambda F: \nat \fun \nat @ (\lambda x: \nat @ \IF F \in Surj \THEN linv~F~x \ELSE F~x)) \in (\nat \fun \nat) \fun (\nat \fun \nat);
+with enabled (RelPow, inPower) prove;
+\end{zproof}
+
+\begin{theorem}{InvWitApp}
+  \forall F: \nat \fun \nat @ InvWit~F = (\lambda x: \nat @ \IF F \in Surj \THEN linv~F~x \ELSE F~x)
+\end{theorem}
+
+\begin{zproof}
+use InvWitFun;
+use pairInFunction[\nat \fun \nat, \nat \fun \nat][f := InvWit, x := F, y := (\lambda x: \nat @ \IF F \in Surj \THEN linv~F~x \ELSE F~x)];
+invoke InvWit;
+prove by reduce;
+\end{zproof}
+
+\begin{theorem}{rule InvWitVal}
+  \forall F: \nat \fun \nat; x: \nat @ InvWit~F~x = \IF F \in Surj \THEN linv~F~x \ELSE F~x
+\end{theorem}
+
+\begin{zproof}
+prove;
+use InvWitApp[F := F];
+use pairInFunction[\nat, \nat][f := (\lambda x: \nat @ \IF F \in Surj \THEN linv~F~x \ELSE F~x), x := x, y := \IF F \in Surj \THEN linv~F~x \ELSE F~x];
+prove;
+\end{zproof}
+
+\begin{theorem}{InvEx}
+  \exists opInv: (\nat \fun \nat) \fun (\nat \fun \nat) @ \forall F: \nat \fun \nat; x: \nat @ opInv~F~x = \IF F \in Surj \THEN linv~F~x \ELSE F~x
+\end{theorem}
+
+\begin{zproof}
+instantiate opInv == InvWit;
+use InvWitFun;
+prove;
+\end{zproof}
+
+\begin{theorem}{InvNot}
+  \forall F: \nat \fun \nat | \lnot F \in Surj @ opInv~F = F
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate opInv~F = F;
+prove;
+use InvVal[F := F, x := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{rule InvRight}
+  \forall F: \nat \fun \nat; x: \nat | F \in Surj @ F~(opInv~F~x) = x
+\end{theorem}
+
+\begin{zproof}
+use InvVal[F := F, x := x];
+invoke Surj;
+prove;
+instantiate x\_\_0 == x;
+prove;
+use LinvProp[F := F, x := x, y := y];
+prove;
+\end{zproof}
+
+\begin{theorem}{InvLeast}
+  \forall F: \nat \fun \nat; x, y: \nat | F \in Surj \land F~y = x @ opInv~F~x \leq y
+\end{theorem}
+
+\begin{zproof}
+use InvVal[F := F, x := x];
+use LinvProp[F := F, x := x, y := y];
+prove;
+\end{zproof}
+
+\begin{theorem}{InvFix0}
+  \forall F: \nat \fun \nat | F~0 = 0 @ opInv~F~0 = 0
+\end{theorem}
+
+\begin{zproof}
+use InvVal[F := F, x := 0];
+use LinvProp[F := F, x := 0, y := 0];
+use UFNonneg[f := linv~F, x := 0];
+prove;
+\end{zproof}
+
+\subsection{Lemmas 6.2--6.6 in a rich set}
+
+The expressions of Lemmas 6.2--6.6 only use $I, E, S, D, M_3, \mathrm{Sq}, \mathrm{Hf}, \mathrm{Rt}$,
+$F^+$ and composition, so they work in every set of functions that contains these and is closed
+under $F^+$ and composition.
+
+\begin{zed}
+  Rich == \{ Y: \power (\nat \fun \nat) | funI \in Y \land funE \in Y \land funS \in Y \land funD \in Y \land funM3 \in Y \land funSq \in Y \land funHf \in Y \land funRt \in Y \land (\forall F: Y @ opPlusI~F \in Y) \land (\forall F, G: Y @ comp(F, G) \in Y) \}
+\end{zed}
+
+\begin{zproof}[Rich\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichI}
+  \forall Y: Rich @ funI \in Y
+\end{theorem}
+
+\begin{zproof}
+invoke Rich;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichE}
+  \forall Y: Rich @ funE \in Y
+\end{theorem}
+
+\begin{zproof}
+invoke Rich;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichS}
+  \forall Y: Rich @ funS \in Y
+\end{theorem}
+
+\begin{zproof}
+invoke Rich;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichD}
+  \forall Y: Rich @ funD \in Y
+\end{theorem}
+
+\begin{zproof}
+invoke Rich;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichM3}
+  \forall Y: Rich @ funM3 \in Y
+\end{theorem}
+
+\begin{zproof}
+invoke Rich;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichSq}
+  \forall Y: Rich @ funSq \in Y
+\end{theorem}
+
+\begin{zproof}
+invoke Rich;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichHf}
+  \forall Y: Rich @ funHf \in Y
+\end{theorem}
+
+\begin{zproof}
+invoke Rich;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichRt}
+  \forall Y: Rich @ funRt \in Y
+\end{theorem}
+
+\begin{zproof}
+invoke Rich;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichPlusI}
+  \forall Y: Rich; F: \nat \fun \nat | F \in Y @ opPlusI~F \in Y
+\end{theorem}
+
+\begin{zproof}
+invoke Rich;
+prove;
+instantiate F\_\_0 == F;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichComp}
+  \forall Y: Rich; F, G: \nat \fun \nat | F \in Y \land G \in Y @ comp(F, G) \in Y
+\end{theorem}
+
+\begin{zproof}
+invoke Rich;
+prove;
+instantiate F\_\_1 == F, G\_\_0 == G;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RMinusIIn}
+  \forall Y: Rich; F: \nat \fun \nat | F \in Y @ exprMinusI~F \in Y
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprMinusIApp) prove;
+\end{zproof}
+
+\begin{theorem}{rule ROplusIn}
+  \forall Y: Rich; F, G: \nat \fun \nat | F \in Y \land G \in Y @ exprOplus(F, G) \in Y
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprOplusApp) prove;
+\end{zproof}
+
+\begin{theorem}{rule ROminusIn}
+  \forall Y: Rich; F, G: \nat \fun \nat | F \in Y \land G \in Y @ exprOminus(F, G) \in Y
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprOminusApp) prove;
+\end{zproof}
+
+\begin{theorem}{rule RPhatIn}
+  \forall Y: Rich @ exprPhat \in Y
+\end{theorem}
+
+\begin{zproof}
+invoke exprPhat;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule ROtimesIn}
+  \forall Y: Rich; F, G: \nat \fun \nat | F \in Y \land G \in Y @ exprOtimes(F, G) \in Y
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprOtimesApp) prove;
+\end{zproof}
+
+\begin{theorem}{rule RPlusExprIn}
+  \forall Y: Rich; F, G: \nat \fun \nat | F \in Y \land G \in Y @ exprPlus(F, G) \in Y
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprPlusApp) prove;
+\end{zproof}
+
+\begin{theorem}{rule RMinusExprIn}
+  \forall Y: Rich; F, G: \nat \fun \nat | F \in Y \land G \in Y @ exprMinus(F, G) \in Y
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprMinusApp) prove;
+\end{zproof}
+
+Lemma 6.6 in a rich set.
+
+\begin{theorem}{rule RichPlus}
+  \forall Y: Rich; F, G: \nat \fun \nat | F \in Y \land G \in Y @ opPlus(F, G) \in Y
+\end{theorem}
+
+\begin{zproof}
+use PlusExprEq[F := F, G := G];
+prove;
+equality substitute opPlus(F, G);
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichDiffE}
+  \forall Y: Rich; F, G: \nat \fun \nat | F \in Y \land G \in Y @ opDiffE(F, G) \in Y
+\end{theorem}
+
+\begin{zproof}
+use MinusExprEq[F := F, G := G];
+prove;
+equality substitute opDiffE(F, G);
+prove;
+\end{zproof}
+
+$A$, $V$, $K$ and $L$ are in every rich set.
+
+\begin{theorem}{RichAExpr}
+  \forall Y: Rich @ comp(funHf, opPlusI~funSq) \in Y
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichA}
+  \forall Y: Rich @ funA \in Y
+\end{theorem}
+
+\begin{zproof}
+prove;
+use RichAExpr[Y := Y];
+use AExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{RichVExpr}
+  \forall Y: Rich @ comp(comp(comp(comp(comp(comp(funHf, exprPhat), funRt), funS), funD), funD), funD) \in Y
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichV}
+  \forall Y: Rich @ funV \in Y
+\end{theorem}
+
+\begin{zproof}
+prove;
+use RichVExpr[Y := Y];
+use VExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{RichKExpr}
+  \forall Y: Rich @ opDiffE(funI, comp(funA, funV)) \in Y
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichK}
+  \forall Y: Rich @ funK \in Y
+\end{theorem}
+
+\begin{zproof}
+prove;
+use RichKExpr[Y := Y];
+use KExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{RichLExpr}
+  \forall Y: Rich @ opDiffE(comp(funA, comp(funS, funV)), funS) \in Y
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule RichL}
+  \forall Y: Rich @ funL \in Y
+\end{theorem}
+
+\begin{zproof}
+prove;
+use RichLExpr[Y := Y];
+use LExpr;
+prove;
+\end{zproof}
+
+\subsection{The bases with inversion}
+
+J.~Robinson's basis $\langle S, E, F + G, FG, F^{-1}\rangle$ and $\langle \bar 1, X, F^+, FG, F^{-1}\rangle$
+for $X \in \{E, K, L\}$.
+
+\begin{zed}
+  ClosJR == clos~\{ funS, funE \}~\{ opInv \}~\{ opPlus, comp \}
+\end{zed}
+
+\begin{zproof}[ClosJR\$domainCheck]
+prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule ClosJRDef}
+  ClosJR = clos~\{ funS, funE \}~\{ opInv \}~\{ opPlus, comp \}
+\end{theorem}
+
+\begin{zproof}
+invoke ClosJR;
+prove;
+\end{zproof}
+
+\begin{theorem}{ClosJRInPower}
+  ClosJR \in \power (\nat \fun \nat)
+\end{theorem}
+
+\begin{zproof}
+use ClosInPow[I := \{ funS, funE \}, U := \{ opInv \}, B := \{ opPlus, comp \}];
+with enabled (ClosJRDef) prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule ClosJRUF}
+  \forall F: \power (\num \cross \num) | F \in ClosJR @ F \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosElemUF[I := \{ funS, funE \}, U := \{ opInv \}, B := \{ opPlus, comp \}, F := F];
+with enabled (ClosJRDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule ClosJRInit0}
+  funS \in ClosJR
+\end{theorem}
+
+\begin{zproof}
+with enabled (ClosJRDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule ClosJRInit1}
+  funE \in ClosJR
+\end{theorem}
+
+\begin{zproof}
+with enabled (ClosJRDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule ClosJRUnop0}
+  \forall F: \nat \fun \nat | F \in ClosJR @ opInv~F \in ClosJR
+\end{theorem}
+
+\begin{zproof}
+with enabled (ClosJRDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule ClosJRBinop0}
+  \forall F, G: \nat \fun \nat | F \in ClosJR \land G \in ClosJR @ opPlus(F, G) \in ClosJR
+\end{theorem}
+
+\begin{zproof}
+with enabled (ClosJRDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule ClosJRBinop1}
+  \forall F, G: \nat \fun \nat | F \in ClosJR \land G \in ClosJR @ comp(F, G) \in ClosJR
+\end{theorem}
+
+\begin{zproof}
+with enabled (ClosJRDef) prove;
+\end{zproof}
+
+\begin{zed}
+  CGE == clos~\{ cst~1, funE \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{zed}
+
+\begin{zproof}[CGE\$domainCheck]
+prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule CGEDef}
+  CGE = clos~\{ cst~1, funE \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+invoke CGE;
+prove;
+\end{zproof}
+
+\begin{theorem}{CGEInPower}
+  CGE \in \power (\nat \fun \nat)
+\end{theorem}
+
+\begin{zproof}
+use ClosInPow[I := \{ cst~1, funE \}, U := \{ opPlusI, opInv \}, B := \{ comp \}];
+with enabled (CGEDef) prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule CGEUF}
+  \forall F: \power (\num \cross \num) | F \in CGE @ F \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosElemUF[I := \{ cst~1, funE \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, F := F];
+with enabled (CGEDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGEInit0}
+  cst~1 \in CGE
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGEDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGEInit1}
+  funE \in CGE
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGEDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGEUnop0}
+  \forall F: \nat \fun \nat | F \in CGE @ opPlusI~F \in CGE
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGEDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGEUnop1}
+  \forall F: \nat \fun \nat | F \in CGE @ opInv~F \in CGE
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGEDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGEBinop0}
+  \forall F, G: \nat \fun \nat | F \in CGE \land G \in CGE @ comp(F, G) \in CGE
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGEDef) prove;
+\end{zproof}
+
+
+\subsection{The case $X = E$: arithmetic}
+
+\begin{theorem}{EBound}
+  \forall y: \nat @ funE~y \leq 2 * funRt~y
+\end{theorem}
+
+\begin{zproof}
+prove;
+use RtSpec[x := y];
+with enabled (EVal) prove;
+\end{zproof}
+
+\begin{theorem}{EDecomp}
+  \forall y: \nat @ funE~y + funRt~y * funRt~y = y
+\end{theorem}
+
+\begin{zproof}
+prove;
+use RtSpec[x := y];
+with enabled (EVal) prove;
+\end{zproof}
+
+\begin{theorem}{TwoLeSq}
+  \forall a: \nat @ 2 * a \leq a * a + 1
+\end{theorem}
+
+\begin{zproof}
+prove;
+split a = 0;
+cases;
+prove;
+next;
+use MulNonneg[a := a - 1, b := a - 1];
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{TwoELe}
+  \forall y: \nat @ 2 * funE~y \leq y + 1
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EBound[y := y];
+use TwoLeSq[a := funRt~y];
+use RtSpec[x := y];
+use UFNonneg[f := funRt, x := y];
+with enabled (EVal) prove;
+\end{zproof}
+
+\begin{theorem}{ESurj}
+  funE \in Surj
+\end{theorem}
+
+\begin{zproof}
+invoke Surj;
+prove;
+instantiate y == x * x + x;
+use ESqAdd[m := x, k := x];
+prove;
+\end{zproof}
+
+$E^{-1}(x) = c^2 + x$ where $c = \lceil x/2 \rceil$.
+
+\begin{theorem}{EinvVal}
+  \forall x, c: \nat | x \leq 2 * c \land 2 * c \leq x + 1 @ opInv~funE~x = c * c + x
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ESurj;
+use ESqAdd[m := c, k := x];
+use InvLeast[F := funE, x := x, y := c * c + x];
+use InvRight[F := funE, x := x];
+use EBound[y := opInv~funE~x];
+use EDecomp[y := opInv~funE~x];
+use UFNonneg[f := funRt, x := opInv~funE~x];
+use timesMonotonic2[a := c, b := c, c := funRt~(opInv~funE~x), d := funRt~(opInv~funE~x)];
+prove;
+\end{zproof}
+
+\begin{theorem}{rule EinvD}
+  \forall z: \nat @ opInv~funE~(2 * z) = z * z + 2 * z
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EinvVal[x := 2 * z, c := z];
+prove;
+\end{zproof}
+
+\begin{theorem}{rule EinvOdd}
+  \forall m: \nat @ opInv~funE~(1 + 2 * m) = (m + 1) * (m + 1) + 2 * m + 1
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EinvVal[x := 1 + 2 * m, c := m + 1];
+prove;
+\end{zproof}
+
+\subsection{The case $X = E$: $S$, $\bar 0$, $I$, $D$, $M_3$, $\mathrm{Sq}$}
+
+\begin{theorem}{IExprZero}
+  opPlusI~(cst~0) = funI
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate opPlusI~(cst~0) = funI;
+prove;
+\end{zproof}
+
+\begin{theorem}{GESExpr}
+  opPlusI~(cst~1) \in CGE
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GES}
+  funS \in CGE
+\end{theorem}
+
+\begin{zproof}
+use GESExpr;
+use SExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{GEZeroExpr}
+  comp(funE, cst~1) \in CGE
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GEZero}
+  cst~0 \in CGE
+\end{theorem}
+
+\begin{zproof}
+use GEZeroExpr;
+use ZeroExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{GEIExpr}
+  opPlusI~(cst~0) \in CGE
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GEI}
+  funI \in CGE
+\end{theorem}
+
+\begin{zproof}
+use GEIExpr;
+use IExprZero;
+prove;
+\end{zproof}
+
+\begin{theorem}{GEDExpr}
+  opPlusI~(opPlusI~(cst~0)) \in CGE
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GED}
+  funD \in CGE
+\end{theorem}
+
+\begin{zproof}
+use GEDExpr;
+use DExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{GEM3Expr}
+  opPlusI~funD \in CGE
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GEM3}
+  funM3 \in CGE
+\end{theorem}
+
+\begin{zproof}
+use GEM3Expr;
+use M3Expr;
+prove;
+\end{zproof}
+
+
+$F^- = E\,(S S S M_3 F E)^+ S\,(E^{-1} D F^+)^+$, without $\mathrm{Sq}$.
+
+\begin{zed}
+  exprMinusIE == (\lambda F: \nat \fun \nat @ comp(comp(comp(funE, opPlusI~(comp(comp(comp(comp(comp(funS, funS), funS), funM3), F), funE))), funS), opPlusI~(comp(comp(opInv~funE, funD), opPlusI~F))))
+\end{zed}
+
+\begin{zproof}[exprMinusIE\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{rule exprMinusIEFun}
+  exprMinusIE \in (\nat \fun \nat) \fun (\nat \fun \nat)
+\end{theorem}
+
+\begin{zproof}
+invoke exprMinusIE;
+apply FunIntro to predicate (\lambda F: \nat \fun \nat @ comp(comp(comp(funE, opPlusI~(comp(comp(comp(comp(comp(funS, funS), funS), funM3), F), funE))), funS), opPlusI~(comp(comp(opInv~funE, funD), opPlusI~F)))) \in (\nat \fun \nat) \fun (\nat \fun \nat);
+with enabled (RelPow, inPower) prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule exprMinusIEApp}
+  \forall F: \nat \fun \nat @ exprMinusIE~F = comp(comp(comp(funE, opPlusI~(comp(comp(comp(comp(comp(funS, funS), funS), funM3), F), funE))), funS), opPlusI~(comp(comp(opInv~funE, funD), opPlusI~F)))
+\end{theorem}
+
+\begin{zproof}
+use exprMinusIEFun;
+use pairInFunction[\nat \fun \nat, \nat \fun \nat][f := exprMinusIE, x := F, y := comp(comp(comp(funE, opPlusI~(comp(comp(comp(comp(comp(funS, funS), funS), funM3), F), funE))), funS), opPlusI~(comp(comp(opInv~funE, funD), opPlusI~F)))];
+invoke exprMinusIE;
+prove;
+\end{zproof}
+
+
+\begin{theorem}{rule MinusIEIn}
+  \forall F: \nat \fun \nat | F \in CGE @ exprMinusIE~F \in CGE
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprMinusIEApp) prove;
+\end{zproof}
+
+\begin{theorem}{rule MinusIEVal}
+  \forall F: \nat \fun \nat; x: \nat | x \leq F~x @ exprMinusIE~F~x = F~x - x
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprMinusIEApp) prove;
+use EinvD[z := F~x + x];
+use ESqAdd[m := F~x + x + 1, k := x];
+use ESqAdd[m := F~x + x + 2, k := F~x - x];
+prove;
+\end{zproof}
+
+\begin{theorem}{SqExprGE}
+  exprMinusIE~(exprMinusIE~(comp(opInv~funE, funD))) = funSq
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate exprMinusIE~(exprMinusIE~(comp(opInv~funE, funD))) = funSq;
+prove;
+\end{zproof}
+
+\begin{theorem}{GESqExpr}
+  exprMinusIE~(exprMinusIE~(comp(opInv~funE, funD))) \in CGE
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GESq}
+  funSq \in CGE
+\end{theorem}
+
+\begin{zproof}
+use GESqExpr;
+use SqExprGE;
+prove;
+\end{zproof}
+
+
+$I - F = E\,(S\,(F^+)^+ E)^+ (\mathrm{Sq}\,F^+)^+$ where $F(x) \leq x$.
+
+\begin{zed}
+  exprIminusE == (\lambda F: \nat \fun \nat @ comp(comp(funE, opPlusI~(comp(comp(funS, opPlusI~(opPlusI~F)), funE))), opPlusI~(comp(funSq, opPlusI~F))))
+\end{zed}
+
+\begin{zproof}[exprIminusE\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{rule exprIminusEFun}
+  exprIminusE \in (\nat \fun \nat) \fun (\nat \fun \nat)
+\end{theorem}
+
+\begin{zproof}
+invoke exprIminusE;
+apply FunIntro to predicate (\lambda F: \nat \fun \nat @ comp(comp(funE, opPlusI~(comp(comp(funS, opPlusI~(opPlusI~F)), funE))), opPlusI~(comp(funSq, opPlusI~F)))) \in (\nat \fun \nat) \fun (\nat \fun \nat);
+with enabled (RelPow, inPower) prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule exprIminusEApp}
+  \forall F: \nat \fun \nat @ exprIminusE~F = comp(comp(funE, opPlusI~(comp(comp(funS, opPlusI~(opPlusI~F)), funE))), opPlusI~(comp(funSq, opPlusI~F)))
+\end{theorem}
+
+\begin{zproof}
+use exprIminusEFun;
+use pairInFunction[\nat \fun \nat, \nat \fun \nat][f := exprIminusE, x := F, y := comp(comp(funE, opPlusI~(comp(comp(funS, opPlusI~(opPlusI~F)), funE))), opPlusI~(comp(funSq, opPlusI~F)))];
+invoke exprIminusE;
+prove;
+\end{zproof}
+
+
+\begin{theorem}{rule IminusEIn}
+  \forall F: \nat \fun \nat | F \in CGE @ exprIminusE~F \in CGE
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprIminusEApp) prove;
+\end{zproof}
+
+\begin{theorem}{rule IminusEVal}
+  \forall F: \nat \fun \nat; x: \nat | F~x \leq x @ exprIminusE~F~x = x - F~x
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprIminusEApp) prove;
+use UFNonneg[f := F, x := x];
+use ESqAdd[m := F~x + x, k := x];
+use RobDiffE[a := x, b := F~x];
+prove;
+\end{zproof}
+
+$W = E\,(S S D E E)^+ E^{-1}$: $W(2q) = 2E(2q) + 1$ and $W(2q + 1) = 2E(2q + 1)$.
+
+\begin{zed}
+  exprW == comp(comp(funE, opPlusI~(comp(comp(comp(comp(funS, funS), funD), funE), funE))), opInv~funE)
+\end{zed}
+
+\begin{zproof}[exprW\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{WEven}
+  \forall q: \nat @ exprW~(2 * q) = 2 * funE~(2 * q) + 1
+\end{theorem}
+
+\begin{zproof}
+invoke exprW;
+prove;
+use ESqAdd[m := q, k := 2 * q];
+use TwoELe[y := 2 * q];
+use ESqAdd[m := q + 1, k := 2 * funE~(2 * q) + 1];
+prove;
+\end{zproof}
+
+\begin{theorem}{WOdd}
+  \forall q: \nat @ exprW~(1 + 2 * q) = 2 * funE~(1 + 2 * q)
+\end{theorem}
+
+\begin{zproof}
+invoke exprW;
+prove;
+use ESqAdd[m := q + 1, k := 1 + 2 * q];
+use TwoELe[y := 1 + 2 * q];
+use ESqAdd[m := q + 2, k := 2 * funE~(1 + 2 * q)];
+prove;
+\end{zproof}
+
+\begin{theorem}{EAt}
+  \forall y, m, k: \nat | y = m * m + k \land k \leq 2 * m @ funE~y = k
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ESqAdd[m := m, k := k];
+prove;
+\end{zproof}
+
+\begin{theorem}{WFun}
+  exprW \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+invoke exprW;
+prove;
+\end{zproof}
+
+\begin{theorem}{WSurj}
+  exprW \in Surj
+\end{theorem}
+
+\begin{zproof}
+invoke Surj;
+use WFun;
+prove;
+use DivModOf[x := x, d := 2];
+use TwoA[x := x \div 2];
+use TwoA[x := 1 + x \div 2];
+prove;
+split x \mod 2 = 0;
+cases;
+instantiate y == 1 + 2 * (funA~(x \div 2) + x \div 2);
+use WOdd[q := funA~(x \div 2) + x \div 2];
+use EAt[y := 1 + 2 * (funA~(x \div 2) + x \div 2), m := 1 + x \div 2, k := x \div 2];
+prove;
+next;
+instantiate y\_\_0 == 2 * (funA~(1 + x \div 2) + x \div 2 + 1);
+use WEven[q := funA~(1 + x \div 2) + x \div 2 + 1];
+use EAt[y := 2 * (funA~(1 + x \div 2) + x \div 2 + 1), m := 2 + x \div 2, k := x \div 2];
+prove;
+next;
+\end{zproof}
+
+\subsection{The case $X = E$: $\mathrm{Hf} = E\,W^{-1}$ and $\mathrm{Rt}$}
+
+\begin{theorem}{WPar}
+  \forall y: \nat @ (y \mod 2 = 0 \implies exprW~y = 2 * funE~y + 1) \land (y \mod 2 = 1 \implies exprW~y = 2 * funE~y)
+\end{theorem}
+
+\begin{zproof}
+prove;
+use DivModOf[x := y, d := 2];
+use WEven[q := y \div 2];
+use WOdd[q := y \div 2];
+prove;
+\end{zproof}
+
+\begin{theorem}{HfExprGE}
+  comp(funE, opInv~exprW) = funHf
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(funE, opInv~exprW) = funHf;
+prove;
+use WSurj;
+use WFun;
+use InvRight[F := exprW, x := x];
+use UFNonneg[f := opInv~exprW, x := x];
+use WPar[y := opInv~exprW~x];
+use DivModOf[x := opInv~exprW~x, d := 2];
+use UFNonneg[f := funE, x := opInv~exprW~x];
+prove;
+split opInv~exprW~x \mod 2 = 0;
+cases;
+use DivMod[x := x, d := 2, q := funE~(opInv~exprW~x), r := 1];
+prove;
+next;
+use DivMod[x := x, d := 2, q := funE~(opInv~exprW~x), r := 0];
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{GEHfExpr}
+  comp(funE, opInv~exprW) \in CGE
+\end{theorem}
+
+\begin{zproof}
+use WFun;
+invoke exprW;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GEHf}
+  funHf \in CGE
+\end{theorem}
+
+\begin{zproof}
+use GEHfExpr;
+use HfExprGE;
+prove;
+\end{zproof}
+
+
+$\mathrm{Rt}(4x + 1) \in \{2\,\mathrm{Rt}(x), 2\,\mathrm{Rt}(x) + 1\}$, so
+$\mathrm{Rt} = \mathrm{Hf}\,\mathrm{Hf}\,S\,S\,E\,(I - \bar 1)(I - E)\,S\,M_3^+$.
+
+\begin{theorem}{HfRt4}
+  \forall x: \nat @ funHf~(funRt~(1 + 4 * x)) = funRt~x
+\end{theorem}
+
+\begin{zproof}
+prove;
+use RtSpec[x := x];
+use UFNonneg[f := funRt, x := x];
+split 1 + 4 * x < (2 * funRt~x + 1) * (2 * funRt~x + 1);
+cases;
+use RtI[r := 2 * funRt~x, x := 1 + 4 * x];
+use DivMod[x := 2 * funRt~x, d := 2, q := funRt~x, r := 0];
+prove;
+next;
+use RtI[r := 2 * funRt~x + 1, x := 1 + 4 * x];
+use DivMod[x := 2 * funRt~x + 1, d := 2, q := funRt~x, r := 1];
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{rule IminusEE}
+  \forall z: \nat @ exprIminusE~funE~z = funRt~z * funRt~z
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ELe[x := z];
+use IminusEVal[F := funE, x := z];
+use EDecomp[y := z];
+prove;
+\end{zproof}
+
+\begin{theorem}{IminusEOne}
+  \forall n: \nat | 1 \leq n @ exprIminusE~(cst~1)~(n * n) = n * n - 1
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{ESqPred}
+  \forall n: \nat | 1 \leq n @ funE~(n * n - 1) = 2 * n - 2
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EAt[y := n * n - 1, m := n - 1, k := 2 * n - 2];
+prove;
+\end{zproof}
+
+\begin{theorem}{HfTwo}
+  \forall n: \nat @ funHf~(2 * n) = n
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{zed}
+  exprRtGE == comp(comp(comp(comp(comp(comp(comp(comp(funHf, funHf), funS), funS), funE), exprIminusE~(cst~1)), exprIminusE~funE), funS), opPlusI~funM3)
+\end{zed}
+
+\begin{zproof}[exprRtGE\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{RtExprGE}
+  exprRtGE = funRt
+\end{theorem}
+
+\begin{zproof}
+invoke exprRtGE;
+apply UFExt to predicate comp(comp(comp(comp(comp(comp(comp(comp(funHf, funHf), funS), funS), funE), exprIminusE~(cst~1)), exprIminusE~funE), funS), opPlusI~funM3) = funRt;
+prove;
+use RtPos[y := 1 + 4 * x];
+use IminusEOne[n := funRt~(1 + 4 * x)];
+use ESqPred[n := funRt~(1 + 4 * x)];
+use HfTwo[n := funRt~(1 + 4 * x)];
+use HfRt4[x := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{GERtExpr}
+  exprRtGE \in CGE
+\end{theorem}
+
+\begin{zproof}
+invoke exprRtGE;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GERt}
+  funRt \in CGE
+\end{theorem}
+
+\begin{zproof}
+use GERtExpr;
+use RtExprGE;
+prove;
+\end{zproof}
+
+\begin{theorem}{GERich}
+  CGE \in Rich
+\end{theorem}
+
+\begin{zproof}
+use CGEInPower;
+invoke Rich;
+with enabled (CGEUF) prove;
+\end{zproof}
+
+\subsection{The case $X = E$: the closure is Robinson's}
+
+\begin{theorem}{JRUClosedGE}
+  CGE \in UClosed~\{ opInv \}
+\end{theorem}
+
+\begin{zproof}
+use CGEInPower;
+with enabled (UClosedDef, CGEUF) prove;
+\end{zproof}
+
+\begin{theorem}{JRBClosedGE}
+  CGE \in BClosed~\{ opPlus, comp \}
+\end{theorem}
+
+\begin{zproof}
+use CGEInPower;
+use GERich;
+with enabled (BClosedDef, CGEUF) prove;
+split b = opPlus;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{JRSubGE}
+  ClosJR \subseteq CGE
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ funS, funE \}, U := \{ opInv \}, B := \{ opPlus, comp \}, Z := CGE];
+use CGEInPower;
+use JRUClosedGE;
+use JRBClosedGE;
+with enabled (ClosJRDef) prove;
+\end{zproof}
+
+In Robinson's closure: $I = E\,E^{-1}$, $\bar 0 = E\,S\,E^{-1}(I + I)$, $\bar 1 = S\,\bar 0$ and
+$F^+ = F + I$.
+
+\begin{theorem}{EEinv}
+  comp(funE, opInv~funE) = funI
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(funE, opInv~funE) = funI;
+prove;
+use ESurj;
+use InvRight[F := funE, x := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{JRIExpr}
+  comp(funE, opInv~funE) \in ClosJR
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule JRI}
+  funI \in ClosJR
+\end{theorem}
+
+\begin{zproof}
+use JRIExpr;
+use EEinv;
+prove;
+\end{zproof}
+
+
+\begin{theorem}{ZeroExprJR}
+  comp(comp(comp(funE, funS), opInv~funE), opPlus(funI, funI)) = cst~0
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(comp(comp(funE, funS), opInv~funE), opPlus(funI, funI)) = cst~0;
+prove;
+use EinvD[z := x];
+use EAt[y := 1 + x * x + 2 * x, m := x + 1, k := 0];
+prove;
+\end{zproof}
+
+\begin{theorem}{JRZeroExpr}
+  comp(comp(comp(funE, funS), opInv~funE), opPlus(funI, funI)) \in ClosJR
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule JRZero}
+  cst~0 \in ClosJR
+\end{theorem}
+
+\begin{zproof}
+use JRZeroExpr;
+use ZeroExprJR;
+prove;
+\end{zproof}
+
+\begin{theorem}{JROneExpr}
+  comp(funS, cst~0) \in ClosJR
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule JROne}
+  cst~1 \in ClosJR
+\end{theorem}
+
+\begin{zproof}
+use JROneExpr;
+use OneExpr;
+prove;
+\end{zproof}
+
+
+\begin{theorem}{rule JRPlusI}
+  \forall F: \nat \fun \nat | F \in ClosJR @ opPlusI~F \in ClosJR
+\end{theorem}
+
+\begin{zproof}
+use PlusIEq[F := F];
+prove;
+\end{zproof}
+
+\begin{theorem}{GEUClosedJR}
+  ClosJR \in UClosed~\{ opPlusI, opInv \}
+\end{theorem}
+
+\begin{zproof}
+use ClosJRInPower;
+with enabled (UClosedDef, ClosJRUF) prove;
+split u = opPlusI;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{GEBClosedJR}
+  ClosJR \in BClosed~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use ClosJRInPower;
+with enabled (BClosedDef, ClosJRUF) prove;
+\end{zproof}
+
+\begin{theorem}{GESubJR}
+  CGE \subseteq ClosJR
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ cst~1, funE \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := ClosJR];
+use ClosJRInPower;
+use GEUClosedJR;
+use GEBClosedJR;
+with enabled (CGEDef) prove;
+\end{zproof}
+
+\begin{theorem}{GREqJRE}
+  CGE = ClosJR
+\end{theorem}
+
+\begin{zproof}
+use GESubJR;
+use JRSubGE;
+use CGEInPower;
+use ClosJRInPower;
+use SubAntisym[\nat \fun \nat][A := CGE, B := ClosJR];
+prove;
+\end{zproof}
+
+\subsection{The case $X = K$}
+
+\begin{theorem}{Halve}
+  \forall a, b: \num | 2 * a = 2 * b @ a = b
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+
+$Z = K^{-1}$, $A = K S S S ((Z Z^+ K)^+ Z K)^+ Z$, $F^- = K (S S S M_3 F K)^+ (A F^+)^+$,
+$\mathrm{Sq} = (((D Z)^-)^-)^-$, $P = K (K S)^{-1}$, $U = I - A K P (I - K)$ ($U = V + K$),
+\begin{theorem}{Div2Bound}
+  \forall x: \nat @ 2 * (x \div 2) \leq x \land x \leq 2 * (x \div 2) + 1
+\end{theorem}
+
+\begin{zproof}
+use DivModOf[x := x, d := 2];
+prove;
+\end{zproof}
+
+$\mathrm{Hf} = K U^{-1}$, $B = I - (I - \mathrm{Sq} (I - \mathrm{Hf}) U)(I - K)$
+($B = K + \lceil V/2 \rceil^2$) and $E = K B^{-1}$.
+
+\begin{zed}
+  CGK == clos~\{ cst~1, funK \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{zed}
+
+\begin{zproof}[CGK\$domainCheck]
+prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule CGKDef}
+  CGK = clos~\{ cst~1, funK \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+invoke CGK;
+prove;
+\end{zproof}
+
+\begin{theorem}{CGKInPower}
+  CGK \in \power (\nat \fun \nat)
+\end{theorem}
+
+\begin{zproof}
+use ClosInPow[I := \{ cst~1, funK \}, U := \{ opPlusI, opInv \}, B := \{ comp \}];
+with enabled (CGKDef) prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule CGKUF}
+  \forall F: \power (\num \cross \num) | F \in CGK @ F \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosElemUF[I := \{ cst~1, funK \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, F := F];
+with enabled (CGKDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGKInit0}
+  cst~1 \in CGK
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGKDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGKInit1}
+  funK \in CGK
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGKDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGKUnop0}
+  \forall F: \nat \fun \nat | F \in CGK @ opPlusI~F \in CGK
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGKDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGKUnop1}
+  \forall F: \nat \fun \nat | F \in CGK @ opInv~F \in CGK
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGKDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGKBinop0}
+  \forall F, G: \nat \fun \nat | F \in CGK \land G \in CGK @ comp(F, G) \in CGK
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGKDef) prove;
+\end{zproof}
+
+
+\begin{theorem}{ZeroExprK}
+  comp(funK, cst~1) = cst~0
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(funK, cst~1) = cst~0;
+prove;
+use KAt[m := 1, t := 1, k := 0];
+use AZero;
+prove;
+\end{zproof}
+
+\begin{theorem}{GKSExpr}
+  opPlusI~(cst~1) \in CGK
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GKS}
+  funS \in CGK
+\end{theorem}
+
+\begin{zproof}
+use GKSExpr;
+use SExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{GKZeroExpr}
+  comp(funK, cst~1) \in CGK
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GKZero}
+  cst~0 \in CGK
+\end{theorem}
+
+\begin{zproof}
+use GKZeroExpr;
+use ZeroExprK;
+prove;
+\end{zproof}
+
+\begin{theorem}{GKIExpr}
+  opPlusI~(cst~0) \in CGK
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GKI}
+  funI \in CGK
+\end{theorem}
+
+\begin{zproof}
+use GKIExpr;
+use IExprZero;
+prove;
+\end{zproof}
+
+\begin{theorem}{GKDExpr}
+  opPlusI~(opPlusI~(cst~0)) \in CGK
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GKD}
+  funD \in CGK
+\end{theorem}
+
+\begin{zproof}
+use GKDExpr;
+use DExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{GKM3Expr}
+  opPlusI~funD \in CGK
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GKM3}
+  funM3 \in CGK
+\end{theorem}
+
+\begin{zproof}
+use GKM3Expr;
+use M3Expr;
+prove;
+\end{zproof}
+
+
+\begin{theorem}{KSurj}
+  funK \in Surj
+\end{theorem}
+
+\begin{zproof}
+invoke Surj;
+prove;
+instantiate y == funA~x + x;
+use KAt[m := funA~x + x, t := x, k := x];
+use UFNonneg[f := funA, x := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{KinvZ}
+  opInv~funK = funZ
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate opInv~funK = funZ;
+prove;
+use KSurj;
+use KAt[m := funA~x + x, t := x, k := x];
+use UFNonneg[f := funA, x := x];
+use InvLeast[F := funK, x := x, y := funA~x + x];
+use InvRight[F := funK, x := x];
+use UFNonneg[f := opInv~funK, x := x];
+use Decomp[x := opInv~funK~x];
+use UFNonneg[f := funV, x := opInv~funK~x];
+use AMono[m := x, n := funV~(opInv~funK~x)];
+prove;
+\end{zproof}
+
+\begin{theorem}{GKZExpr}
+  opInv~funK \in CGK
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GKZ}
+  funZ \in CGK
+\end{theorem}
+
+\begin{zproof}
+use GKZExpr;
+use KinvZ;
+prove;
+\end{zproof}
+
+
+\begin{theorem}{KZ}
+  \forall x: \nat @ funK~(funA~x + x) = x
+\end{theorem}
+
+\begin{zproof}
+prove;
+use KAt[m := funA~x + x, t := x, k := x];
+use UFNonneg[f := funA, x := x];
+prove;
+\end{zproof}
+
+\begin{zed}
+  exprAK == comp(comp(comp(comp(comp(funK, funS), funS), funS), opPlusI~(comp(comp(opPlusI~(comp(comp(funZ, opPlusI~funZ), funK)), funZ), funK))), funZ)
+\end{zed}
+
+\begin{zproof}[exprAK\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{AExprK}
+  exprAK = funA
+\end{theorem}
+
+\begin{zproof}
+invoke exprAK;
+apply UFExt to predicate comp(comp(comp(comp(comp(funK, funS), funS), funS), opPlusI~(comp(comp(opPlusI~(comp(comp(funZ, opPlusI~funZ), funK)), funZ), funK))), funZ) = funA;
+prove;
+use KZ[x := x];
+use UFNonneg[f := funA, x := x];
+use RobDiffK[a := funA~x + x, b := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{GKAExpr}
+  exprAK \in CGK
+\end{theorem}
+
+\begin{zproof}
+invoke exprAK;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GKA}
+  funA \in CGK
+\end{theorem}
+
+\begin{zproof}
+use GKAExpr;
+use AExprK;
+prove;
+\end{zproof}
+
+\begin{zed}
+  exprMinusIK == (\lambda F: \nat \fun \nat @ comp(comp(funK, opPlusI~(comp(comp(comp(comp(comp(funS, funS), funS), funM3), F), funK))), opPlusI~(comp(funA, opPlusI~F))))
+\end{zed}
+
+\begin{zproof}[exprMinusIK\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{rule exprMinusIKFun}
+  exprMinusIK \in (\nat \fun \nat) \fun (\nat \fun \nat)
+\end{theorem}
+
+\begin{zproof}
+invoke exprMinusIK;
+apply FunIntro to predicate (\lambda F: \nat \fun \nat @ comp(comp(funK, opPlusI~(comp(comp(comp(comp(comp(funS, funS), funS), funM3), F), funK))), opPlusI~(comp(funA, opPlusI~F)))) \in (\nat \fun \nat) \fun (\nat \fun \nat);
+with enabled (RelPow, inPower) prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule exprMinusIKApp}
+  \forall F: \nat \fun \nat @ exprMinusIK~F = comp(comp(funK, opPlusI~(comp(comp(comp(comp(comp(funS, funS), funS), funM3), F), funK))), opPlusI~(comp(funA, opPlusI~F)))
+\end{theorem}
+
+\begin{zproof}
+use exprMinusIKFun;
+use pairInFunction[\nat \fun \nat, \nat \fun \nat][f := exprMinusIK, x := F, y := comp(comp(funK, opPlusI~(comp(comp(comp(comp(comp(funS, funS), funS), funM3), F), funK))), opPlusI~(comp(funA, opPlusI~F)))];
+invoke exprMinusIK;
+prove;
+\end{zproof}
+
+
+\begin{theorem}{rule MinusIKIn}
+  \forall F: \nat \fun \nat | F \in CGK @ exprMinusIK~F \in CGK
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprMinusIKApp) prove;
+\end{zproof}
+
+\begin{theorem}{rule MinusIKVal}
+  \forall F: \nat \fun \nat; x: \nat | x \leq F~x @ exprMinusIK~F~x = F~x - x
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprMinusIKApp) prove;
+use UFNonneg[f := F, x := x];
+use UFNonneg[f := funA, x := F~x + x];
+use KAt[m := funA~(F~x + x) + x, t := F~x + x, k := x];
+use ASuc[x := F~x + x];
+use ASuc[x := 1 + F~x + x];
+use KAt[m := 3 + (funA~(F~x + x) + x + 3 * F~x), t := 2 + F~x + x, k := F~x - x];
+prove;
+\end{zproof}
+
+\begin{theorem}{SqExprGK}
+  exprMinusIK~(exprMinusIK~(exprMinusIK~(comp(funD, funZ)))) = funSq
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate exprMinusIK~(exprMinusIK~(exprMinusIK~(comp(funD, funZ)))) = funSq;
+prove;
+use TwoA[x := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{GKSqExpr}
+  exprMinusIK~(exprMinusIK~(exprMinusIK~(comp(funD, funZ)))) \in CGK
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GKSq}
+  funSq \in CGK
+\end{theorem}
+
+\begin{zproof}
+use GKSqExpr;
+use SqExprGK;
+prove;
+\end{zproof}
+
+
+The predecessor $P = K (K S)^{-1}$.
+
+\begin{theorem}{KSSurj}
+  comp(funK, funS) \in Surj
+\end{theorem}
+
+\begin{zproof}
+invoke Surj;
+prove;
+instantiate y == funA~x + 2 * x;
+use ASuc[x := x];
+use UFNonneg[f := funA, x := x];
+use KAt[m := 1 + funA~x + 2 * x, t := 1 + x, k := x];
+prove;
+\end{zproof}
+
+\begin{zed}
+  exprPK == comp(funK, opInv~(comp(funK, funS)))
+\end{zed}
+
+\begin{zproof}[exprPK\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{rule PKFun}
+  exprPK \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+invoke exprPK;
+prove;
+\end{zproof}
+
+\begin{theorem}{KSInvRight}
+  \forall x: \nat @ funK~(1 + opInv~(comp(funK, funS))~x) = x
+\end{theorem}
+
+\begin{zproof}
+prove;
+use KSSurj;
+use InvRight[F := comp(funK, funS), x := x];
+with disabled (InvRight) prove;
+\end{zproof}
+
+\begin{theorem}{PKZero}
+  exprPK~0 = 0
+\end{theorem}
+
+\begin{zproof}
+invoke exprPK;
+prove;
+use KSSurj;
+use KAt[m := 1, t := 1, k := 0];
+use AZero;
+use InvLeast[F := comp(funK, funS), x := 0, y := 0];
+use UFNonneg[f := opInv~(comp(funK, funS)), x := 0];
+use KZero;
+prove;
+\end{zproof}
+
+\begin{theorem}{PKSuc}
+  \forall x: \nat @ exprPK~(1 + x) = x
+\end{theorem}
+
+\begin{zproof}
+invoke exprPK;
+prove;
+use KSInvRight[x := 1 + x];
+use UFNonneg[f := opInv~(comp(funK, funS)), x := 1 + x];
+use Decomp[x := 1 + opInv~(comp(funK, funS))~(1 + x)];
+use UFNonneg[f := funA, x := funV~(1 + opInv~(comp(funK, funS))~(1 + x))];
+use KAt[m := opInv~(comp(funK, funS))~(1 + x), t := funV~(1 + opInv~(comp(funK, funS))~(1 + x)), k := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{GKPExpr}
+  comp(funK, opInv~(comp(funK, funS))) \in CGK
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GKP}
+  exprPK \in CGK
+\end{theorem}
+
+\begin{zproof}
+use GKPExpr;
+invoke exprPK;
+prove;
+\end{zproof}
+
+
+\begin{theorem}{rule GKIminusF}
+  \forall F: \nat \fun \nat | F \in CGK @ exprIminusF~F \in CGK
+\end{theorem}
+
+\begin{zproof}
+with enabled (exprIminusFApp) prove;
+\end{zproof}
+
+\begin{theorem}{rule IminusKVal}
+  \forall y: \nat @ exprIminusF~funK~y = funA~(funV~y)
+\end{theorem}
+
+\begin{zproof}
+prove;
+use Decomp[x := y];
+use UFNonneg[f := funA, x := funV~y];
+use IminusFVal[F := funK, x := y];
+prove;
+\end{zproof}
+
+\begin{zed}
+  exprU == exprIminusF~(comp(comp(comp(funA, funK), exprPK), exprIminusF~funK))
+\end{zed}
+
+\begin{zproof}[exprU\$domainCheck]
+use PKFun;
+prove;
+\end{zproof}
+
+\begin{theorem}{UIn}
+  exprU \in CGK
+\end{theorem}
+
+\begin{zproof}
+invoke exprU;
+use GKP;
+prove;
+\end{zproof}
+
+\begin{theorem}{UPairPos}
+  \forall t, k: \nat | k \leq 1 + t @ exprU~(funA~(1 + t) + k) = 1 + t + k
+\end{theorem}
+
+\begin{zproof}
+invoke exprU;
+prove;
+use Diag[k := k, t := 1 + t];
+use ASuc[x := t];
+use UFNonneg[f := funA, x := t];
+use PKSuc[x := funA~t + t];
+use KAt[m := funA~t + t, t := t, k := t];
+use IminusFVal[F := comp(comp(comp(funA, funK), exprPK), exprIminusF~funK), x := funA~(1 + t) + k];
+prove;
+\end{zproof}
+
+\begin{theorem}{UZero}
+  exprU~0 = 0
+\end{theorem}
+
+\begin{zproof}
+use IminusFVal[F := comp(comp(comp(funA, funK), exprPK), exprIminusF~funK), x := 0];
+use IminusKVal[y := 0];
+use Diag[k := 0, t := 0];
+use AZero;
+use PKZero;
+use KZero;
+invoke exprU;
+prove;
+\end{zproof}
+
+\begin{theorem}{UPair}
+  \forall k, t: \nat | k \leq t @ exprU~(funA~t + k) = t + k
+\end{theorem}
+
+\begin{zproof}
+prove;
+split t = 0;
+cases;
+use UZero;
+use AZero;
+prove;
+next;
+use UPairPos[t := t - 1, k := k];
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{UVal}
+  \forall y: \nat @ exprU~y = funV~y + funK~y
+\end{theorem}
+
+\begin{zproof}
+prove;
+use Decomp[x := y];
+use UPair[k := funK~y, t := funV~y];
+prove;
+\end{zproof}
+
+\begin{theorem}{rule UFun}
+  exprU \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+invoke exprU;
+prove;
+\end{zproof}
+
+\begin{theorem}{USurj}
+  exprU \in Surj
+\end{theorem}
+
+\begin{zproof}
+invoke Surj;
+use UFun;
+prove;
+use DivModOf[x := x, d := 2];
+split x \mod 2 = 0;
+cases;
+instantiate y == funA~(x \div 2) + x \div 2;
+use UPair[k := x \div 2, t := x \div 2];
+prove;
+next;
+instantiate y\_\_0 == funA~(1 + x \div 2) + x \div 2;
+use UPair[k := x \div 2, t := 1 + x \div 2];
+prove;
+next;
+\end{zproof}
+
+$\mathrm{Hf} = K U^{-1}$: the least $y = A(t) + k$ with $t + k = x$ has $k = \lfloor x/2 \rfloor$.
+
+\begin{theorem}{HfMin}
+  \forall x, y, t, k: \nat | y = funA~t + k \land k \leq t \land t + k = x \land y \leq funA~(x - x \div 2) + x \div 2 @ k = x \div 2
+\end{theorem}
+
+\begin{zproof}
+prove;
+use Div2Bound[x := x];
+use ASuc[x := x - x \div 2];
+use UFNonneg[f := funA, x := x - x \div 2];
+use AMono[m := 1 + (x - x \div 2), n := t];
+prove;
+\end{zproof}
+
+\begin{theorem}{HfExprK}
+  comp(funK, opInv~exprU) = funHf
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(funK, opInv~exprU) = funHf;
+prove;
+use USurj;
+use InvRight[F := exprU, x := x];
+use UFNonneg[f := opInv~exprU, x := x];
+use UVal[y := opInv~exprU~x];
+use Decomp[x := opInv~exprU~x];
+use Div2Bound[x := x];
+use UPair[k := x \div 2, t := x - x \div 2];
+use InvLeast[F := exprU, x := x, y := funA~(x - x \div 2) + x \div 2];
+use HfMin[x := x, y := opInv~exprU~x, t := funV~(opInv~exprU~x), k := funK~(opInv~exprU~x)];
+prove;
+\end{zproof}
+
+\begin{theorem}{GKHfExpr}
+  comp(funK, opInv~exprU) \in CGK
+\end{theorem}
+
+\begin{zproof}
+use UIn;
+use UFun;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GKHf}
+  funHf \in CGK
+\end{theorem}
+
+\begin{zproof}
+use GKHfExpr;
+use HfExprK;
+prove;
+\end{zproof}
+
+$B = K + \lceil V/2 \rceil^2$ and $E = K B^{-1}$.
+
+\begin{theorem}{AHalf}
+  \forall h, r: \nat | r = 0 \lor r = 1 @ funA~(2 * h + r) = (h + r) * (h + r) + h * h + h
+\end{theorem}
+
+\begin{zproof}
+prove;
+use TwoA[x := 2 * h + r];
+use Halve[a := funA~(2 * h + r), b := (h + r) * (h + r) + h * h + h];
+split r = 0;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{rule IminusHfEven}
+  \forall h: \nat @ exprIminusF~funHf~(2 * h) = h
+\end{theorem}
+
+\begin{zproof}
+prove;
+use DivMod[x := 2 * h, d := 2, q := h, r := 0];
+use IminusFVal[F := funHf, x := 2 * h];
+prove;
+\end{zproof}
+
+\begin{theorem}{rule IminusHfOdd}
+  \forall h: \nat @ exprIminusF~funHf~(1 + 2 * h) = 1 + h
+\end{theorem}
+
+\begin{zproof}
+prove;
+use DivMod[x := 1 + 2 * h, d := 2, q := h, r := 1];
+use IminusFVal[F := funHf, x := 1 + 2 * h];
+prove;
+\end{zproof}
+
+\begin{zed}
+  exprB == exprIminusF~(comp(exprIminusF~(comp(comp(funSq, exprIminusF~funHf), exprU)), exprIminusF~funK))
+\end{zed}
+
+\begin{zproof}[exprB\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{BIn}
+  exprB \in CGK
+\end{theorem}
+
+\begin{zproof}
+invoke exprB;
+use UIn;
+use UFun;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule BFun}
+  exprB \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+invoke exprB;
+use UFun;
+prove;
+\end{zproof}
+
+\begin{theorem}{BVal}
+  \forall h, r, k: \nat | (r = 0 \lor r = 1) \land k \leq 2 * h + r @ exprB~(funA~(2 * h + r) + k) = k + (h + r) * (h + r)
+\end{theorem}
+
+\begin{zproof}
+invoke exprB;
+prove;
+use Diag[k := k, t := 2 * h + r];
+use AHalf[h := h, r := r];
+use MulNonneg[a := h, b := h];
+use UPair[k := 0, t := 2 * h + r];
+use IminusFVal[F := comp(comp(funSq, exprIminusF~funHf), exprU), x := funA~(2 * h + r)];
+use IminusFVal[F := comp(exprIminusF~(comp(comp(funSq, exprIminusF~funHf), exprU)), exprIminusF~funK), x := funA~(2 * h + r) + k];
+prove;
+split r = 0;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{BSurj}
+  exprB \in Surj
+\end{theorem}
+
+\begin{zproof}
+invoke Surj;
+use BFun;
+prove;
+instantiate y == funA~(2 * funRt~x) + funE~x;
+use EBound[y := x];
+use UFNonneg[f := funA, x := 2 * funRt~x];
+use Diag[k := funE~x, t := 2 * funRt~x];
+use BVal[h := funRt~x, r := 0, k := funE~x];
+use EDecomp[y := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{Mod2Cases}
+  \forall x: \nat @ x = 2 * (x \div 2) + x \mod 2 \land (x \mod 2 = 0 \lor x \mod 2 = 1)
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{Div2Nonneg}
+  \forall x: \nat @ 0 \leq x \div 2
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{EKey}
+  \forall x, y, t, k, q, r: \nat | y = funA~t + k \land k \leq t \land t = 2 * q + r \land (r = 0 \lor r = 1) \land exprB~y = x @ funE~x = k
+\end{theorem}
+
+\begin{zproof}
+prove;
+use BVal[h := q, r := r, k := k];
+use EAt[y := x, m := q + r, k := k];
+prove;
+\end{zproof}
+
+\begin{theorem}{EExprKB}
+  comp(funK, opInv~exprB) = funE
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(funK, opInv~exprB) = funE;
+prove;
+use BSurj;
+use InvRight[F := exprB, x := x];
+use UFNonneg[f := opInv~exprB, x := x];
+use Decomp[x := opInv~exprB~x];
+use Mod2Cases[x := funV~(opInv~exprB~x)];
+use Div2Nonneg[x := funV~(opInv~exprB~x)];
+use EKey[x := x, y := opInv~exprB~x, t := funV~(opInv~exprB~x), k := funK~(opInv~exprB~x), q := funV~(opInv~exprB~x) \div 2, r := funV~(opInv~exprB~x) \mod 2];
+prove;
+\end{zproof}
+
+\begin{theorem}{GKEExpr}
+  comp(funK, opInv~exprB) \in CGK
+\end{theorem}
+
+\begin{zproof}
+use BIn;
+use BFun;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GKE}
+  funE \in CGK
+\end{theorem}
+
+\begin{zproof}
+use GKEExpr;
+use EExprKB;
+prove;
+\end{zproof}
+
+\subsection{The cases $X = K$ and $X = L$: the closure is Robinson's}
+
+\begin{theorem}{CGEUClosedG}
+  CGE \in UClosed~\{ opPlusI, opInv \}
+\end{theorem}
+
+\begin{zproof}
+use CGEInPower;
+with enabled (UClosedDef, CGEUF) prove;
+split u = opPlusI;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{CGEBClosedG}
+  CGE \in BClosed~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use CGEInPower;
+with enabled (BClosedDef, CGEUF) prove;
+\end{zproof}
+
+\begin{theorem}{CGKUClosedG}
+  CGK \in UClosed~\{ opPlusI, opInv \}
+\end{theorem}
+
+\begin{zproof}
+use CGKInPower;
+with enabled (UClosedDef, CGKUF) prove;
+split u = opPlusI;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{CGKBClosedG}
+  CGK \in BClosed~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use CGKInPower;
+with enabled (BClosedDef, CGKUF) prove;
+\end{zproof}
+
+
+\begin{theorem}{rule GEK}
+  funK \in CGE
+\end{theorem}
+
+\begin{zproof}
+use GERich;
+use RichK[Y := CGE];
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GEL}
+  funL \in CGE
+\end{theorem}
+
+\begin{zproof}
+use GERich;
+use RichL[Y := CGE];
+prove;
+\end{zproof}
+
+\begin{theorem}{GKSubGE}
+  CGK \subseteq CGE
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ cst~1, funK \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := CGE];
+use CGEInPower;
+use CGEUClosedG;
+use CGEBClosedG;
+with enabled (CGKDef) prove;
+\end{zproof}
+
+\begin{theorem}{GESubGK}
+  CGE \subseteq CGK
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ cst~1, funE \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := CGK];
+use CGKInPower;
+use CGKUClosedG;
+use CGKBClosedG;
+with enabled (CGEDef) prove;
+\end{zproof}
+
+\begin{zed}
+  CGL == clos~\{ cst~1, funL \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{zed}
+
+\begin{zproof}[CGL\$domainCheck]
+prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule CGLDef}
+  CGL = clos~\{ cst~1, funL \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+invoke CGL;
+prove;
+\end{zproof}
+
+\begin{theorem}{CGLInPower}
+  CGL \in \power (\nat \fun \nat)
+\end{theorem}
+
+\begin{zproof}
+use ClosInPow[I := \{ cst~1, funL \}, U := \{ opPlusI, opInv \}, B := \{ comp \}];
+with enabled (CGLDef) prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule CGLUF}
+  \forall F: \power (\num \cross \num) | F \in CGL @ F \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosElemUF[I := \{ cst~1, funL \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, F := F];
+with enabled (CGLDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGLInit0}
+  cst~1 \in CGL
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGLDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGLInit1}
+  funL \in CGL
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGLDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGLUnop0}
+  \forall F: \nat \fun \nat | F \in CGL @ opPlusI~F \in CGL
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGLDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGLUnop1}
+  \forall F: \nat \fun \nat | F \in CGL @ opInv~F \in CGL
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGLDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGLBinop0}
+  \forall F, G: \nat \fun \nat | F \in CGL \land G \in CGL @ comp(F, G) \in CGL
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGLDef) prove;
+\end{zproof}
+
+\begin{theorem}{CGLUClosedG}
+  CGL \in UClosed~\{ opPlusI, opInv \}
+\end{theorem}
+
+\begin{zproof}
+use CGLInPower;
+with enabled (UClosedDef, CGLUF) prove;
+split u = opPlusI;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{CGLBClosedG}
+  CGL \in BClosed~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use CGLInPower;
+with enabled (BClosedDef, CGLUF) prove;
+\end{zproof}
+
+\begin{theorem}{GLKExpr}
+  comp(comp(funL, opPlusI~(cst~1)), opPlusI~(comp(opPlusI~(opPlusI~(cst~1)), funL))) \in CGL
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GLK}
+  funK \in CGL
+\end{theorem}
+
+\begin{zproof}
+use GLKExpr;
+use KExprL;
+prove;
+\end{zproof}
+
+\begin{theorem}{GKSubGL}
+  CGK \subseteq CGL
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ cst~1, funK \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := CGL];
+use CGLInPower;
+use CGLUClosedG;
+use CGLBClosedG;
+with enabled (CGKDef) prove;
+\end{zproof}
+
+\begin{theorem}{GLSubGE}
+  CGL \subseteq CGE
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ cst~1, funL \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := CGE];
+use CGEInPower;
+use CGEUClosedG;
+use CGEBClosedG;
+with enabled (CGLDef) prove;
+\end{zproof}
+
+
+\begin{theorem}{rule GLE}
+  funE \in CGL
+\end{theorem}
+
+\begin{zproof}
+use GKSubGL;
+use GKE;
+apply subsetDef to predicate CGK \subseteq CGL;
+apply inPower to predicate CGK \in \power CGL;
+instantiate e == funE;
+prove;
+\end{zproof}
+
+\begin{theorem}{GESubGL}
+  CGE \subseteq CGL
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ cst~1, funE \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := CGL];
+use CGLInPower;
+use CGLUClosedG;
+use CGLBClosedG;
+with enabled (CGEDef) prove;
+\end{zproof}
+
+
+\begin{theorem}{GREqJR}
+  CGE = ClosJR \land CGK = ClosJR \land CGL = ClosJR
+\end{theorem}
+
+\begin{zproof}
+use GREqJRE;
+use GKSubGE;
+use GESubGK;
+use GKSubGL;
+use GLSubGE;
+use CGEInPower;
+use CGKInPower;
+use CGLInPower;
+use SubAntisym[\nat \fun \nat][A := CGK, B := CGE];
+use SubAntisym[\nat \fun \nat][A := CGL, B := CGE];
+use GESubGL;
+prove;
+\end{zproof}
+
+\subsection{The constant cannot be dropped}
+
+Without $\bar 1$, every generated function fixes $0$: $\langle X, F^+, FG, F^{-1}\rangle$ does not
+generate Robinson's closure for $X \in \{E, K, L\}$.
+
+\begin{theorem}{rule L0}
+  funL~0 = 0
+\end{theorem}
+
+\begin{zproof}
+use LAt[m := 0, t := 0, k := 0];
+use AZero;
+prove;
+\end{zproof}
+
+\begin{theorem}{FixZeroUClosedInv}
+  FixZero \in UClosed~\{ opPlusI, opInv \}
+\end{theorem}
+
+\begin{zproof}
+use FixZeroInPower;
+with enabled (UClosedDef) prove;
+invoke FixZero;
+prove;
+split u = opPlusI;
+cases;
+prove;
+next;
+use InvFix0[F := F];
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{GR0Fix}
+  \forall X: \nat \fun \nat | X~0 = 0 @ clos~\{ X \}~\{ opPlusI, opInv \}~\{ comp \} \subseteq FixZero
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosLeast[I := \{ X \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := FixZero];
+use FixZeroInPower;
+use FixZeroUClosedInv;
+use FixZeroBClosed;
+invoke FixZero;
+prove;
+\end{zproof}
+
+\begin{theorem}{GR0NotOne}
+  \forall X: \nat \fun \nat | X~0 = 0 @ \lnot cst~1 \in clos~\{ X \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use GR0Fix[X := X];
+apply subsetDef to predicate clos~\{ X \}~\{ opPlusI, opInv \}~\{ comp \} \subseteq FixZero;
+apply inPower to predicate clos~\{ X \}~\{ opPlusI, opInv \}~\{ comp \} \in \power FixZero;
+instantiate e == cst~1;
+invoke FixZero;
+prove;
+\end{zproof}
+
+\begin{theorem}{OneInJREq}
+  \forall Y: \power (\nat \fun \nat) | Y = ClosJR @ cst~1 \in Y
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{GR0Neq}
+  \forall X: \nat \fun \nat | X~0 = 0 @ \lnot clos~\{ X \}~\{ opPlusI, opInv \}~\{ comp \} = ClosJR
+\end{theorem}
+
+\begin{zproof}
+use GR0NotOne[X := X];
+use JROne;
+prove;
+split clos~\{ X \}~\{ opPlusI, opInv \}~\{ comp \} = ClosJR;
+cases;
+equality substitute clos~\{ X \}~(\{ opPlusI \} \cup \{ opInv \})~\{ comp \};
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{ExtGR0}
+  \lnot clos~\{ funE \}~\{ opPlusI, opInv \}~\{ comp \} = ClosJR \land \lnot clos~\{ funK \}~\{ opPlusI, opInv \}~\{ comp \} = ClosJR \land \lnot clos~\{ funL \}~\{ opPlusI, opInv \}~\{ comp \} = ClosJR
+\end{theorem}
+
+\begin{zproof}
+use GR0Neq[X := funE];
+use GR0Neq[X := funK];
+use GR0Neq[X := funL];
+use KZero;
+prove;
+\end{zproof}
+
+\subsection{Remark: $\bar 1$ and $S$ are interchangeable}
+
+With $S$ in place of $\bar 1$: $\bar 0 = (E S E^{-1})(E S E^{-1})$, $\bar 0 = K S K^{-1}$ and
+$\bar 0 = L (L S)^{-1} S$, and $\bar 1 = S \bar 0$.
+
+\begin{theorem}{ESEEven}
+  \forall x, q: \nat | x = 2 * q @ comp(comp(funE, funS), opInv~funE)~x = 0
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EAt[y := 1 + q * q + 2 * q, m := q + 1, k := 0];
+prove;
+\end{zproof}
+
+\begin{theorem}{ESEOdd}
+  \forall x, q: \nat | x = 1 + 2 * q @ comp(comp(funE, funS), opInv~funE)~x = 2 + 2 * q
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EAt[y := 2 + (q + 1) * (q + 1) + 2 * q, m := q + 1, k := 2 + 2 * q];
+prove;
+\end{zproof}
+
+\begin{theorem}{ZeroExprSE}
+  comp(comp(comp(funE, funS), opInv~funE), comp(comp(funE, funS), opInv~funE)) = cst~0
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(comp(comp(funE, funS), opInv~funE), comp(comp(funE, funS), opInv~funE)) = cst~0;
+prove;
+use Mod2Cases[x := x];
+use Div2Nonneg[x := x];
+use ESEEven[x := 0, q := 0];
+split x \mod 2 = 0;
+cases;
+use ESEEven[x := x, q := x \div 2];
+prove;
+next;
+use ESEOdd[x := x, q := x \div 2];
+use ESEEven[x := 2 + 2 * (x \div 2), q := 1 + x \div 2];
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{ZeroExprSK}
+  comp(comp(funK, funS), opInv~funK) = cst~0
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(comp(funK, funS), opInv~funK) = cst~0;
+prove;
+use KinvZ;
+use ASuc[x := x];
+use UFNonneg[f := funA, x := x];
+use KAt[m := 1 + funA~x + x, t := 1 + x, k := 0];
+prove;
+\end{zproof}
+
+\begin{theorem}{LSSurj}
+  comp(funL, funS) \in Surj
+\end{theorem}
+
+\begin{zproof}
+invoke Surj;
+prove;
+instantiate y == funA~(1 + x);
+use UFNonneg[f := funA, x := 1 + x];
+use LAt[m := 1 + funA~(1 + x), t := 1 + x, k := 1];
+prove;
+\end{zproof}
+
+\begin{theorem}{LSLow}
+  \forall x, y, t, k: \nat | 1 + y = funA~t + k \land k \leq t \land t - k = 1 + x @ funA~x + x \leq y
+\end{theorem}
+
+\begin{zproof}
+prove;
+use AMono[m := 1 + x, n := t];
+use ASuc[x := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{LSInvSuc}
+  \forall x: \nat @ opInv~(comp(funL, funS))~(1 + x) = funA~x + x
+\end{theorem}
+
+\begin{zproof}
+prove;
+use LSSurj;
+use InvRight[F := comp(funL, funS), x := 1 + x];
+use UFNonneg[f := opInv~(comp(funL, funS)), x := 1 + x];
+use Decomp[x := 1 + opInv~(comp(funL, funS))~(1 + x)];
+use LAt[m := 1 + opInv~(comp(funL, funS))~(1 + x), t := funV~(1 + opInv~(comp(funL, funS))~(1 + x)), k := funK~(1 + opInv~(comp(funL, funS))~(1 + x))];
+use LSLow[x := x, y := opInv~(comp(funL, funS))~(1 + x), t := funV~(1 + opInv~(comp(funL, funS))~(1 + x)), k := funK~(1 + opInv~(comp(funL, funS))~(1 + x))];
+use ASuc[x := x];
+use UFNonneg[f := funA, x := x];
+use LAt[m := 1 + funA~x + x, t := 1 + x, k := 0];
+use InvLeast[F := comp(funL, funS), x := 1 + x, y := funA~x + x];
+with disabled (InvRight) prove;
+\end{zproof}
+
+\begin{theorem}{ZeroExprSL}
+  comp(comp(funL, opInv~(comp(funL, funS))), funS) = cst~0
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(comp(funL, opInv~(comp(funL, funS))), funS) = cst~0;
+prove;
+use LSInvSuc[x := x];
+use UFNonneg[f := funA, x := x];
+use LAt[m := funA~x + x, t := x, k := x];
+prove;
+\end{zproof}
+
+\begin{zed}
+  CGSE == clos~\{ funS, funE \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{zed}
+
+\begin{zproof}[CGSE\$domainCheck]
+prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule CGSEDef}
+  CGSE = clos~\{ funS, funE \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+invoke CGSE;
+prove;
+\end{zproof}
+
+\begin{theorem}{CGSEInPower}
+  CGSE \in \power (\nat \fun \nat)
+\end{theorem}
+
+\begin{zproof}
+use ClosInPow[I := \{ funS, funE \}, U := \{ opPlusI, opInv \}, B := \{ comp \}];
+with enabled (CGSEDef) prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule CGSEUF}
+  \forall F: \power (\num \cross \num) | F \in CGSE @ F \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosElemUF[I := \{ funS, funE \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, F := F];
+with enabled (CGSEDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSEInit0}
+  funS \in CGSE
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSEDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSEInit1}
+  funE \in CGSE
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSEDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSEUnop0}
+  \forall F: \nat \fun \nat | F \in CGSE @ opPlusI~F \in CGSE
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSEDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSEUnop1}
+  \forall F: \nat \fun \nat | F \in CGSE @ opInv~F \in CGSE
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSEDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSEBinop0}
+  \forall F, G: \nat \fun \nat | F \in CGSE \land G \in CGSE @ comp(F, G) \in CGSE
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSEDef) prove;
+\end{zproof}
+
+\begin{theorem}{CGSEUClosedG}
+  CGSE \in UClosed~\{ opPlusI, opInv \}
+\end{theorem}
+
+\begin{zproof}
+use CGSEInPower;
+with enabled (UClosedDef, CGSEUF) prove;
+split u = opPlusI;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{CGSEBClosedG}
+  CGSE \in BClosed~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use CGSEInPower;
+with enabled (BClosedDef, CGSEUF) prove;
+\end{zproof}
+
+\begin{theorem}{GSEZeroExpr}
+  comp(comp(comp(funE, funS), opInv~funE), comp(comp(funE, funS), opInv~funE)) \in CGSE
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GSEZero}
+  cst~0 \in CGSE
+\end{theorem}
+
+\begin{zproof}
+use GSEZeroExpr;
+use ZeroExprSE;
+prove;
+\end{zproof}
+
+\begin{theorem}{GSEOneExpr}
+  comp(funS, cst~0) \in CGSE
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GSEOne}
+  cst~1 \in CGSE
+\end{theorem}
+
+\begin{zproof}
+use GSEOneExpr;
+use OneExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{GRSESub1}
+  CGSE \subseteq CGE
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ funS, funE \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := CGE];
+use CGEInPower;
+use CGEUClosedG;
+use CGEBClosedG;
+with enabled (CGSEDef) prove;
+\end{zproof}
+
+\begin{theorem}{GRSESub2}
+  CGE \subseteq CGSE
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ cst~1, funE \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := CGSE];
+use CGSEInPower;
+use CGSEUClosedG;
+use CGSEBClosedG;
+with enabled (CGEDef) prove;
+\end{zproof}
+
+\begin{theorem}{GRSE}
+  CGSE = CGE
+\end{theorem}
+
+\begin{zproof}
+use GRSESub1;
+use GRSESub2;
+use CGSEInPower;
+use CGEInPower;
+use SubAntisym[\nat \fun \nat][A := CGSE, B := CGE];
+prove;
+\end{zproof}
+
+\begin{zed}
+  CGSK == clos~\{ funS, funK \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{zed}
+
+\begin{zproof}[CGSK\$domainCheck]
+prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule CGSKDef}
+  CGSK = clos~\{ funS, funK \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+invoke CGSK;
+prove;
+\end{zproof}
+
+\begin{theorem}{CGSKInPower}
+  CGSK \in \power (\nat \fun \nat)
+\end{theorem}
+
+\begin{zproof}
+use ClosInPow[I := \{ funS, funK \}, U := \{ opPlusI, opInv \}, B := \{ comp \}];
+with enabled (CGSKDef) prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule CGSKUF}
+  \forall F: \power (\num \cross \num) | F \in CGSK @ F \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosElemUF[I := \{ funS, funK \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, F := F];
+with enabled (CGSKDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSKInit0}
+  funS \in CGSK
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSKDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSKInit1}
+  funK \in CGSK
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSKDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSKUnop0}
+  \forall F: \nat \fun \nat | F \in CGSK @ opPlusI~F \in CGSK
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSKDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSKUnop1}
+  \forall F: \nat \fun \nat | F \in CGSK @ opInv~F \in CGSK
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSKDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSKBinop0}
+  \forall F, G: \nat \fun \nat | F \in CGSK \land G \in CGSK @ comp(F, G) \in CGSK
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSKDef) prove;
+\end{zproof}
+
+\begin{theorem}{CGSKUClosedG}
+  CGSK \in UClosed~\{ opPlusI, opInv \}
+\end{theorem}
+
+\begin{zproof}
+use CGSKInPower;
+with enabled (UClosedDef, CGSKUF) prove;
+split u = opPlusI;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{CGSKBClosedG}
+  CGSK \in BClosed~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use CGSKInPower;
+with enabled (BClosedDef, CGSKUF) prove;
+\end{zproof}
+
+\begin{theorem}{GSKZeroExpr}
+  comp(comp(funK, funS), opInv~funK) \in CGSK
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GSKZero}
+  cst~0 \in CGSK
+\end{theorem}
+
+\begin{zproof}
+use GSKZeroExpr;
+use ZeroExprSK;
+prove;
+\end{zproof}
+
+\begin{theorem}{GSKOneExpr}
+  comp(funS, cst~0) \in CGSK
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GSKOne}
+  cst~1 \in CGSK
+\end{theorem}
+
+\begin{zproof}
+use GSKOneExpr;
+use OneExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{GRSKSub1}
+  CGSK \subseteq CGK
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ funS, funK \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := CGK];
+use CGKInPower;
+use CGKUClosedG;
+use CGKBClosedG;
+with enabled (CGSKDef) prove;
+\end{zproof}
+
+\begin{theorem}{GRSKSub2}
+  CGK \subseteq CGSK
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ cst~1, funK \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := CGSK];
+use CGSKInPower;
+use CGSKUClosedG;
+use CGSKBClosedG;
+with enabled (CGKDef) prove;
+\end{zproof}
+
+\begin{theorem}{GRSK}
+  CGSK = CGK
+\end{theorem}
+
+\begin{zproof}
+use GRSKSub1;
+use GRSKSub2;
+use CGSKInPower;
+use CGKInPower;
+use SubAntisym[\nat \fun \nat][A := CGSK, B := CGK];
+prove;
+\end{zproof}
+
+\begin{zed}
+  CGSL == clos~\{ funS, funL \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{zed}
+
+\begin{zproof}[CGSL\$domainCheck]
+prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule CGSLDef}
+  CGSL = clos~\{ funS, funL \}~\{ opPlusI, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+invoke CGSL;
+prove;
+\end{zproof}
+
+\begin{theorem}{CGSLInPower}
+  CGSL \in \power (\nat \fun \nat)
+\end{theorem}
+
+\begin{zproof}
+use ClosInPow[I := \{ funS, funL \}, U := \{ opPlusI, opInv \}, B := \{ comp \}];
+with enabled (CGSLDef) prove;
+\end{zproof}
+
+\begin[disabled]{theorem}{rule CGSLUF}
+  \forall F: \power (\num \cross \num) | F \in CGSL @ F \in \nat \fun \nat
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosElemUF[I := \{ funS, funL \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, F := F];
+with enabled (CGSLDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSLInit0}
+  funS \in CGSL
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSLDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSLInit1}
+  funL \in CGSL
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSLDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSLUnop0}
+  \forall F: \nat \fun \nat | F \in CGSL @ opPlusI~F \in CGSL
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSLDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSLUnop1}
+  \forall F: \nat \fun \nat | F \in CGSL @ opInv~F \in CGSL
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSLDef) prove;
+\end{zproof}
+
+\begin{theorem}{rule CGSLBinop0}
+  \forall F, G: \nat \fun \nat | F \in CGSL \land G \in CGSL @ comp(F, G) \in CGSL
+\end{theorem}
+
+\begin{zproof}
+with enabled (CGSLDef) prove;
+\end{zproof}
+
+\begin{theorem}{CGSLUClosedG}
+  CGSL \in UClosed~\{ opPlusI, opInv \}
+\end{theorem}
+
+\begin{zproof}
+use CGSLInPower;
+with enabled (UClosedDef, CGSLUF) prove;
+split u = opPlusI;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{CGSLBClosedG}
+  CGSL \in BClosed~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use CGSLInPower;
+with enabled (BClosedDef, CGSLUF) prove;
+\end{zproof}
+
+\begin{theorem}{GSLZeroExpr}
+  comp(comp(funL, opInv~(comp(funL, funS))), funS) \in CGSL
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GSLZero}
+  cst~0 \in CGSL
+\end{theorem}
+
+\begin{zproof}
+use GSLZeroExpr;
+use ZeroExprSL;
+prove;
+\end{zproof}
+
+\begin{theorem}{GSLOneExpr}
+  comp(funS, cst~0) \in CGSL
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GSLOne}
+  cst~1 \in CGSL
+\end{theorem}
+
+\begin{zproof}
+use GSLOneExpr;
+use OneExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{GLSExpr}
+  opPlusI~(cst~1) \in CGL
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule GLS}
+  funS \in CGL
+\end{theorem}
+
+\begin{zproof}
+use GLSExpr;
+use SExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{GRSLSub1}
+  CGSL \subseteq CGL
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ funS, funL \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := CGL];
+use CGLInPower;
+use CGLUClosedG;
+use CGLBClosedG;
+with enabled (CGSLDef) prove;
+\end{zproof}
+
+\begin{theorem}{GRSLSub2}
+  CGL \subseteq CGSL
+\end{theorem}
+
+\begin{zproof}
+use ClosLeast[I := \{ cst~1, funL \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := CGSL];
+use CGSLInPower;
+use CGSLUClosedG;
+use CGSLBClosedG;
+with enabled (CGLDef) prove;
+\end{zproof}
+
+\begin{theorem}{GRSL}
+  CGSL = CGL
+\end{theorem}
+
+\begin{zproof}
+use GRSLSub1;
+use GRSLSub2;
+use CGSLInPower;
+use CGLInPower;
+use SubAntisym[\nat \fun \nat][A := CGSL, B := CGL];
+prove;
+\end{zproof}
+
+
+\begin{theorem}{GRSEq}
+  CGSE = ClosJR \land CGSK = ClosJR \land CGSL = ClosJR
+\end{theorem}
+
+\begin{zproof}
+use GRSE;
+use GRSK;
+use GRSL;
+use GREqJR;
+prove;
+\end{zproof}
+
+\subsection{The shifted operator with inversion}
+
+$\langle X, F^{+b}, FG, F^{-1}\rangle$ generates Robinson's closure iff $b \geq 1$
+($X \in \{E, K, L\}$).  A successor $S$ is generated first; a predecessor $P$ then gives
+$F^+ = P^b F^{+b}$ and $\bar 1$.
+
+\begin{theorem}{rule CbX}
+  \forall X: \nat \fun \nat; b: \nat @ X \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{CbComp}
+  \forall X: \nat \fun \nat; b: \nat; F, G: \power (\num \cross \num) | F \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land G \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ comp(F, G) \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosElemUF[I := \{ X \}, U := \{ opPlusIb~b, opInv \}, B := \{ comp \}, F := F];
+use ClosElemUF[I := \{ X \}, U := \{ opPlusIb~b, opInv \}, B := \{ comp \}, F := G];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbUn}
+  \forall X: \nat \fun \nat; b: \nat; F: \power (\num \cross \num) | F \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ opPlusIb~b~F \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land opInv~F \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosElemUF[I := \{ X \}, U := \{ opPlusIb~b, opInv \}, B := \{ comp \}, F := F];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbIter}
+  \forall X: \nat \fun \nat; b, k: \nat; F, G: \nat \fun \nat | F \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land G \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ comp(iter[\nat]~k~F, G) \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use PowIn[I := \{ X \}, U := \{ opPlusIb~b, opInv \}, B := \{ comp \}, F := F, G := G, k := k];
+prove;
+\end{zproof}
+
+$F^+ = P^b F^{+b}$ for a predecessor $P$.
+
+\begin{theorem}{PlusIFromPred}
+  \forall b: \nat; P, F: \nat \fun \nat | P \in Preds @ comp(iter[\nat]~b~P, opPlusIb~b~F) = opPlusI~F
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(iter[\nat]~b~P, opPlusIb~b~F) = opPlusI~F;
+prove;
+use IterPAll[k := b, P := P, x := F~x + x];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbPlusI}
+  \forall X: \nat \fun \nat; b: \nat; P, F: \nat \fun \nat | P \in Preds \land P \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land F \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ opPlusI~F \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbUn[X := X, b := b, F := F];
+use CbIter[X := X, b := b, k := b, F := P, G := opPlusIb~b~F];
+use PlusIFromPred[b := b, P := P, F := F];
+prove;
+\end{zproof}
+
+With $\bar 1$ and a predecessor, the closure contains $\langle \bar 1, X, F^+, FG, F^{-1}\rangle$.
+
+\begin{theorem}{CbUClosed}
+  \forall X: \nat \fun \nat; b: \nat; P: \nat \fun \nat | P \in Preds \land P \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} \in UClosed~\{ opPlusI, opInv \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosInPow[I := \{ X \}, U := \{ opPlusIb~b, opInv \}, B := \{ comp \}];
+with enabled (UClosedDef) prove;
+use ClosElemUF[I := \{ X \}, U := \{ opPlusIb~b, opInv \}, B := \{ comp \}, F := F];
+prove;
+split u = opPlusI;
+cases;
+use CbPlusI[X := X, b := b, P := P, F := F];
+prove;
+next;
+use CbUn[X := X, b := b, F := F];
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{CbBClosed}
+  \forall X: \nat \fun \nat; b: \nat @ clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} \in BClosed~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosInPow[I := \{ X \}, U := \{ opPlusIb~b, opInv \}, B := \{ comp \}];
+with enabled (BClosedDef) prove;
+\end{zproof}
+
+\begin{theorem}{CbSub}
+  \forall X: \nat \fun \nat; b: \nat; P: \nat \fun \nat | cst~1 \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land P \in Preds \land P \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ clos~\{ cst~1, X \}~\{ opPlusI, opInv \}~\{ comp \} \subseteq clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosLeast[I := \{ cst~1, X \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, Z := clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \}];
+use ClosInPow[I := \{ X \}, U := \{ opPlusIb~b, opInv \}, B := \{ comp \}];
+use CbUClosed[X := X, b := b, P := P];
+use CbBClosed[X := X, b := b];
+prove;
+\end{zproof}
+
+Soundness: $F^{+b} = (S^b F)^+$.
+
+\begin{theorem}{GEPlusIb}
+  \forall b: \nat; F: \nat \fun \nat | F \in CGE @ opPlusIb~b~F \in CGE
+\end{theorem}
+
+\begin{zproof}
+prove;
+use PlusIbExpr[b := b, F := F];
+use GES;
+use PowIn[I := \{ cst~1, funE \}, U := \{ opPlusI, opInv \}, B := \{ comp \}, F := funS, G := F, k := b];
+with enabled (CGEDef) prove;
+\end{zproof}
+
+\begin{theorem}{GEUClosedb}
+  \forall b: \nat @ CGE \in UClosed~\{ opPlusIb~b, opInv \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CGEInPower;
+with enabled (UClosedDef, CGEUF) prove;
+use InPair[\power (\power (\num \cross \num) \cross \power (\num \cross \num))][u := u, p := opPlusIb~b, q := opInv];
+split u = opInv;
+cases;
+prove;
+next;
+use GEPlusIb[b := b, F := F];
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{GRbSubGE}
+  \forall X: \nat \fun \nat; b: \nat | X \in CGE @ clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} \subseteq CGE
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosLeast[I := \{ X \}, U := \{ opPlusIb~b, opInv \}, B := \{ comp \}, Z := CGE];
+use CGEInPower;
+use CGEBClosedG;
+use GEUClosedb[b := b];
+prove;
+\end{zproof}
+
+\begin{theorem}{ShiftVal}
+  \forall W: \nat \fun \nat; c, y: \nat | (W, c) \in Shift @ W~y = y + c
+\end{theorem}
+
+\begin{zproof}
+invoke Shift;
+prove;
+instantiate y\_\_0 == y;
+prove;
+\end{zproof}
+
+Subtraction by inversion with $E$: if $V(y) = y + c$ then $E\,(E V)^{-1}$ subtracts $c$.
+
+\begin{theorem}{ESubSurj}
+  \forall W: \nat \fun \nat; c: \nat | (W, c) \in Shift @ comp(funE, W) \in Surj
+\end{theorem}
+
+\begin{zproof}
+invoke Surj;
+prove;
+instantiate y == (x + c) * (x + c) + x - c;
+use LeSq[n := x + c];
+use ShiftVal[W := W, c := c, y := (x + c) * (x + c) + x - c];
+use EAt[y := (x + c) * (x + c) + x, m := x + c, k := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{ESubCore}
+  \forall y, c, x: \nat | funE~(y + c) = x \land c \leq x @ funE~y = x - c
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EDecomp[y := y + c];
+use EBound[y := y + c];
+use EAt[y := y, m := funRt~(y + c), k := x - c];
+prove;
+\end{zproof}
+
+\begin{theorem}{ESubVal}
+  \forall W: \nat \fun \nat; c, x: \nat | (W, c) \in Shift \land c \leq x @ funE~(opInv~(comp(funE, W))~x) = x - c
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ESubSurj[W := W, c := c];
+use InvRight[F := comp(funE, W), x := x];
+use UFNonneg[f := opInv~(comp(funE, W)), x := x];
+use ShiftVal[W := W, c := c, y := opInv~(comp(funE, W))~x];
+use ESubCore[y := opInv~(comp(funE, W))~x, c := c, x := x];
+with disabled (InvRight) prove;
+\end{zproof}
+
+
+\subsection{$\langle E, F^{+b}, FG, F^{-1}\rangle$}
+
+$E(E^{-1}(2m) + x + c + 1) = x + c$ and $E(E^{-1}(2m + 1) + x + c + 2) = x + c$.
+
+\begin{theorem}{EShiftE}
+  \forall m, x, c: \nat | x + c \leq 2 * m + 2 @ funE~(opInv~funE~(2 * m) + x + c + 1) = x + c
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EAt[y := m * m + 2 * m + x + c + 1, m := m + 1, k := x + c];
+prove;
+\end{zproof}
+
+\begin{theorem}{EShiftO}
+  \forall m, x, c: \nat | x + c \leq 2 * m + 4 @ funE~(opInv~funE~(1 + 2 * m) + x + c + 2) = x + c
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EAt[y := (m + 1) * (m + 1) + 2 * m + 1 + x + c + 2, m := m + 2, k := x + c];
+prove;
+\end{zproof}
+
+For $b \geq 2$, $W_1 = E\,(E^{-1} T)^{+b}$ and $W_2 = E\,(E^{-1} W_1 T)^{+b}$ ($T = I^{+b}$) are the
+shifts $x + b - 1$ and $x + b - 2$, in an order given by the parity of $b$.
+
+\begin{theorem}{W1EvenVal}
+  \forall p, x: \nat @ comp(funE, opPlusIb~(2 + 2 * p)~(comp(opInv~funE, opPlusIb~(2 + 2 * p)~funI)))~x = x + 2 * p + 1
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EShiftE[m := x + p + 1, x := x, c := 2 * p + 1];
+prove;
+\end{zproof}
+
+\begin{theorem}{W2EvenVal}
+  \forall p, x: \nat @ comp(funE, opPlusIb~(2 + 2 * p)~(comp(comp(opInv~funE, comp(funE, opPlusIb~(2 + 2 * p)~(comp(opInv~funE, opPlusIb~(2 + 2 * p)~funI)))), opPlusIb~(2 + 2 * p)~funI)))~x = x + 2 * p
+\end{theorem}
+
+\begin{zproof}
+prove;
+use W1EvenVal[p := p, x := 2 + 2 * p + 2 * x];
+use EShiftO[m := x + 2 * p + 1, x := x, c := 2 * p];
+prove;
+\end{zproof}
+
+\begin{theorem}{W1OddVal}
+  \forall p, x: \nat @ comp(funE, opPlusIb~(3 + 2 * p)~(comp(opInv~funE, opPlusIb~(3 + 2 * p)~funI)))~x = x + 2 * p + 1
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EShiftO[m := x + p + 1, x := x, c := 2 * p + 1];
+prove;
+\end{zproof}
+
+\begin{theorem}{W2OddVal}
+  \forall p, x: \nat @ comp(funE, opPlusIb~(3 + 2 * p)~(comp(comp(opInv~funE, comp(funE, opPlusIb~(3 + 2 * p)~(comp(opInv~funE, opPlusIb~(3 + 2 * p)~funI)))), opPlusIb~(3 + 2 * p)~funI)))~x = x + 2 * p + 2
+\end{theorem}
+
+\begin{zproof}
+prove;
+use W1OddVal[p := p, x := 3 + 2 * p + 2 * x];
+use EShiftE[m := x + 2 * p + 2, x := x, c := 2 * p + 2];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbEIn}
+  \forall b: \nat @ funI \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land comp(funE, opPlusIb~b~(comp(opInv~funE, opPlusIb~b~funI))) \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land comp(funE, opPlusIb~b~(comp(comp(opInv~funE, comp(funE, opPlusIb~b~(comp(opInv~funE, opPlusIb~b~funI)))), opPlusIb~b~funI))) \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbUn[X := funE, b := b, F := funE];
+use CbComp[X := funE, b := b, F := funE, G := opInv~funE];
+use EEinv;
+prove;
+\end{zproof}
+
+$S = E\,(E\,W_2)^{-1} W_1$ (or with $W_1$ and $W_2$ exchanged).
+
+\begin{theorem}{SFromShifts}
+  \forall G, H: \nat \fun \nat; d: \nat | (G, d + 1) \in Shift \land (H, d) \in Shift @ comp(comp(funE, opInv~(comp(funE, H))), G) = funS
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(comp(funE, opInv~(comp(funE, H))), G) = funS;
+prove;
+use ShiftVal[W := G, c := d + 1, y := x];
+use ESubVal[W := H, c := d, x := 1 + x + d];
+prove;
+\end{zproof}
+
+\begin{theorem}{SInCbFromShifts}
+  \forall X: \nat \fun \nat; b, d: \nat; G, H: \nat \fun \nat | funE \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land G \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land H \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land (G, d + 1) \in Shift \land (H, d) \in Shift @ funS \in clos~\{ X \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use SFromShifts[G := G, H := H, d := d];
+prove;
+equality substitute funS;
+use CbComp[X := X, b := b, F := funE, G := H];
+use CbUn[X := X, b := b, F := comp(funE, H)];
+use CbComp[X := X, b := b, F := funE, G := opInv~(comp(funE, H))];
+use CbComp[X := X, b := b, F := comp(funE, opInv~(comp(funE, H))), G := G];
+prove;
+\end{zproof}
+
+\begin{theorem}{W12Shifts}
+  \forall p: \nat @ (comp(funE, opPlusIb~(2 + 2 * p)~(comp(opInv~funE, opPlusIb~(2 + 2 * p)~funI))), 2 * p + 1) \in Shift \land (comp(funE, opPlusIb~(2 + 2 * p)~(comp(comp(opInv~funE, comp(funE, opPlusIb~(2 + 2 * p)~(comp(opInv~funE, opPlusIb~(2 + 2 * p)~funI)))), opPlusIb~(2 + 2 * p)~funI))), 2 * p) \in Shift \land (comp(funE, opPlusIb~(3 + 2 * p)~(comp(comp(opInv~funE, comp(funE, opPlusIb~(3 + 2 * p)~(comp(opInv~funE, opPlusIb~(3 + 2 * p)~funI)))), opPlusIb~(3 + 2 * p)~funI))), 2 * p + 2) \in Shift \land (comp(funE, opPlusIb~(3 + 2 * p)~(comp(opInv~funE, opPlusIb~(3 + 2 * p)~funI))), 2 * p + 1) \in Shift
+\end{theorem}
+
+\begin{zproof}
+invoke Shift;
+prove;
+use W1EvenVal[p := p, x := y];
+use W2EvenVal[p := p, x := y\_\_0];
+use W2OddVal[p := p, x := y\_\_1];
+use W1OddVal[p := p, x := y\_\_2];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbESEven}
+  \forall p: \nat @ funS \in clos~\{ funE \}~\{ opPlusIb~(2 + 2 * p), opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbEIn[b := 2 + 2 * p];
+use W12Shifts[p := p];
+use SInCbFromShifts[X := funE, b := 2 + 2 * p, d := 2 * p, G := comp(funE, opPlusIb~(2 + 2 * p)~(comp(opInv~funE, opPlusIb~(2 + 2 * p)~funI))), H := comp(funE, opPlusIb~(2 + 2 * p)~(comp(comp(opInv~funE, comp(funE, opPlusIb~(2 + 2 * p)~(comp(opInv~funE, opPlusIb~(2 + 2 * p)~funI)))), opPlusIb~(2 + 2 * p)~funI)))];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbESOdd}
+  \forall p: \nat @ funS \in clos~\{ funE \}~\{ opPlusIb~(3 + 2 * p), opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use W12Shifts[p := p];
+use SInCbFromShifts[X := funE, b := 3 + 2 * p, d := 2 * p + 1, G := comp(funE, opPlusIb~(3 + 2 * p)~(comp(comp(opInv~funE, comp(funE, opPlusIb~(3 + 2 * p)~(comp(opInv~funE, opPlusIb~(3 + 2 * p)~funI)))), opPlusIb~(3 + 2 * p)~funI))), H := comp(funE, opPlusIb~(3 + 2 * p)~(comp(opInv~funE, opPlusIb~(3 + 2 * p)~funI)))];
+prove;
+use CbEIn[b := 3 + 2 * p];
+with disabled (ClosBinop, ClosUnop, ClosInit) prove;
+\end{zproof}
+
+
+For $b = 1$: $\hat P = E\,(E^{-1} T)^{+1}$ ($\hat P(y + 1) = y$, $\hat P(0) = 2$) and
+$S = E\,\hat P^{-1} (E^{-1} \hat P T)^{+1}$.
+
+\begin{theorem}{PE1Suc}
+  \forall y: \nat @ comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI)))~(1 + y) = y
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EShiftO[m := 1 + y, x := y, c := 0];
+prove;
+\end{zproof}
+
+\begin{theorem}{PE1Zero}
+  comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI)))~0 = 2
+\end{theorem}
+
+\begin{zproof}
+prove;
+use EinvOdd[m := 0];
+use EAt[y := 3, m := 1, k := 2];
+prove;
+\end{zproof}
+
+\begin{theorem}{PE1Core}
+  \forall v, y: \nat | comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI)))~y = v \land \lnot v = 2 @ y = 1 + v
+\end{theorem}
+
+\begin{zproof}
+prove;
+use PE1Zero;
+use PE1Suc[y := y - 1];
+split y = 0;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{PE1Surj}
+  comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI))) \in Surj
+\end{theorem}
+
+\begin{zproof}
+invoke Surj;
+with disabled (EinvOdd, EinvD) prove;
+use PE1Suc[y := x];
+instantiate y == 1 + x;
+with disabled (EinvOdd, EinvD) prove;
+\end{zproof}
+
+\begin{theorem}{PE1Inv}
+  \forall v: \nat | \lnot v = 2 @ opInv~(comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI))))~v = 1 + v
+\end{theorem}
+
+\begin{zproof}
+prove;
+use PE1Surj;
+use InvRight[F := comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI))), x := v];
+use UFNonneg[f := opInv~(comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI)))), x := v];
+use PE1Core[v := v, y := opInv~(comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI))))~v];
+with disabled (InvRight) prove;
+\end{zproof}
+
+\begin{theorem}{SE1Val}
+  comp(comp(funE, opInv~(comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI))))), opPlusIb~1~(comp(comp(opInv~funE, comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI)))), opPlusIb~1~funI))) = funS
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(comp(funE, opInv~(comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI))))), opPlusIb~1~(comp(comp(opInv~funE, comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI)))), opPlusIb~1~funI))) = funS;
+prove;
+use PE1Suc[y := 2 * x];
+use MulNonneg[a := x, b := x];
+use PE1Inv[v := 1 + x * x + 3 * x];
+use EAt[y := 2 + x * x + 3 * x, m := x + 1, k := x + 1];
+prove;
+split x = 0;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{SE1In}
+  comp(comp(funE, opInv~(comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI))))), opPlusIb~1~(comp(comp(opInv~funE, comp(funE, opPlusIb~1~(comp(opInv~funE, opPlusIb~1~funI)))), opPlusIb~1~funI))) \in clos~\{ funE \}~\{ opPlusIb~1, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use CbEIn[b := 1];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbESOne}
+  funS \in clos~\{ funE \}~\{ opPlusIb~1, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use SE1In;
+use SE1Val;
+prove;
+\end{zproof}
+
+From $S$: the predecessor $E\,(E S)^{-1}$, then $F^+$, $\bar 0 = E S E^{-1} I^+$ and
+$\bar 1 = S \bar 0$.
+
+\begin{theorem}{SShift}
+  (funS, 1) \in Shift
+\end{theorem}
+
+\begin{zproof}
+invoke Shift;
+prove;
+\end{zproof}
+
+\begin{theorem}{PEPreds}
+  comp(funE, opInv~(comp(funE, funS))) \in Preds
+\end{theorem}
+
+\begin{zproof}
+invoke Preds;
+prove;
+use SShift;
+use ESubVal[W := funS, c := 1, x := 1 + x];
+prove;
+\end{zproof}
+
+\begin{theorem}{ZeroExprE2}
+  comp(comp(comp(funE, funS), opInv~funE), opPlusI~funI) = cst~0
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(comp(comp(funE, funS), opInv~funE), opPlusI~funI) = cst~0;
+prove;
+use EAt[y := 1 + x * x + 2 * x, m := x + 1, k := 0];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbEPI}
+  \forall b: \nat | funS \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ comp(funE, opInv~(comp(funE, funS))) \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land opPlusI~funI \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbEIn[b := b];
+use PEPreds;
+use CbPlusI[X := funE, b := b, P := comp(funE, opInv~(comp(funE, funS))), F := funI];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbEZeroIn}
+  \forall b: \nat | funS \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ comp(comp(comp(funE, funS), opInv~funE), opPlusI~funI) \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbEPI[b := b];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbEOne}
+  \forall b: \nat | funS \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ cst~0 \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land cst~1 \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbEZeroIn[b := b];
+use ZeroExprE2;
+prove;
+use OneExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{CbEFromS}
+  \forall b: \nat | funS \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \} = ClosJR
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbEOne[b := b];
+use CbEPI[b := b];
+use PEPreds;
+use CbSub[X := funE, b := b, P := comp(funE, opInv~(comp(funE, funS)))];
+use GRbSubGE[X := funE, b := b];
+use GREqJRE;
+use ClosInPow[I := \{ funE \}, U := \{ opPlusIb~b, opInv \}, B := \{ comp \}];
+use CGEInPower;
+use SubAntisym[\nat \fun \nat][A := clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \}, B := CGE];
+with enabled (CGEDef) prove;
+\end{zproof}
+
+
+\subsection{$\langle K, F^{+b}, FG, F^{-1}\rangle$}
+
+\begin{theorem}{rule CbKZ}
+  \forall b: \nat @ funZ \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbUn[X := funK, b := b, F := funK];
+use KinvZ;
+prove;
+\end{zproof}
+
+\begin{theorem}{KZI}
+  comp(funK, funZ) = funI
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(funK, funZ) = funI;
+prove;
+use KZ[x := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbKIExpr}
+  \forall b: \nat @ comp(funK, funZ) \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule CbKI}
+  \forall b: \nat @ funI \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbKIExpr[b := b];
+use KZI;
+prove;
+\end{zproof}
+
+\begin{theorem}{ALeCore}
+  \forall a, n, q: \num | n \leq q \land 2 * a = n + q @ n \leq a
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{ALe}
+  \forall n: \nat @ n \leq funA~n
+\end{theorem}
+
+\begin{zproof}
+prove;
+use TwoA[x := n];
+use LeSq[n := n];
+use ALeCore[a := funA~n, n := n, q := n * n];
+prove;
+\end{zproof}
+
+\begin{theorem}{ShiftComp}
+  \forall F, G: \nat \fun \nat; a, c: \nat | (F, a) \in Shift \land (G, c) \in Shift @ (comp(F, G), a + c) \in Shift
+\end{theorem}
+
+\begin{zproof}
+prove;
+invoke Shift;
+prove;
+instantiate y\_\_0 == G~y, y\_\_1 == y;
+prove;
+\end{zproof}
+
+Subtraction by inversion with $K$.
+
+\begin{theorem}{KSubSurj}
+  \forall W: \nat \fun \nat; c: \nat | (W, c) \in Shift @ comp(funK, W) \in Surj
+\end{theorem}
+
+\begin{zproof}
+invoke Surj;
+prove;
+instantiate y == funA~(x + c) + x - c;
+use ALe[n := x + c];
+use ShiftVal[W := W, c := c, y := funA~(x + c) + x - c];
+use KAt[m := funA~(x + c) + x, t := x + c, k := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{KSubCore}
+  \forall y, c, x: \nat | funK~(y + c) = x \land c \leq x @ funK~y = x - c
+\end{theorem}
+
+\begin{zproof}
+prove;
+use Decomp[x := y + c];
+use KAt[m := y, t := funV~(y + c), k := x - c];
+prove;
+\end{zproof}
+
+\begin{theorem}{KSubVal}
+  \forall W: \nat \fun \nat; c, x: \nat | (W, c) \in Shift \land c \leq x @ funK~(opInv~(comp(funK, W))~x) = x - c
+\end{theorem}
+
+\begin{zproof}
+prove;
+use KSubSurj[W := W, c := c];
+use InvRight[F := comp(funK, W), x := x];
+use UFNonneg[f := opInv~(comp(funK, W)), x := x];
+use ShiftVal[W := W, c := c, y := opInv~(comp(funK, W))~x];
+use KSubCore[y := opInv~(comp(funK, W))~x, c := c, x := x];
+with disabled (InvRight) prove;
+\end{zproof}
+
+$U = K\,(Z T)^{+b}$ is the shift $b - 1$.
+
+\begin{theorem}{UKShift}
+  \forall c: \nat @ (comp(funK, opPlusIb~(1 + c)~(comp(funZ, opPlusIb~(1 + c)~funI))), c) \in Shift
+\end{theorem}
+
+\begin{zproof}
+invoke Shift;
+prove;
+use ASuc[x := 1 + c + 2 * y];
+use UFNonneg[f := funA, x := 1 + c + 2 * y];
+use KAt[m := funA~(2 + c + 2 * y) + y + c, t := 2 + c + 2 * y, k := y + c];
+prove;
+\end{zproof}
+
+\begin{theorem}{rule CbKUIn}
+  \forall b: \nat @ comp(funK, opPlusIb~b~(comp(funZ, opPlusIb~b~funI))) \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+For $b = d + 2$: the constant $C = K\,(Z P_1)^{+b} U^3 = 2d$ with $P_1 = K\,(K U)^{-1}$, and
+$S = K\,(K\,C^{+b})^{-1} U^3$.
+
+\begin{theorem}{CKVal}
+  \forall d, x: \nat @ comp(comp(funK, opPlusIb~(2 + d)~(comp(funZ, comp(funK, opInv~(comp(funK, comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))))))))), comp(comp(comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))))~x = 2 * d
+\end{theorem}
+
+\begin{zproof}
+prove;
+use UKShift[c := 1 + d];
+use ShiftVal[W := comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), c := 1 + d, y := x];
+use ShiftVal[W := comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), c := 1 + d, y := 1 + d + x];
+use ShiftVal[W := comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), c := 1 + d, y := 2 + 2 * d + x];
+use KSubVal[W := comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), c := 1 + d, x := 3 + 3 * d + x];
+use ASuc[x := 2 + 2 * d + x];
+use ASuc[x := 3 + 2 * d + x];
+use UFNonneg[f := funA, x := 2 + 2 * d + x];
+use KAt[m := funA~(4 + 2 * d + x) + 2 * d, t := 4 + 2 * d + x, k := 2 * d];
+prove;
+\end{zproof}
+
+\begin{theorem}{KShifts}
+  \forall d: \nat @ (comp(comp(comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))), 3 * d + 3) \in Shift \land (opPlusIb~(2 + d)~(comp(comp(funK, opPlusIb~(2 + d)~(comp(funZ, comp(funK, opInv~(comp(funK, comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))))))))), comp(comp(comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))))), 3 * d + 2) \in Shift
+\end{theorem}
+
+\begin{zproof}
+prove;
+use UKShift[c := 1 + d];
+use ShiftComp[F := comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), G := comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), a := 1 + d, c := 1 + d];
+use ShiftComp[F := comp(comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))), G := comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), a := 2 + 2 * d, c := 1 + d];
+prove;
+invoke Shift;
+prove;
+use CKVal[d := d, x := y];
+prove;
+\end{zproof}
+
+\begin{theorem}{SFromShiftsK}
+  \forall G, H: \nat \fun \nat; d: \nat | (G, d + 1) \in Shift \land (H, d) \in Shift @ comp(comp(funK, opInv~(comp(funK, H))), G) = funS
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(comp(funK, opInv~(comp(funK, H))), G) = funS;
+prove;
+use ShiftVal[W := G, c := d + 1, y := x];
+use KSubVal[W := H, c := d, x := 1 + x + d];
+prove;
+\end{zproof}
+
+\begin{theorem}{rule CbKU3In}
+  \forall b: \nat @ comp(comp(comp(funK, opPlusIb~b~(comp(funZ, opPlusIb~b~funI))), comp(funK, opPlusIb~b~(comp(funZ, opPlusIb~b~funI)))), comp(funK, opPlusIb~b~(comp(funZ, opPlusIb~b~funI)))) \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule CbKP1In}
+  \forall b: \nat @ comp(funK, opInv~(comp(funK, comp(funK, opPlusIb~b~(comp(funZ, opPlusIb~b~funI)))))) \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{rule CbKCIn}
+  \forall b: \nat @ comp(comp(funK, opPlusIb~b~(comp(funZ, comp(funK, opInv~(comp(funK, comp(funK, opPlusIb~b~(comp(funZ, opPlusIb~b~funI))))))))), comp(comp(comp(funK, opPlusIb~b~(comp(funZ, opPlusIb~b~funI))), comp(funK, opPlusIb~b~(comp(funZ, opPlusIb~b~funI)))), comp(funK, opPlusIb~b~(comp(funZ, opPlusIb~b~funI))))) \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{CbKSTwoIn}
+  \forall d: \nat @ comp(comp(funK, opInv~(comp(funK, opPlusIb~(2 + d)~(comp(comp(funK, opPlusIb~(2 + d)~(comp(funZ, comp(funK, opInv~(comp(funK, comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))))))))), comp(comp(comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))))))))), comp(comp(comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))))) \in clos~\{ funK \}~\{ opPlusIb~(2 + d), opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{CbKSTwo}
+  \forall d: \nat @ funS \in clos~\{ funK \}~\{ opPlusIb~(2 + d), opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbKSTwoIn[d := d];
+use KShifts[d := d];
+use SFromShiftsK[G := comp(comp(comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))), H := opPlusIb~(2 + d)~(comp(comp(funK, opPlusIb~(2 + d)~(comp(funZ, comp(funK, opInv~(comp(funK, comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))))))))), comp(comp(comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))), comp(funK, opPlusIb~(2 + d)~(comp(funZ, opPlusIb~(2 + d)~funI)))))), d := 3 * d + 2];
+prove;
+\end{zproof}
+
+For $b = 1$: $\hat P = K\,(Z^{+1})^{+1}$ ($\hat P(y + 1) = y$, $\hat P(0) = 1$) and
+$S = K\,\hat P^{-1} (Z T)^{+1}$.
+
+\begin{theorem}{PK1Suc}
+  \forall y: \nat @ comp(funK, opPlusIb~1~(opPlusIb~1~funZ))~(1 + y) = y
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ASuc[x := 1 + y];
+use ASuc[x := 2 + y];
+use UFNonneg[f := funA, x := 1 + y];
+use KAt[m := funA~(3 + y) + y, t := 3 + y, k := y];
+prove;
+\end{zproof}
+
+\begin{theorem}{PK1Zero}
+  comp(funK, opPlusIb~1~(opPlusIb~1~funZ))~0 = 1
+\end{theorem}
+
+\begin{zproof}
+prove;
+use AZero;
+use KAt[m := 2, t := 1, k := 1];
+prove;
+\end{zproof}
+
+\begin{theorem}{PK1Core}
+  \forall v, y: \nat | comp(funK, opPlusIb~1~(opPlusIb~1~funZ))~y = v \land \lnot v = 1 @ y = 1 + v
+\end{theorem}
+
+\begin{zproof}
+prove;
+use PK1Zero;
+use PK1Suc[y := y - 1];
+split y = 0;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{PK1Surj}
+  comp(funK, opPlusIb~1~(opPlusIb~1~funZ)) \in Surj
+\end{theorem}
+
+\begin{zproof}
+invoke Surj;
+prove;
+use PK1Suc[y := x];
+instantiate y == 1 + x;
+prove;
+\end{zproof}
+
+\begin{theorem}{PK1Inv}
+  \forall v: \nat | \lnot v = 1 @ opInv~(comp(funK, opPlusIb~1~(opPlusIb~1~funZ)))~v = 1 + v
+\end{theorem}
+
+\begin{zproof}
+prove;
+use PK1Surj;
+use InvRight[F := comp(funK, opPlusIb~1~(opPlusIb~1~funZ)), x := v];
+use UFNonneg[f := opInv~(comp(funK, opPlusIb~1~(opPlusIb~1~funZ))), x := v];
+use PK1Core[v := v, y := opInv~(comp(funK, opPlusIb~1~(opPlusIb~1~funZ)))~v];
+with disabled (InvRight) prove;
+\end{zproof}
+
+\begin{theorem}{SK1Val}
+  comp(comp(funK, opInv~(comp(funK, opPlusIb~1~(opPlusIb~1~funZ)))), opPlusIb~1~(comp(funZ, opPlusIb~1~funI))) = funS
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(comp(funK, opInv~(comp(funK, opPlusIb~1~(opPlusIb~1~funZ)))), opPlusIb~1~(comp(funZ, opPlusIb~1~funI))) = funS;
+prove;
+use ASuc[x := 1 + 2 * x];
+use UFNonneg[f := funA, x := 1 + 2 * x];
+use ALe[n := 2 + 2 * x];
+use PK1Inv[v := funA~(2 + 2 * x) + x];
+use KAt[m := 1 + funA~(2 + 2 * x) + x, t := 2 + 2 * x, k := 1 + x];
+prove;
+\end{zproof}
+
+\begin{theorem}{SK1In}
+  comp(comp(funK, opInv~(comp(funK, opPlusIb~1~(opPlusIb~1~funZ)))), opPlusIb~1~(comp(funZ, opPlusIb~1~funI))) \in clos~\{ funK \}~\{ opPlusIb~1, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbUn[X := funK, b := 1, F := funZ];
+use CbUn[X := funK, b := 1, F := opPlusIb~1~funZ];
+use CbComp[X := funK, b := 1, F := funK, G := opPlusIb~1~(opPlusIb~1~funZ)];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbKSOne}
+  funS \in clos~\{ funK \}~\{ opPlusIb~1, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use SK1In;
+use SK1Val;
+prove;
+\end{zproof}
+
+From $S$: $P = K (K S)^{-1}$, $F^+ = P^b F^{+b}$, $A$, $\bar 0 = K A$ and $\bar 1 = S \bar 0$.
+
+\begin{theorem}{PKPreds}
+  exprPK \in Preds
+\end{theorem}
+
+\begin{zproof}
+invoke Preds;
+prove;
+use PKSuc[x := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{rule CbKPlusI}
+  \forall b: \nat; F: \nat \fun \nat | funS \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land F \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ opPlusI~F \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use PKPreds;
+use CbComp[X := funK, b := b, F := funK, G := funS];
+use CbUn[X := funK, b := b, F := comp(funK, funS)];
+use CbComp[X := funK, b := b, F := funK, G := opInv~(comp(funK, funS))];
+invoke exprPK;
+use CbPlusI[X := funK, b := b, P := comp(funK, opInv~(comp(funK, funS))), F := F];
+prove;
+\end{zproof}
+
+\begin{theorem}{ZeroExprKA}
+  comp(funK, funA) = cst~0
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(funK, funA) = cst~0;
+prove;
+use UFNonneg[f := funA, x := x];
+use KAt[m := funA~x, t := x, k := 0];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbKAIn}
+  \forall b: \nat | funS \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ exprAK \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+invoke exprAK;
+prove;
+\end{zproof}
+
+\begin{theorem}{CbKOne}
+  \forall b: \nat | funS \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ cst~0 \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land cst~1 \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbKAIn[b := b];
+use AExprK;
+prove;
+use ZeroExprKA;
+prove;
+use OneExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{CbKPIn}
+  \forall b: \nat | funS \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ exprPK \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+invoke exprPK;
+prove;
+\end{zproof}
+
+\begin{theorem}{CbKFromS}
+  \forall b: \nat | funS \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \} = ClosJR
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbKOne[b := b];
+use CbKPIn[b := b];
+use PKPreds;
+use CbSub[X := funK, b := b, P := exprPK];
+use GRbSubGE[X := funK, b := b];
+use GEK;
+use GREqJR;
+use GKSubGE;
+use GESubGK;
+use ClosInPow[I := \{ funK \}, U := \{ opPlusIb~b, opInv \}, B := \{ comp \}];
+use CGEInPower;
+use CGKInPower;
+use SubAntisym[\nat \fun \nat][A := clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}, B := CGE];
+with enabled (CGKDef) prove;
+\end{zproof}
+
+
+\subsection{$\langle L, F^{+b}, FG, F^{-1}\rangle$}
+
+$L^{-1} = A$; $U = L\,(\dots(A^{+b})\dots)^{+b}$ ($2b - 2$ times) is the shift $b - 1$,
+$L A^{+b}$ subtracts $b - 2$, and $S = L A^{+b} U$.
+
+\begin{theorem}{LSurj}
+  funL \in Surj
+\end{theorem}
+
+\begin{zproof}
+invoke Surj;
+prove;
+instantiate y == funA~x;
+use UFNonneg[f := funA, x := x];
+use LAt[m := funA~x, t := x, k := 0];
+prove;
+\end{zproof}
+
+\begin{theorem}{LLowCore}
+  \forall x, y, t, k: \nat | y = funA~t + k \land k \leq t \land t - k = x @ funA~x \leq y
+\end{theorem}
+
+\begin{zproof}
+prove;
+use AMono[m := x, n := t];
+prove;
+\end{zproof}
+
+\begin{theorem}{LinvA}
+  opInv~funL = funA
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate opInv~funL = funA;
+prove;
+use LSurj;
+use UFNonneg[f := funA, x := x];
+use LAt[m := funA~x, t := x, k := 0];
+use InvLeast[F := funL, x := x, y := funA~x];
+use InvRight[F := funL, x := x];
+use UFNonneg[f := opInv~funL, x := x];
+use Decomp[x := opInv~funL~x];
+use LAt[m := opInv~funL~x, t := funV~(opInv~funL~x), k := funK~(opInv~funL~x)];
+use LLowCore[x := x, y := opInv~funL~x, t := funV~(opInv~funL~x), k := funK~(opInv~funL~x)];
+with disabled (InvRight) prove;
+split funA~x \leq opInv~funL~x;
+cases;
+prove;
+next;
+with normalization prove;
+next;
+\end{zproof}
+
+\begin{theorem}{rule CbLA}
+  \forall b: \nat @ funA \in clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbUn[X := funL, b := b, F := funL];
+use LinvA;
+prove;
+\end{zproof}
+
+$A + n(I + \bar b)$, i.e.\ $A^{+b}$ iterated $n$ times, is in the closure.
+
+\begin{zed}
+  IterLSet == \{ n: \nat | \forall b: \nat @ opPlus(funA, comp(funM~n, opPlus(funI, cst~b))) \in clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \} \}
+\end{zed}
+
+\begin{zproof}[IterLSet\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{IterLEqZero}
+  \forall b: \nat @ opPlus(funA, comp(funM~0, opPlus(funI, cst~b))) = funA
+\end{theorem}
+
+\begin{zproof}
+prove;
+apply UFExt to predicate opPlus(funA, comp(funM~0, opPlus(funI, cst~b))) = funA;
+prove;
+\end{zproof}
+
+\begin{theorem}{IterLEqSuc}
+  \forall n, b: \nat @ opPlus(funA, comp(funM~(1 + n), opPlus(funI, cst~b))) = opPlusIb~b~(opPlus(funA, comp(funM~n, opPlus(funI, cst~b))))
+\end{theorem}
+
+\begin{zproof}
+prove;
+apply UFExt to predicate opPlus(funA, comp(funM~(1 + n), opPlus(funI, cst~b))) = opPlusIb~b~(opPlus(funA, comp(funM~n, opPlus(funI, cst~b))));
+prove;
+\end{zproof}
+
+\begin{theorem}{rule IterLBase}
+  0 \in IterLSet
+\end{theorem}
+
+\begin{zproof}
+invoke IterLSet;
+prove;
+use IterLEqZero[b := b];
+prove;
+\end{zproof}
+
+\begin{theorem}{rule IterLStep}
+  \forall n: IterLSet @ 1 + n \in IterLSet
+\end{theorem}
+
+\begin{zproof}
+invoke IterLSet;
+prove;
+instantiate b\_\_0 == b;
+use IterLEqSuc[n := n, b := b];
+use CbUn[X := funL, b := b, F := opPlus(funA, comp(funM~n, opPlus(funI, cst~b)))];
+prove;
+\end{zproof}
+
+\begin{theorem}{IterLSub}
+  \nat \subseteq IterLSet
+\end{theorem}
+
+\begin{zproof}
+apply natInduction to predicate \nat \subseteq IterLSet;
+prove;
+invoke IterLSet;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule IterLAll}
+  \forall n, b: \nat @ opPlus(funA, comp(funM~n, opPlus(funI, cst~b))) \in clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use IterLSub;
+invoke IterLSet;
+with enabled (inPower) prove;
+instantiate e == n;
+prove;
+instantiate b\_\_1 == b;
+prove;
+\end{zproof}
+
+
+\begin{theorem}{AAddTwo}
+  \forall x, c: \nat @ funA~(x + 2 * c) = funA~x + 2 * c * x + 2 * c * c + c
+\end{theorem}
+
+\begin{zproof}
+prove;
+use TwoA[x := x + 2 * c];
+use TwoA[x := x];
+use Halve[a := funA~(x + 2 * c), b := funA~x + 2 * c * x + 2 * c * c + c];
+prove;
+\end{zproof}
+
+\begin{theorem}{ULShift}
+  \forall c: \nat @ (comp(funL, opPlus(funA, comp(funM~(2 * c), opPlus(funI, cst~(1 + c))))), c) \in Shift
+\end{theorem}
+
+\begin{zproof}
+invoke Shift;
+prove;
+use AAddTwo[x := y, c := c];
+use UFNonneg[f := funA, x := y + 2 * c];
+use LAt[m := funA~(y + 2 * c) + c, t := y + 2 * c, k := c];
+prove;
+\end{zproof}
+
+\begin{theorem}{SigmaS}
+  \forall c: \nat; U: \nat \fun \nat | (U, c) \in Shift @ comp(comp(funL, opPlusIb~(1 + c)~funA), U) = funS
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(comp(funL, opPlusIb~(1 + c)~funA), U) = funS;
+prove;
+use ShiftVal[W := U, c := c, y := x];
+use ASuc[x := x + c];
+use UFNonneg[f := funA, x := x + c];
+use LAt[m := funA~(1 + x + c) + c, t := 1 + x + c, k := c];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbLSIn}
+  \forall c: \nat @ comp(comp(funL, opPlusIb~(1 + c)~funA), comp(funL, opPlus(funA, comp(funM~(2 * c), opPlus(funI, cst~(1 + c)))))) \in clos~\{ funL \}~\{ opPlusIb~(1 + c), opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{CbLS}
+  \forall c: \nat @ funS \in clos~\{ funL \}~\{ opPlusIb~(1 + c), opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbLSIn[c := c];
+use ULShift[c := c];
+use SigmaS[c := c, U := comp(funL, opPlus(funA, comp(funM~(2 * c), opPlus(funI, cst~(1 + c)))))];
+prove;
+\end{zproof}
+
+From $S$: the predecessor $L S A$, $F^+$, $\bar 0 = L A^+$ and $\bar 1 = S \bar 0$.
+
+\begin{theorem}{PLPreds}
+  comp(comp(funL, funS), funA) \in Preds
+\end{theorem}
+
+\begin{zproof}
+invoke Preds;
+prove;
+use UFNonneg[f := funA, x := 1 + x];
+use LAt[m := 1 + funA~(1 + x), t := 1 + x, k := 1];
+prove;
+\end{zproof}
+
+\begin{theorem}{ZeroExprLA}
+  comp(funL, opPlusI~funA) = cst~0
+\end{theorem}
+
+\begin{zproof}
+apply UFExt to predicate comp(funL, opPlusI~funA) = cst~0;
+prove;
+use UFNonneg[f := funA, x := x];
+use LAt[m := funA~x + x, t := x, k := x];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbLPI}
+  \forall b: \nat | funS \in clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ comp(comp(funL, funS), funA) \in clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land opPlusI~funA \in clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use PLPreds;
+use CbPlusI[X := funL, b := b, P := comp(comp(funL, funS), funA), F := funA];
+prove;
+\end{zproof}
+
+\begin{theorem}{CbLOne}
+  \forall b: \nat | funS \in clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ cst~0 \in clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \} \land cst~1 \in clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbLPI[b := b];
+use ZeroExprLA;
+prove;
+use OneExpr;
+prove;
+\end{zproof}
+
+\begin{theorem}{CbLFromS}
+  \forall b: \nat | funS \in clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \} @ clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \} = ClosJR
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbLOne[b := b];
+use CbLPI[b := b];
+use PLPreds;
+use CbSub[X := funL, b := b, P := comp(comp(funL, funS), funA)];
+use GRbSubGE[X := funL, b := b];
+use GEL;
+use GREqJR;
+use GLSubGE;
+use ClosInPow[I := \{ funL \}, U := \{ opPlusIb~b, opInv \}, B := \{ comp \}];
+use CGEInPower;
+use CGLInPower;
+use SubAntisym[\nat \fun \nat][A := clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \}, B := CGE];
+with enabled (CGLDef) prove;
+\end{zproof}
+
+\subsection{The shifted operator with inversion: the result}
+
+\begin{theorem}{CbES}
+  \forall b: \nat | 1 \leq b @ funS \in clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use Mod2Cases[x := b];
+use Div2Nonneg[x := b];
+split b = 1;
+cases;
+use CbESOne;
+prove;
+next;
+split b \mod 2 = 0;
+cases;
+use CbESEven[p := b \div 2 - 1];
+prove;
+next;
+use CbESOdd[p := b \div 2 - 1];
+prove;
+next;
+next;
+\end{zproof}
+
+\begin{theorem}{CbKS}
+  \forall b: \nat | 1 \leq b @ funS \in clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+split b = 1;
+cases;
+use CbKSOne;
+prove;
+next;
+use CbKSTwo[d := b - 2];
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{CbLSAll}
+  \forall b: \nat | 1 \leq b @ funS \in clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbLS[c := b - 1];
+prove;
+\end{zproof}
+
+\begin{theorem}{ExtGRb}
+  \forall b: \nat | 1 \leq b @ clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \} = ClosJR \land clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \} = ClosJR \land clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \} = ClosJR
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CbES[b := b];
+use CbKS[b := b];
+use CbLSAll[b := b];
+use CbEFromS[b := b];
+use CbKFromS[b := b];
+use CbLFromS[b := b];
+prove;
+\end{zproof}
+
+$b = 0$: every generated function fixes $0$.
+
+\begin{theorem}{FixZeroUClosedIb}
+  FixZero \in UClosed~\{ opPlusIb~0, opInv \}
+\end{theorem}
+
+\begin{zproof}
+use FixZeroInPower;
+with enabled (UClosedDef) prove;
+invoke FixZero;
+prove;
+use InPair[\power (\power (\num \cross \num) \cross \power (\num \cross \num))][u := u, p := opPlusIb~0, q := opInv];
+split u = opInv;
+cases;
+use InvFix0[F := F];
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{GRbZeroFix}
+  \forall X: \nat \fun \nat | X~0 = 0 @ clos~\{ X \}~\{ opPlusIb~0, opInv \}~\{ comp \} \subseteq FixZero
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosLeast[I := \{ X \}, U := \{ opPlusIb~0, opInv \}, B := \{ comp \}, Z := FixZero];
+use FixZeroInPower;
+use FixZeroUClosedIb;
+use FixZeroBClosed;
+invoke FixZero;
+prove;
+\end{zproof}
+
+\begin{theorem}{GRbZeroNotOne}
+  \forall X: \nat \fun \nat | X~0 = 0 @ \lnot cst~1 \in clos~\{ X \}~\{ opPlusIb~0, opInv \}~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+use GRbZeroFix[X := X];
+apply subsetDef to predicate clos~\{ X \}~\{ opPlusIb~0, opInv \}~\{ comp \} \subseteq FixZero;
+apply inPower to predicate clos~\{ X \}~\{ opPlusIb~0, opInv \}~\{ comp \} \in \power FixZero;
+instantiate e == cst~1;
+invoke FixZero;
+prove;
+\end{zproof}
+
+\begin{theorem}{GRbZeroNeq}
+  \forall X: \nat \fun \nat | X~0 = 0 @ \lnot clos~\{ X \}~\{ opPlusIb~0, opInv \}~\{ comp \} = ClosJR
+\end{theorem}
+
+\begin{zproof}
+use GRbZeroNotOne[X := X];
+use JROne;
+prove;
+split clos~\{ X \}~\{ opPlusIb~0, opInv \}~\{ comp \} = ClosJR;
+cases;
+equality substitute clos~\{ X \}~(\{ opPlusIb~0 \} \cup \{ opInv \})~\{ comp \};
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{ExtGRbIff}
+  \forall b: \nat @ (clos~\{ funE \}~\{ opPlusIb~b, opInv \}~\{ comp \} = ClosJR \iff 1 \leq b) \land (clos~\{ funK \}~\{ opPlusIb~b, opInv \}~\{ comp \} = ClosJR \iff 1 \leq b) \land (clos~\{ funL \}~\{ opPlusIb~b, opInv \}~\{ comp \} = ClosJR \iff 1 \leq b)
+\end{theorem}
+
+\begin{zproof}
+prove;
+split b = 0;
+cases;
+use GRbZeroNeq[X := funE];
+use GRbZeroNeq[X := funK];
+use GRbZeroNeq[X := funL];
+use KZero;
+prove;
+next;
+use ExtGRb[b := b];
+prove;
+next;
+\end{zproof}
+
+
+\subsection{Remark: any constant $\bar n$ with $n \geq 1$}
+
+For $X \in \{E, K, L\}$ and a set $U$ of unary operators with $F^+ \in U$,
+$\langle \bar n, X, U, FG\rangle$ and $\langle \bar 1, X, U, FG\rangle$ have the same closure if
+$n \geq 1$.  Since $\bar n^+(x) = x + n$, every constant $c + kn$ is generated from $c$, and $X$
+steps down from $c$ to $c - 1$:
+$E(c + (nc^2 + 2c)n) = c - 1$, $K(c + (2nc^2 + 3c)n) = c - 1$,
+$L(c + (2nc^2 + 2c)n) = nc - c$ and $L((nc - c) + 2nc^2 n) = c - 1$.
+
+\begin{theorem}{CnComp}
+  \forall X: \nat \fun \nat; U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); n: \nat; F, G: \nat \fun \nat | F \in clos~\{ cst~n, X \}~U~\{ comp \} \land G \in clos~\{ cst~n, X \}~U~\{ comp \} @ comp(F, G) \in clos~\{ cst~n, X \}~U~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+\end{zproof}
+
+\begin{theorem}{CstComp}
+  \forall F: \nat \fun \nat; m: \nat @ comp(F, cst~m) = cst~(F~m)
+\end{theorem}
+
+\begin{zproof}
+prove;
+apply UFExt to predicate comp(F, cst~m) = cst~(F~m);
+prove;
+\end{zproof}
+
+\begin{theorem}{CstShiftEq}
+  \forall n, c, k: \nat @ comp(iter[\nat]~k~(opPlusI~(cst~n)), cst~c) = cst~(c + k * n)
+\end{theorem}
+
+\begin{zproof}
+prove;
+apply UFExt to predicate comp(iter[\nat]~k~(opPlusI~(cst~n)), cst~c) = cst~(c + k * n);
+prove;
+use ShiftPow[k := k, c := n, x := c, F := opPlusI~(cst~n)];
+invoke Shift;
+prove;
+\end{zproof}
+
+\begin{theorem}{CstShift}
+  \forall X: \nat \fun \nat; U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); n, c, k: \nat | opPlusI \in U \land cst~c \in clos~\{ cst~n, X \}~U~\{ comp \} @ cst~(c + k * n) \in clos~\{ cst~n, X \}~U~\{ comp \} \land cst~(X~(c + k * n)) \in clos~\{ cst~n, X \}~U~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use PowIn[I := \{ cst~n, X \}, U := U, B := \{ comp \}, F := opPlusI~(cst~n), G := cst~c, k := k];
+use CstShiftEq[n := n, c := c, k := k];
+prove;
+use CstComp[F := X, m := c + k * n];
+prove;
+\end{zproof}
+
+The descent, with $n = n_1 + 1$ and $c = c_1 + 1$.
+
+\begin{theorem}{EDesc}
+  \forall n1, c1: \nat @ funE~((1 + c1) + ((1 + n1) * (1 + c1) * (1 + c1) + 2 * (1 + c1)) * (1 + n1)) = c1
+\end{theorem}
+
+\begin{zproof}
+prove;
+use MulNonneg[a := n1, b := c1];
+use EAt[y := (1 + c1) + ((1 + n1) * (1 + c1) * (1 + c1) + 2 * (1 + c1)) * (1 + n1), m := (1 + n1) * (1 + c1) + 1, k := c1];
+prove;
+\end{zproof}
+
+\begin{theorem}{KDesc}
+  \forall n1, c1: \nat @ funK~((1 + c1) + (2 * (1 + n1) * (1 + c1) * (1 + c1) + 3 * (1 + c1)) * (1 + n1)) = c1
+\end{theorem}
+
+\begin{zproof}
+prove;
+use MulNonneg[a := n1, b := c1];
+use TwoA[x := 2 * (1 + n1) * (1 + c1) + 1];
+use Halve[a := funA~(2 * (1 + n1) * (1 + c1) + 1), b := (2 * (1 + n1) * (1 + c1) + 1) * ((1 + n1) * (1 + c1) + 1)];
+use KAt[m := (1 + c1) + (2 * (1 + n1) * (1 + c1) * (1 + c1) + 3 * (1 + c1)) * (1 + n1), t := 2 * (1 + n1) * (1 + c1) + 1, k := c1];
+prove;
+\end{zproof}
+
+\begin{theorem}{LDescOne}
+  \forall n1, c: \nat @ funL~(c + (2 * (1 + n1) * c * c + 2 * c) * (1 + n1)) = n1 * c
+\end{theorem}
+
+\begin{zproof}
+prove;
+use MulNonneg[a := n1, b := c];
+use TwoA[x := 2 * (1 + n1) * c];
+use Halve[a := funA~(2 * (1 + n1) * c), b := 2 * (1 + n1) * (1 + n1) * c * c + (1 + n1) * c];
+use LAt[m := c + (2 * (1 + n1) * c * c + 2 * c) * (1 + n1), t := 2 * (1 + n1) * c, k := (1 + n1) * c + c];
+prove;
+\end{zproof}
+
+\begin{theorem}{LDescTwo}
+  \forall n1, c1: \nat @ funL~(n1 * (1 + c1) + (2 * (1 + n1) * (1 + c1) * (1 + c1)) * (1 + n1)) = c1
+\end{theorem}
+
+\begin{zproof}
+prove;
+use MulNonneg[a := n1, b := c1];
+use TwoA[x := (2 * n1 + 1) * (1 + c1) + c1];
+use Halve[a := funA~((2 * n1 + 1) * (1 + c1) + c1), b := n1 * (1 + c1) + (2 * (1 + n1) * (1 + c1) * (1 + c1)) * (1 + n1) - (2 * n1 + 1) * (1 + c1)];
+use LAt[m := n1 * (1 + c1) + (2 * (1 + n1) * (1 + c1) * (1 + c1)) * (1 + n1), t := (2 * n1 + 1) * (1 + c1) + c1, k := (2 * n1 + 1) * (1 + c1)];
+prove;
+\end{zproof}
+
+
+\begin{theorem}{StepE}
+  \forall U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); n, c: \nat | opPlusI \in U \land 1 \leq n \land 1 \leq c \land cst~c \in clos~\{ cst~n, funE \}~U~\{ comp \} @ cst~(c - 1) \in clos~\{ cst~n, funE \}~U~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CstShift[X := funE, U := U, n := n, c := c, k := n * c * c + 2 * c];
+use EDesc[n1 := n - 1, c1 := c - 1];
+prove;
+\end{zproof}
+
+\begin{zed}
+  DescESet == \{ j: \nat | \forall U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); n: \nat | opPlusI \in U \land j + 1 \leq n @ cst~(n - j) \in clos~\{ cst~n, funE \}~U~\{ comp \} \}
+\end{zed}
+
+\begin{zproof}[DescESet\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{rule DescEBase}
+  0 \in DescESet
+\end{theorem}
+
+\begin{zproof}
+invoke DescESet;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule DescEStep}
+  \forall j: DescESet @ 1 + j \in DescESet
+\end{theorem}
+
+\begin{zproof}
+invoke DescESet;
+prove;
+instantiate U\_\_0 == U, n\_\_0 == n;
+use StepE[U := U, n := n, c := n - j];
+prove;
+\end{zproof}
+
+\begin{theorem}{DescESub}
+  \nat \subseteq DescESet
+\end{theorem}
+
+\begin{zproof}
+apply natInduction to predicate \nat \subseteq DescESet;
+prove;
+invoke DescESet;
+prove;
+\end{zproof}
+
+\begin{theorem}{OneInE}
+  \forall U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); m: \nat | opPlusI \in U @ cst~1 \in clos~\{ cst~(1 + m), funE \}~U~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use DescESub;
+invoke DescESet;
+with enabled (inPower) prove;
+instantiate e\_\_0 == m, U\_\_0 == U, n == 1 + m;
+with enabled (inPower) prove;
+\end{zproof}
+
+
+\begin{theorem}{StepK}
+  \forall U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); n, c: \nat | opPlusI \in U \land 1 \leq n \land 1 \leq c \land cst~c \in clos~\{ cst~n, funK \}~U~\{ comp \} @ cst~(c - 1) \in clos~\{ cst~n, funK \}~U~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CstShift[X := funK, U := U, n := n, c := c, k := 2 * n * c * c + 3 * c];
+use KDesc[n1 := n - 1, c1 := c - 1];
+prove;
+\end{zproof}
+
+\begin{zed}
+  DescKSet == \{ j: \nat | \forall U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); n: \nat | opPlusI \in U \land j + 1 \leq n @ cst~(n - j) \in clos~\{ cst~n, funK \}~U~\{ comp \} \}
+\end{zed}
+
+\begin{zproof}[DescKSet\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{rule DescKBase}
+  0 \in DescKSet
+\end{theorem}
+
+\begin{zproof}
+invoke DescKSet;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule DescKStep}
+  \forall j: DescKSet @ 1 + j \in DescKSet
+\end{theorem}
+
+\begin{zproof}
+invoke DescKSet;
+prove;
+instantiate U\_\_0 == U, n\_\_0 == n;
+use StepK[U := U, n := n, c := n - j];
+prove;
+\end{zproof}
+
+\begin{theorem}{DescKSub}
+  \nat \subseteq DescKSet
+\end{theorem}
+
+\begin{zproof}
+apply natInduction to predicate \nat \subseteq DescKSet;
+prove;
+invoke DescKSet;
+prove;
+\end{zproof}
+
+\begin{theorem}{OneInK}
+  \forall U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); m: \nat | opPlusI \in U @ cst~1 \in clos~\{ cst~(1 + m), funK \}~U~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use DescKSub;
+invoke DescKSet;
+with enabled (inPower) prove;
+instantiate e\_\_0 == m, U\_\_0 == U, n == 1 + m;
+with enabled (inPower) prove;
+\end{zproof}
+
+
+\begin{theorem}{StepL}
+  \forall U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); n, c: \nat | opPlusI \in U \land 1 \leq n \land 1 \leq c \land cst~c \in clos~\{ cst~n, funL \}~U~\{ comp \} @ cst~(c - 1) \in clos~\{ cst~n, funL \}~U~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CstShift[X := funL, U := U, n := n, c := c, k := 2 * n * c * c + 2 * c];
+use LDescOne[n1 := n - 1, c := c];
+prove;
+use CstShift[X := funL, U := U, n := n, c := (n - 1) * c, k := 2 * n * c * c];
+use LDescTwo[n1 := n - 1, c1 := c - 1];
+prove;
+\end{zproof}
+
+\begin{zed}
+  DescLSet == \{ j: \nat | \forall U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); n: \nat | opPlusI \in U \land j + 1 \leq n @ cst~(n - j) \in clos~\{ cst~n, funL \}~U~\{ comp \} \}
+\end{zed}
+
+\begin{zproof}[DescLSet\$domainCheck]
+prove;
+\end{zproof}
+
+\begin{theorem}{rule DescLBase}
+  0 \in DescLSet
+\end{theorem}
+
+\begin{zproof}
+invoke DescLSet;
+prove;
+\end{zproof}
+
+\begin{theorem}{rule DescLStep}
+  \forall j: DescLSet @ 1 + j \in DescLSet
+\end{theorem}
+
+\begin{zproof}
+invoke DescLSet;
+prove;
+instantiate U\_\_0 == U, n\_\_0 == n;
+use StepL[U := U, n := n, c := n - j];
+prove;
+\end{zproof}
+
+\begin{theorem}{DescLSub}
+  \nat \subseteq DescLSet
+\end{theorem}
+
+\begin{zproof}
+apply natInduction to predicate \nat \subseteq DescLSet;
+prove;
+invoke DescLSet;
+prove;
+\end{zproof}
+
+\begin{theorem}{OneInL}
+  \forall U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); m: \nat | opPlusI \in U @ cst~1 \in clos~\{ cst~(1 + m), funL \}~U~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use DescLSub;
+invoke DescLSet;
+with enabled (inPower) prove;
+instantiate e\_\_0 == m, U\_\_0 == U, n == 1 + m;
+with enabled (inPower) prove;
+\end{zproof}
+
+
+With $\bar 1$ in the closure, the bases with $\bar n$ and with $\bar 1$ are equivalent.
+
+\begin{theorem}{CnUClosed}
+  \forall X: \nat \fun \nat; U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); n: \nat @ clos~\{ cst~n, X \}~U~\{ comp \} \in UClosed~U
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosInPow[I := \{ cst~n, X \}, U := U, B := \{ comp \}];
+with enabled (UClosedDef) prove;
+\end{zproof}
+
+\begin{theorem}{CnBClosed}
+  \forall X: \nat \fun \nat; U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); n: \nat @ clos~\{ cst~n, X \}~U~\{ comp \} \in BClosed~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosInPow[I := \{ cst~n, X \}, U := U, B := \{ comp \}];
+with enabled (BClosedDef) prove;
+\end{zproof}
+
+\begin{theorem}{CEqCOne}
+  \forall X: \nat \fun \nat; U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); n: \nat | opPlusI \in U \land 1 \leq n \land cst~1 \in clos~\{ cst~n, X \}~U~\{ comp \} @ clos~\{ cst~n, X \}~U~\{ comp \} = clos~\{ cst~1, X \}~U~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use CstShift[X := X, U := U, n := 1, c := 1, k := n - 1];
+use ClosLeast[I := \{ cst~1, X \}, U := U, B := \{ comp \}, Z := clos~\{ cst~n, X \}~U~\{ comp \}];
+use ClosLeast[I := \{ cst~n, X \}, U := U, B := \{ comp \}, Z := clos~\{ cst~1, X \}~U~\{ comp \}];
+use ClosInPow[I := \{ cst~n, X \}, U := U, B := \{ comp \}];
+use ClosInPow[I := \{ cst~1, X \}, U := U, B := \{ comp \}];
+use CnUClosed[X := X, U := U, n := n];
+use CnUClosed[X := X, U := U, n := 1];
+use CnBClosed[X := X, U := U, n := n];
+use CnBClosed[X := X, U := U, n := 1];
+use SubAntisym[\nat \fun \nat][A := clos~\{ cst~n, X \}~U~\{ comp \}, B := clos~\{ cst~1, X \}~U~\{ comp \}];
+prove;
+\end{zproof}
+
+\begin{theorem}{CEq}
+  \forall U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)); n: \nat | opPlusI \in U \land 1 \leq n @ clos~\{ cst~n, funE \}~U~\{ comp \} = clos~\{ cst~1, funE \}~U~\{ comp \} \land clos~\{ cst~n, funK \}~U~\{ comp \} = clos~\{ cst~1, funK \}~U~\{ comp \} \land clos~\{ cst~n, funL \}~U~\{ comp \} = clos~\{ cst~1, funL \}~U~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use OneInE[U := U, m := n - 1];
+use OneInK[U := U, m := n - 1];
+use OneInL[U := U, m := n - 1];
+use CEqCOne[X := funE, U := U, n := n];
+use CEqCOne[X := funK, U := U, n := n];
+use CEqCOne[X := funL, U := U, n := n];
+prove;
+\end{zproof}
+
+With $\bar 0$, every generated function fixes $0$ (for $U = \{F^+, F^\square\}$ or $\{F^+, F^{-1}\}$).
+
+\begin{theorem}{FixZeroUClosedBox}
+  FixZero \in UClosed~\{ opPlusI, opBox \}
+\end{theorem}
+
+\begin{zproof}
+use FixZeroInPower;
+with enabled (UClosedDef) prove;
+invoke FixZero;
+prove;
+split u = opBox;
+cases;
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{CZeroFix}
+  \forall X: \nat \fun \nat; U: \power ((\nat \fun \nat) \fun (\nat \fun \nat)) | X~0 = 0 \land FixZero \in UClosed~U @ \lnot cst~1 \in clos~\{ cst~0, X \}~U~\{ comp \}
+\end{theorem}
+
+\begin{zproof}
+prove;
+use ClosLeast[I := \{ cst~0, X \}, U := U, B := \{ comp \}, Z := FixZero];
+use FixZeroInPower;
+use FixZeroBClosed;
+invoke FixZero;
+prove;
+apply inPower to predicate clos~(\{ X \} \cup \{ cst~0 \})~U~\{ comp \} \in \power \{ F: \nat \fun \nat | F~0 = 0 \};
+instantiate e == cst~1;
+prove;
+\end{zproof}
+
+
+\begin{theorem}{CnBoxNeq}
+  \forall X: \nat \fun \nat | X~0 = 0 @ \lnot clos~\{ cst~0, X \}~\{ opPlusI, opBox \}~\{ comp \} = C6
+\end{theorem}
+
+\begin{zproof}
+use CZeroFix[X := X, U := \{ opPlusI, opBox \}];
+use FixZeroUClosedBox;
+prove;
+split clos~(\{ X \} \cup \{ cst~0 \})~(\{ opPlusI \} \cup \{ opBox \})~\{ comp \} = C6;
+cases;
+equality substitute clos~(\{ X \} \cup \{ cst~0 \})~(\{ opPlusI \} \cup \{ opBox \})~\{ comp \};
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{CnBox}
+  \forall n: \nat @ (clos~\{ cst~n, funE \}~\{ opPlusI, opBox \}~\{ comp \} = C6 \iff 1 \leq n) \land (clos~\{ cst~n, funK \}~\{ opPlusI, opBox \}~\{ comp \} = C6 \iff 1 \leq n) \land (clos~\{ cst~n, funL \}~\{ opPlusI, opBox \}~\{ comp \} = C6 \iff 1 \leq n)
+\end{theorem}
+
+\begin{zproof}
+prove;
+split n = 0;
+cases;
+use CnBoxNeq[X := funE];
+use CnBoxNeq[X := funK];
+use CnBoxNeq[X := funL];
+use KZero;
+prove;
+next;
+use CEq[U := \{ opPlusI, opBox \}, n := n];
+use Theorem68;
+with enabled (C6Def, C6KDef, C6LDef) prove;
+next;
+\end{zproof}
+
+
+\begin{theorem}{CnInvNeq}
+  \forall X: \nat \fun \nat | X~0 = 0 @ \lnot clos~\{ cst~0, X \}~\{ opPlusI, opInv \}~\{ comp \} = ClosJR
+\end{theorem}
+
+\begin{zproof}
+use CZeroFix[X := X, U := \{ opPlusI, opInv \}];
+use FixZeroUClosedInv;
+prove;
+split clos~(\{ X \} \cup \{ cst~0 \})~(\{ opPlusI \} \cup \{ opInv \})~\{ comp \} = ClosJR;
+cases;
+equality substitute clos~(\{ X \} \cup \{ cst~0 \})~(\{ opPlusI \} \cup \{ opInv \})~\{ comp \};
+prove;
+next;
+prove;
+next;
+\end{zproof}
+
+\begin{theorem}{CnInv}
+  \forall n: \nat @ (clos~\{ cst~n, funE \}~\{ opPlusI, opInv \}~\{ comp \} = ClosJR \iff 1 \leq n) \land (clos~\{ cst~n, funK \}~\{ opPlusI, opInv \}~\{ comp \} = ClosJR \iff 1 \leq n) \land (clos~\{ cst~n, funL \}~\{ opPlusI, opInv \}~\{ comp \} = ClosJR \iff 1 \leq n)
+\end{theorem}
+
+\begin{zproof}
+prove;
+split n = 0;
+cases;
+use CnInvNeq[X := funE];
+use CnInvNeq[X := funK];
+use CnInvNeq[X := funL];
+use KZero;
+prove;
+next;
+use CEq[U := \{ opPlusI, opInv \}, n := n];
+use GREqJR;
+with enabled (CGEDef, CGKDef, CGLDef) prove;
+next;
+\end{zproof}
+
+
 \end{document}

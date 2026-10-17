@@ -24,6 +24,8 @@ section \<open>The operator \<open>F(x) + x + b\<close>\<close>
 
 definition opPlusIb :: "nat \<Rightarrow> uop" where "opPlusIb b F x = F x + x + b"
 
+declare opPlusIb_def [eval_simps]
+
 lemma opPlusIb_PR: "F \<in> PrimNN \<Longrightarrow> opPlusIb b F \<in> PrimNN"
   unfolding opPlusIb_def by prec
 

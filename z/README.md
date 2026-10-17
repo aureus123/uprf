@@ -1,7 +1,8 @@
 # Z/EVES formalization
 
 Formalization of Section 6 of D. E. Severin, *Unary primitive recursive functions*
-(J. Symbolic Logic 73(4), 2008), and of the two open questions answered in the root README (§2),
+(J. Symbolic Logic 73(4), 2008), and of the open questions answered in the root README (§2, including §2.3 on general recursive
+functions),
 in Z (ZF set theory with types), checked by Z/EVES 2.3.
 
 The scope is the same as the Mizar version: everything is proved **at the level of closures**.
@@ -28,7 +29,7 @@ The paper's results become equalities between closures, and Robinson's theorem (
 1. Unpack Z/EVES into `/opt/Z/Z-Eves` (inside the VM on macOS). It must contain `system/` and
    `library/`. Another place can be given with `ZEVES_DIR`.
 2. On macOS, start the VM: `limactl start zeves` (`ZEVES_VM` names another instance).
-3. Check the installation, then the development (about 45 s):
+3. Check the installation, then the development (about 3 minutes):
 
    ```sh
    ./zeves.sh smoke.tex
@@ -40,7 +41,7 @@ The paper's results become equalities between closures, and Robinson's theorem (
 
 ## PDF
 
-`./pdf.sh` typesets `uprf.tex` into `uprf.pdf` (A4, about 140 pages, with the proof scripts),
+`./pdf.sh` typesets `uprf.tex` into `uprf.pdf` (A4, about 225 pages, with the proof scripts),
 using pdflatex. It needs a TeX distribution with `amssymb` and `geometry`, and it takes the
 style file `z-eves.sty` from the Z/EVES distribution (`ZEVES_DIR`; on macOS through the VM).
 The build files go to `build/`. The PDF is committed, so it can be read without building it.
@@ -62,7 +63,7 @@ with `Plus…`, which `z-eves.sty` read as a glue specification.
 | `zcmd.sh` | development helper: reads a file, then runs interactive commands from a second file (`print declaration X;`, `try P;`, `prove;`, …) |
 | `gen/zgen.py` | development helper: Python functions that print the recurring boilerplate (a function with its witness and consistency theorem, an operator, an induction, a closure with its rules, closure inclusions) |
 
-## Contents of `uprf.tex` (8 320 lines, 632 theorems, 33 axiomatic definitions)
+## Contents of `uprf.tex` (13 656 lines, 1 063 theorems, 35 axiomatic definitions)
 
 Functions are the elements of `\nat \fun \nat`. Operators are total functions on them, so they
 can be members of a basis. `comp(F, G)` is the composition FG of the paper. The closure is
@@ -86,6 +87,14 @@ operators `U` and the binary operators `B`.
 | Remark 6.9 (I)–(III) | `Remark69`: the closures of ⟨X, F⁺, FG, F^□(1)⟩, X ∈ {E, K, L}, equal `C6` |
 | open question of Remark 6.9: iteration from any a ≥ 1 | `ExtAE` (a ≥ 2), `ExtAEOne`, `ExtAK`, `ExtAL`, `ExtAAll` |
 | shifted operator F⁺ᵇ(x) = F(x) + x + b | `opPlusIb`, `ExtVb` (b ≥ 1), `ExtVbZero`, `ExtVbIff`: equal to `C6` iff `1 \leq b` |
+| README §2.3: inversion F⁻¹ (least preimage if F is onto, F itself otherwise) | `IsLeast`, `linv`, `Surj`, `opInv`; `InvRight`, `InvLeast`, `InvNot` |
+| Robinson's ⟨S, E, F + G, FG, F⁻¹⟩ and ⟨1̄, X, F⁺, FG, F⁻¹⟩ | `ClosJR`, `CGE`, `CGK`, `CGL` |
+| Lemmas 6.2–6.6 in any set with I, E, S, D, M₃, Sq, Hf, Rt closed under F⁺ and FG | `Rich`; `RichPlus`, `RichDiffE`, `RichA` … `RichL` |
+| §2.3, Theorem 1 | `GREqJR`: `CGE = ClosJR \land CGK = ClosJR \land CGL = ClosJR` |
+| the constant cannot be dropped | `GR0Fix`, `ExtGR0` |
+| Remark: 1̄ and S are interchangeable | `CGSE`, `CGSK`, `CGSL`; `GRSEq` |
+| §2.3, Theorem 2: F⁺ᵇ with inversion | `ExtGRb` (b ≥ 1), `ExtGRbIff`: equal to `ClosJR` iff `1 \leq b` |
+| Remark: any constant n̄ | `CEq` (n ≥ 1, F⁺ ∈ U); `CnBox`: ⟨n̄, X, F⁺, FG, F^□⟩ gives `C6` iff `1 \leq n`; `CnInv`: ⟨n̄, X, F⁺, FG, F⁻¹⟩ gives `ClosJR` iff `1 \leq n` |
 
 ## Status
 
@@ -96,19 +105,35 @@ Everything listed above is proved, and Z/EVES reports no unproved goals.
 - `Theorem68`, `Remark69`, `ExtAAll` and `ExtVb` show that the other bases generate the same
   closure as well. `ExtVbZero` shows that for b = 0 the closure is different: every generated
   function fixes 0 (`CVZeroFix`), so 1̄ is missing.
+- `GREqJR`, `GRSEq`, `ExtGRbIff` and `CnInv` do the same for README §2.3. They show that the
+  bases with inversion generate the closure `ClosJR` of J. Robinson's basis
+  ⟨S, E, F + G, FG, F⁻¹⟩. By J. Robinson (1950, §4, Theorem 3), `ClosJR` is the set of unary
+  general recursive functions. `ExtGR0`, `ExtGRbIff` and `CnInv` also show that the closure is
+  different without the constant, for b = 0 and for n = 0.
 
-**Definitions are not axioms.** In Z an axiomatic box `axdef` is an axiom. Every one of the 33
+**Definitions are not axioms.** In Z an axiomatic box `axdef` is an axiom. Every one of the 35
 boxes is therefore followed by a consistency theorem `XEx`, which proves `\exists X: T @ P` for
 the box's declaration `X: T` and predicate `P`. The witness `XWit` is an explicit term (a
 λ-term, an iterate `iter`, or a relation for the functions defined by a specification, such as
-`funV`). The other definitions are abbreviations (`==`), which are conservative.
+`funV` and the least preimage `linv`). The other definitions are abbreviations (`==`), which are
+conservative.
 
 Not formalized:
 
 1. **Prim(ℕ,ℕ) itself.** Z/EVES has no library of computable functions.
-2. **Robinson's theorem.**
+2. **Robinson's theorems** (R. M. Robinson 1947 and J. Robinson 1950).
 
 **Differences from the other formalizations:**
+
+- **Inversion** is defined pointwise: `opInv~F~x = \IF F \in Surj \THEN linv~F~x \ELSE F~x`.
+  Here `linv~F~x` is the least preimage of x (0 if x is not a value). Its consistency theorem
+  `LinvEx` rests on `LeastPre`, the existence of least preimages, proved by induction. So
+  `opInv F = F` for F not onto (`InvNot`), as in the other formalizations.
+- **Lemmas 6.2–6.6** are reused through the set `Rich` of sets of functions. Its members contain
+  I, E, S, D, M₃, Sq, Hf and Rt and are closed under F⁺ and FG.
+- **The L case of F⁺ᵇ with inversion.** The (2b − 2)-fold iterate of A⁺ᵇ is written explicitly
+  as `opPlus(funA, comp(funM~n, opPlus(funI, cst~b)))` (`IterLAll`), instead of iterating an
+  operator.
 
 - **The cases of iteration from a.** The common part (`ExtAOne`, `ExtASup`) only needs `X ∈ Mult`
   (for every i ≥ 1 some r with X(r(i+1)) = i), 0̄ and a predecessor in the closure. It holds
@@ -148,6 +173,14 @@ Not formalized:
   for example `SubAntisym[\nat \fun \nat]`.
 - **Generated names.** Bound variables are renamed (`x\_\_0`, `F\_\_1`, …). Read the names from
   the proof trace before writing `instantiate`.
+- **Inversion and quantified side conditions.** `prove by reduce` loops on λ-terms that contain
+  `opInv`, and it unfolds `Surj`, so plain `prove` is used there. A lemma whose hypotheses are
+  quantified is prenexed when it is `use`d and becomes useless. The fix is to wrap the condition
+  in a named set (`IsLeast`, `Shift`) and use atomic membership. Equations like
+  y = A(V(y)) + K(y), where the variable y occurs on both sides, break the arithmetic. The fix is to
+  state helper lemmas over fresh variables (`HfMin`, `EKey`, `LSLow`).
+- **Deep membership terms.** The closure rules do not reach deeply nested terms. Intermediate
+  membership rules (`CbKU3In`, `CbKP1In`, …) keep each step shallow.
 - **Scripts.** A command with no effect aborts the rest of the script. So does a command that
   refers to a variable that no longer exists, for example after the goal has already been
   proved.

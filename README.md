@@ -455,6 +455,79 @@ is arbitrary when $`x < y`$ (footnote 3).
 > **Open problem.** Is $`\langle S, F - G, FG, F^\square\rangle`$ suitable for every
 > (primitive recursive) difference function $`d`$?
 
+The values $`d(x, y)`$ with $`x < y`$ are the *garbage* of $`d`$. Since $`d`$ is primitive
+recursive, the closure is always contained in $`\mathrm{Prim}`$, so only the other inclusion is
+in question. We split the problem by whether the garbage is bounded. The bounded case is solved
+below; the unbounded case remains open.
+
+#### 3.1.1 Bounded garbage (solved)
+
+> **Theorem.** If there is a constant $`M`$ with $`d(x, y) \le M`$ whenever $`x < y`$, then
+> $`\langle S, F - G, FG, F^\square\rangle`$ is suitable.
+
+This theorem is not formalized yet. Its two main steps (Lemma 5.3 with a generic difference,
+and the last formula) were checked numerically for $`M = 5`$ with random garbage.
+
+*Proof.* Let $`\mathcal C`$ be the closure. A subtraction $`F - G`$ is *safe* when
+$`F(x) \ge G(x)`$ for every $`x`$. A safe subtraction computes the true difference, whatever
+$`d`$ is.
+
+1. **First functions.** The paper's first list in §5 uses only safe subtractions, so it is in
+   $`\mathcal C`$:
+   - $`I = S^\square`$, $`D = (SS)^\square`$, $`M_n = (S^n)^\square`$ (with $`M_n(x) = nx`$);
+   - $`\bar 0 = S - S`$, $`\bar 1 = S\bar 0`$;
+   - $`\mathrm{Sgn} = \bar 1^\square`$, $`P = I - \mathrm{Sgn}`$ and $`O = \bar 1 - \mathrm{Sgn}`$.
+2. **Majorants.** Let $`\mathcal M`$ be the set of nondecreasing $`H \in \mathcal C`$ with
+   $`H(x) \ge x`$. We prove that every $`F \in \mathcal C`$ is bounded pointwise by some
+   $`H \in \mathcal M`$. The proof is by induction on the closure.
+   - $`S \in \mathcal M`$.
+   - Composition: if $`F \le H_F`$ and $`G \le H_G`$, then $`FG \le H_F H_G \in \mathcal M`$,
+     because $`H_F`$ is nondecreasing.
+   - Difference: $`d(F(x), G(x)) \le \max(F(x), M) \le H_F(x) + M`$, so
+     $`F - G \le S^M H_F \in \mathcal M`$. This is the only use of the bound $`M`$.
+   - Iteration: if $`F \le H`$, let $`H' = SH \in \mathcal M`$. By induction on $`x`$,
+     $`F^\square(x) \le H'^\square(x)`$. Moreover $`H'^\square(x+1) \ge H'^\square(x) + 1`$, so
+     $`H'^\square \in \mathcal M`$.
+
+   This replaces Georgieva's majorization lemma, which the paper's Lemma 5.2 cites and which is
+   stated for $`\dot-`$ and $`\vert\cdot\vert`$ only.
+3. **Addition.** Given $`F, G \in \mathcal C`$, take majorants $`H_F, H_G \in \mathcal M`$.
+   Then $`H = H_F H_G \in \mathcal M`$ bounds both $`F`$ and $`G`$, and $`W = DH \ge F + G`$.
+   All three subtractions in
+   $$F + G = W - \big((W - F) - G\big)$$
+   are safe, as in Lemma 5.2.
+4. **Lemma 5.3.** Its formulas use only $`+`$, composition, iteration and the safe subtractions
+   $`P`$, $`O`$ and
+   $$\mathrm{Div}_{n+2} = (S + O\,\mathrm{Mod}_{n+3}\,SS)^\square - I.$$
+   The last subtraction is safe because the iterated function is at least $`S`$. Hence
+   $`O_n`$, $`M_n`$, $`\mathrm{Mod}_{n+2}`$ and $`\mathrm{Div}_{n+2}`$ are in $`\mathcal C`$.
+5. **Truncated subtraction.** Let $`m = M + 2`$. Then
+   $$F \mathbin{\dot-} G = \mathrm{Div}_m\big(M_m F - M_m G\big).$$
+   - If $`F(x) \ge G(x)`$, the inner difference is $`m(F(x) - G(x))`$.
+   - Otherwise it is garbage, at most $`M < m`$, and $`\mathrm{Div}_m`$ sends it to $`0`$.
+6. Hence $`\mathcal C \supseteq \mathrm{clos}\langle S, F \mathbin{\dot-} G, FG, F^\square\rangle`$,
+   which is $`\mathrm{Prim}`$ by Theorem 5.8. $`\square`$
+
+Bounded garbage is sufficient but not necessary. The distance $`\vert x - y\vert`$ has unbounded
+garbage, and its basis is suitable by Theorem 5.8.
+
+#### 3.1.2 Unbounded garbage (open)
+
+> **Conjecture.** If the garbage of $`d`$ is unbounded, the basis
+> $`\langle S, F - G, FG, F^\square\rangle`$ is in general **not** suitable. That is, there is a
+> primitive recursive difference $`d`$ (we suspect the $`d^*`$ below) whose closure is a proper
+> subset of $`\mathrm{Prim}`$.
+
+The proof above uses the bound twice:
+- in step 2, to majorize $`F - G`$;
+- in step 5, where $`\mathrm{Div}_m`$ can absorb only bounded garbage.
+
+Step 2 should extend to every primitive recursive $`d`$. Bound $`d(x, y)`$ by a nondecreasing
+primitive recursive $`\delta(\max(x, y))`$. Then $`\delta`$ lies below one of the functions
+$`B_n S`$ of Lemma 5.1, which are built from $`S`$, composition and iteration only. This is only
+a sketch: it has not been checked in detail. If it holds, addition and Lemma 5.3 are available
+for every $`d`$. Step 5 is the real obstacle.
+
 Partial progress:
 
 - The paper notes that it would suffice to obtain $`\mathrm{Sq}`$. Definition by cases then
@@ -474,6 +547,20 @@ Partial progress:
 - None of these has been obtained for every $`d`$. A barrier argument explains why the standard
   techniques (Gladstone's comparisons, Georgieva's $`\dot-`$-conditionals, Mazzanti's operators)
   do not reach it: they rely on a specific difference function.
+- **A hardest difference.** Let $`d^*(x, y) = x - y`$ if $`x \ge y`$, and
+  $`2^{x+y} + x - y`$ otherwise.
+  - Once addition is available, every closure computes the $`d^*`$-difference of two of its
+    functions:
+    $$\big(F + [F < G] \cdot 2^{F+G}\big) - G.$$
+    This uses the comparison and the gated exponential above, and the subtraction is safe.
+  - Hence, if addition is available for every $`d`$ (the sketch above),
+    $`\mathrm{clos}(d^*) \subseteq \mathrm{clos}(d)`$ for every $`d`$. The open problem is then
+    equivalent to the suitability of the basis for $`d^*`$ alone.
+  - Heuristically, a gate $`c \cdot y`$ seems to need a "decoder", that is, an unbounded
+    sublinear function or polynomial growth. None was found, and a brute-force search over small
+    expressions found nothing either. This is why we expect $`d^*`$ not to be suitable.
+  - A proof of the conjecture would need an invariant of the closure that survives chaotic
+    orbits of the Mahler type, such as iterating $`\lfloor 3s/2\rfloor`$.
 
 ---
 

@@ -1,0 +1,225 @@
+\documentclass[10pt]{article}
+\usepackage[paperwidth=170mm,paperheight=240mm,top=22mm,bottom=22mm,
+  inner=20mm,outer=20mm,headsep=6mm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+
+
+\usepackage{tikz}
+
+% ------------------------------------------------------------ FM-like layout
+\newif\iffmlabels \fmlabelsfalse  % \fmlabelstrue shows the Mizar labels
+\newcounter{fmsec}
+% keep a heading with the text that follows it
+\newcommand{\fmkeep}{\par\vskip 0pt plus 8\baselineskip\penalty-200
+  \vskip 0pt plus -8\baselineskip}
+\newcommand{\fmsection}[1]{\stepcounter{fmsec}%
+  \fmkeep\bigskip\begin{center}\normalsize\scshape\arabic{fmsec}.\ #1\end{center}\nopagebreak
+  \smallskip}
+\newcommand{\fmunnumbered}[1]{%
+  \fmkeep\bigskip\begin{center}\normalsize\scshape #1\end{center}\nopagebreak\smallskip}
+\newcommand{\fmpara}[1]{\par\smallskip #1\par}
+\newlength{\fmnum}\setlength{\fmnum}{2.6em}
+\newlength{\fmdefnum}\setlength{\fmdefnum}{4.6em}
+% where the items of a list start: after the number of the theorem or the
+% definition that contains the list
+\newlength{\fmlistindent}
+\makeatletter
+% (n) statement (and, optionally, the Mizar label at the right)
+\newcommand{\fmthm}[3]{\par\smallskip\noindent
+  \setlength{\fmlistindent}{\dimexpr\fmnum+1.2em\relax}%
+  \hangindent=\dimexpr\fmnum+1.2em\relax\hangafter=1%
+  \hspace*{1.2em}\makebox[\fmnum][l]{(#1)}#2%
+  \iffmlabels\nobreak\hfill\nobreak
+    \hbox{\hspace{1em}\scriptsize\textsf{\color{black!60}#3}}\fi
+  \phantomsection\def\@currentlabel{#1}\label{thm:#3}\par}
+\makeatother
+\newcommand{\fmdef}[2]{\par\smallskip\noindent
+  \setlength{\fmlistindent}{\fmdefnum}%
+  \hangindent=\fmdefnum\hangafter=1%
+  \makebox[\fmdefnum][l]{(Def.\,#1)}#2\par}
+\newcounter{fmi}
+\newif\iffmsameline
+% \fmsameline: the first item goes on the line of the theorem number
+\newcommand{\fmsameline}{\global\fmsamelinetrue}
+\newenvironment{fmlist}{\setcounter{fmi}{0}%
+  \renewcommand{\item}{\stepcounter{fmi}%
+    \iffmsameline\global\fmsamelinefalse\else
+      \par\noindent\hspace*{\fmlistindent}\fi
+    \hangindent=\dimexpr\fmlistindent+2.8em\relax\hangafter=1%
+    \makebox[2.8em][r]{(\roman{fmi})\ }}%
+  \iffmsameline\else\par\fi}{\par}
+% the period that ends a statement goes into its last item
+\def\fmlistend#1{#1\end{fmlist}}
+% text after a list, aligned with the statement
+\newcommand{\fmafterlist}[1]{\par\noindent
+  \hangindent=\fmlistindent\hangafter=0 #1}
+\newcommand{\thref}[1]{(\ref{thm:#1})}
+% the ORCID iD icon
+\newcommand{\orcidicon}{\tikz[baseline=-0.6ex]{
+  \fill[green!55!black!80!lime] (0,0) circle (0.9ex);
+  \node[white,font=\fontsize{4.5}{4.5}\selectfont\sffamily\bfseries,inner sep=0]
+    at (0,0) {iD};}}
+\newcommand{\fmbox}[1]{\fcolorbox{cyan!70}{white}{\strut #1}}
+\setlength{\fboxsep}{1.5pt}\setlength{\fboxrule}{0.4pt}
+\setlength{\parindent}{1.5em}
+\setlength{\emergencystretch}{3em}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE]{\small\thepage}
+\fancyhead[RO]{\small\thepage}
+\fancyhead[CE]{\small\scshape daniel severín}
+\fancyhead[CO]{\small\scshape Unary primitive recursive functions}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{first}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}
+  \fancyfoot[C]{\small\thepage}}
+
+\begin{document}
+\thispagestyle{first}
+
+\noindent{\scriptsize\scshape A Mizar article in the style of
+Formalized Mathematics}
+\vspace{16mm}
+
+\begin{center}
+{\LARGE\bfseries Unary Primitive Recursive Functions}
+\par\vspace{12mm}
+{\large Daniel Severín\,\href{https://orcid.org/0000-0003-2391-3489}{\orcidicon}\\
+Facultad de Ciencias Exactas, Ingeniería y Agrimensura\\
+Universidad Nacional de Rosario\\
+Argentina}\\[3pt]
+{\small\href{mailto:daniel@fceia.unr.edu.ar}{\texttt{daniel@fceia.unr.edu.ar}}}
+\end{center}
+
+\vspace{10mm}
+\begin{list}{}{\leftmargin=8mm\rightmargin=8mm}\item\relax
+{\small
+\textbf{\normalsize Summary.} A basis of unary functions, given by initial
+functions and operators, is suitable when its closure is the set of unary
+primitive recursive functions. R.~M.~Robinson proved that
+$\langle \mathrm{S}, \mathrm{E}, F + G, FG, F^{\square}\rangle$ is suitable
+\cite{rrobinson1947}, where $\mathrm{E}(x) = x - \lfloor\sqrt{x}\rfloor^2$
+and $F^{\square}$ is pure iteration. We formalize Section~6 of
+\cite{severin}, which replaces the binary operator $F + G$ by the unary
+operator $F^{+}(x) = F(x) + x$: the bases
+$\langle \overline{1}, X, F^{+}, FG, F^{\square}\rangle$, for $X$ the excess
+$\mathrm{E}$ or one of the inverses $\mathrm{K}$, $\mathrm{L}$ of Cantor's
+pairing function, and $\langle X, F^{+}, FG, F^{\square(1)}\rangle$, with
+iteration started at~$1$, generate the same closure as Robinson's basis. We
+also answer the question left open in the paper for iteration started at any
+$a \geq 2$, show that a shifted operator $F^{+b}(x) = F(x) + x + b$ can
+replace both $F^{+}$ and $\overline{1}$ exactly when $b \geq 1$, and prove the
+corresponding results for the unary general recursive functions, with
+iteration replaced by inversion as in the basis of J.~Robinson
+\cite{jrobinson1950}.
+
+\par\medskip
+MSC: \href{https://zbmath.org/classification/?q=03D20}{\fmbox{03D20}}\enspace
+\href{https://zbmath.org/classification/?q=68V20}{\fmbox{68V20}}
+
+\smallskip
+Keywords: primitive recursive functions;\enspace unary functions;\enspace
+pure iteration;\enspace general recursive functions;\enspace inversion
+
+\smallskip
+MML identifier: \fmbox{\texttt{UPRF}},\enspace version:
+\fmbox{\texttt{8.1.15 5.94.1493}}
+}
+\end{list}
+\vspace{4mm}
+
+\fmunnumbered{Introduction}
+
+A class of unary functions $\mathbb{N} \to \mathbb{N}$ can be described by a
+basis $\langle F_1, \ldots, F_n, \text{operators}\rangle$: its closure is the
+least set of functions that contains $F_1$, \ldots, $F_n$ and is closed under
+the operators. R.~M.~Robinson \cite{rrobinson1947} showed that the unary
+primitive recursive functions are the closure of
+$\langle \mathrm{S}, \mathrm{E}, F + G, FG, F^{\square}\rangle$, where
+$\mathrm{S}$ is the successor, $\mathrm{E}(x) = x - \lfloor\sqrt{x}\rfloor^2$
+is the excess over a square, $FG$ is composition and $F^{\square}$ is pure
+iteration: $F^{\square}(0) = 0$ and $F^{\square}(x + 1) = F(F^{\square}(x))$.
+Section~6 of \cite{severin} removes the binary operator $F + G$: the basis
+$\langle \overline{1}, \mathrm{E}, F^{+}, FG, F^{\square}\rangle$, with
+$F^{+}(x) = F(x) + x$, is suitable (Theorem~6.7); so are the bases with the
+inverses $\mathrm{K}$ and $\mathrm{L}$ of Cantor's pairing function in place of
+$\mathrm{E}$ (Theorem~6.8, after R.~M.~Robinson \cite{rrobinson1955}); and,
+with iteration started at~$1$, the constant $\overline{1}$ can be dropped
+(Remark~6.9). This article formalizes that section in the Mizar system
+\cite{mizar,fourdecades}. The proofs follow an earlier formalization of the
+same paper in Isabelle/HOL.
+
+The notion of a primitive recursive unary function is not available in the
+Mizar Mathematical Library for functions in $\mathbb{N}^{\mathbb{N}}$
+\cite{funct2}, so the results are stated as equalities of closures. A basis is
+given by a set of initial functions, a set of unary operations and a set of
+binary operations on $\mathbb{N}^{\mathbb{N}}$ \cite{binop1}, and
+$\mathrm{clos}(I, U, B)$ is the least subset of $\mathbb{N}^{\mathbb{N}}$
+that contains $I$ and is closed under $U$ and $B$ (Section~4). Theorem~6.7
+becomes $\mathrm{C}_6 = \mathrm{RobinsonClos}$ \thref{Theorem67}, where
+$\mathrm{C}_6$ and $\mathrm{RobinsonClos}$ are the closures of the two bases
+above; the proof of the paper, through the basis of its Lemma~3.3, is
+\thref{Theorem67L33}. Lemmas 6.2--6.6, which build $F^{-}$, $F \oplus G$,
+$F \ominus G$, $F \otimes G$, $F + G$ and a difference out of $F^{+}$, are
+\thref{Lemma62}--\thref{Lemma66}. Theorem~6.8 is \thref{Theorem68} and
+Remark~6.9 is \thref{Remark69}.
+
+The remaining sections answer the questions that the paper leaves open. For
+every $a \geq 1$, the bases $\langle X, F^{+}, FG, F^{\square(a)}\rangle$ with
+iteration started at~$a$ generate $\mathrm{C}_6$, for
+$X \in \{\mathrm{E}, \mathrm{K}, \mathrm{L}\}$ \thref{ExtA}. The basis
+$\langle \mathrm{E}, F^{+b}, FG, F^{\square}\rangle$ with the shifted operator
+$F^{+b}(x) = F(x) + x + b$ generates $\mathrm{C}_6$ if and only if $b \geq 1$
+\thref{ExtVbIff}. J.~Robinson \cite{jrobinson1950} showed that the unary
+general recursive functions are the closure $\mathrm{ClosJR}$ of
+$\langle \mathrm{S}, \mathrm{E}, F + G, FG, F^{-1}\rangle$, where
+$F^{-1}(x)$ is the least $y$ with $F(y) = x$ for $F$ onto (we take
+$F^{-1} = F$ otherwise). The bases
+$\langle \overline{1}, X, F^{+}, FG, F^{-1}\rangle$ generate $\mathrm{ClosJR}$
+\thref{GREqJR}, the constant cannot be dropped \thref{GR0Neq}, the successor
+can replace it \thref{GRSEq}, the shifted basis
+$\langle X, F^{+b}, FG, F^{-1}\rangle$ generates $\mathrm{ClosJR}$ if and only
+if $b \geq 1$ \thref{GRbIff}, and so does the basis with a constant
+$\overline{n}$ in place of $\overline{1}$, for iteration \thref{CnBox} and for
+inversion \thref{CnInv}.
+
+Throughout, the functions of the paper are written in roman type:
+$\mathrm{I}$ is the identity, $\overline{n}$ the constant function with value
+$n$, $\mathrm{D}(x) = 2x$, $\mathrm{M}_r(x) = rx$, $\mathrm{Sq}(x) = x^2$,
+$\mathrm{Hf}(x) = \lfloor x/2\rfloor$, $\mathrm{Rt}(x) = \lfloor\sqrt{x}\rfloor$,
+$\mathrm{O}$ the cosignum, $\mathrm{Sgn}$ the signum, $\mathrm{Q}$ the
+characteristic function of the squares, and $\mathrm{A}(x) = x(x+1)/2$,
+$\mathrm{V}$, $\mathrm{K}$, $\mathrm{L}$ the functions of Cantor's pairing.
+$FG$ is the composition $x \mapsto F(G(x))$, $\dot{-}$ is the arithmetic
+difference \cite{natd}, $F^{\square(a)}$ is iteration started at $a$, and an
+operator applied to a function is written as in the paper ($F^{+}$,
+$F^{\square}$, $F^{-1}$, $F \oplus G$, \ldots); standing alone, it is written
+${\cdot}^{+}$, ${\cdot}^{\square}$, $\circ$, $+$, \ldots{} The
+functions named $\mathrm{expr}\ldots$ are the expressions of the paper, such as
+$F^{-} \equiv \mathrm{E}\,\mathrm{S}\,(\mathrm{M}_3 F \mathrm{E})^{+}
+(\mathrm{Sq}\,F^{+})^{+}$ of Lemma~6.2, and the sets named
+$\mathrm{Clos}\ldots$ are closures of bases.
+
+\input{body}
+
+\bigskip
+\noindent\textsc{Acknowledgement:} This document has the layout of a paper in
+\emph{Formalized Mathematics}. It is generated by \texttt{miz2tex.py} from the
+Mizar article \texttt{uprf.miz} and has not been published.
+
+\makeatletter
+{\footnotesize
+\fmunnumbered{References}
+\let\section\@gobbletwo
+\setlength{\itemsep}{0pt}
+\input{refs}
+}
+\makeatother
+
+\end{document}

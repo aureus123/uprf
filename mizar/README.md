@@ -47,6 +47,8 @@ abstract and shows the theorem labels.
 | `text/uprf.miz` | the article. It is a single file because Mizar can cite the theorems of another article only by number. |
 | `dict/uprf.voc` | vocabulary (the new symbols) |
 | `miz.sh`, `mmlthm.sh` | scripts described above |
+| `uprf.pdf` | the statements of the article, typeset in the style of a [Formalized Mathematics](https://mizar.uwb.edu.pl/fm/) paper |
+| `fm/` | the generator of `uprf.pdf`: `build.sh` runs `miz2tex.py` (theorems and definitions of `uprf.miz` translated to English and LaTeX) and `bib.py` (the bibliography, from the `fm.bib` of the Mizar distribution), then pdfLaTeX |
 
 ## Contents of `uprf.miz` (9166 lines, 358 theorems, 86 definitions, 6 schemes)
 

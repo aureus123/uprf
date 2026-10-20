@@ -1,6 +1,8 @@
 # Papers and scanned copies (copyrighted; only the bibliographic data is in the READMEs)
 *.pdf
 scans/
+# except the generated FM-style paper of the Mizar article
+!mizar/uprf.pdf
 
 # OS files
 .DS_Store
@@ -13,6 +15,10 @@ mizar/system/
 mizar/prel/
 mizar/text/*
 !mizar/text/*.miz
+mizar/fm/body.tex
+mizar/fm/refs.tex
+mizar/fm/uprf.build.log
+mizar/fm/__pycache__/
 
 # Lean: lake build directory and downloaded packages
 lean/.lake/

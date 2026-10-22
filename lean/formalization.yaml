@@ -1,0 +1,228 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+# Metadata in the formalization.yaml standard (https://github.com/mathlib-initiative/formalization.yaml),
+# in the shape expected by the Palomar Registry (https://palomar-registry.org/how-to-submit).
+# It describes the Lean 4 formalization in this folder; the other provers of the repository are
+# listed under related_formalizations.
+version: "v0.4"
+
+project:
+  name: "Unary primitive recursive functions (Lean 4)"
+  description: >-
+    Lean 4 + Mathlib formalization of Section 6 of D. E. Severin, "Unary primitive recursive
+    functions" (J. Symbolic Logic 73(4), 2008): bases of unary functions closed under
+    composition, F^+(x) = F(x) + x and pure iteration F^□ that generate exactly the unary
+    primitive recursive functions (Mathlib's Nat.Primrec). It proves Lemmas 6.2-6.6,
+    Theorem 6.7 (the basis ⟨1, E, F^+, FG, F^□⟩), Theorem 6.8 (with K or L in place of E),
+    Remark 6.9 (no constant needed), Lemma 3.3, and R. M. Robinson's 1947 theorem (Section 7,
+    Theorem 3). It also answers open questions of the paper: iteration started at any a ≥ 1
+    (§2.1), the shifted operator F(x) + x + b (§2.2), any constant n̄ in place of 1, and the
+    analogue for general recursive functions with inversion F⁻¹ in place of iteration (§2.3).
+  authors:
+    - name: "Daniel E. Severín"
+      orcid: "0000-0003-2391-3489"
+  license: "MIT"
+  responsible_maintainers:
+    - name: "Daniel E. Severín"
+      orcid: "0000-0003-2391-3489"
+
+classification:
+  arxiv: ["math.LO"]
+  msc2020: ["03D20", "68V20"]
+
+sources:
+  - title: "Unary primitive recursive functions"
+    authors:
+      - name: "Daniel E. Severín"
+        orcid: "0000-0003-2391-3489"
+    id: "doi:10.2178/jsl/1230396909"
+    type: "article"
+    location: >-
+      J. Symbolic Logic 73(4) (2008), 1122-1138 (arXiv:cs/0603063); Section 6 (Lemmas
+      6.2-6.6, Theorems 6.7 and 6.8, Remark 6.9) and Lemma 3.3
+    relationship: "formalizes"
+    note: >-
+      Section 6 is formalized as stated. Lemma 3.3 is proved by a different route (from
+      R. M. Robinson's Theorem 3 instead of Lemma 3.1 and his Theorem 2); the paper's own route
+      is also given as Theorem_6_7_via_L33. The extensions of README §2.1-2.3 answer questions
+      left open by the paper; they are new results first presented in this repository.
+    author_endorsement: "participated"
+  - title: "Primitive recursive functions"
+    authors:
+      - "Raphael M. Robinson"
+    id: "doi:10.1090/S0002-9904-1947-08911-4"
+    type: "article"
+    location: "Bull. Amer. Math. Soc. 53 (1947), 925-942; Section 7, Theorem 3"
+    relationship: "independently-proves"
+    note: >-
+      Robinson's theorem that ⟨S, E, F + G, FG, F^□⟩ generates the unary primitive recursive
+      functions is proved by induction on Mathlib's Nat.Primrec, using only Lemmas 6.2-6.6 of
+      the UPRF paper, not Robinson's own proof.
+    author_endorsement: "n/a"
+  - title: "General recursive functions"
+    authors:
+      - "Julia Robinson"
+    id: "doi:10.1090/S0002-9939-1950-0038912-1"
+    type: "article"
+    location: "Proc. Amer. Math. Soc. 1 (1950), 703-718; Section 4, Theorem 3"
+    relationship: "background"
+    note: >-
+      Her theorem that ⟨S, E, F + G, FG, F⁻¹⟩ generates the unary general recursive functions
+      is not formalized. It is the explicit hypothesis Robinson_1950_sec4_thm3 of the §2.3
+      theorems.
+    author_endorsement: "n/a"
+
+related_formalizations:
+  - id: "https://github.com/aureus123/uprf/tree/main/isabelle"
+    relationship: "independent"
+    note: "Isabelle/HOL formalization of the same results in this repository."
+  - id: "https://github.com/aureus123/uprf/tree/main/mizar"
+    relationship: "independent"
+    note: >-
+      Mizar formalization of the same results in this repository, at closure level (neither
+      Robinson theorem is proved).
+  - id: "https://github.com/aureus123/uprf/tree/main/rocq"
+    relationship: "independent"
+    note: "Rocq formalization of the same results in this repository."
+  - id: "https://github.com/aureus123/uprf/tree/main/z"
+    relationship: "independent"
+    note: "Z/EVES formalization of the same results in this repository, at closure level."
+
+status:
+  scope: >-
+    A partial formalization of the paper: its Section 6, plus new results on the questions it
+    leaves open. Formalized: Section 6 of the paper (Lemmas 6.2-6.6, Theorems 6.7 and 6.8, Remark 6.9 I-III),
+    Lemma 3.3, R. M. Robinson's 1947 theorem, and the answers to the open questions of README
+    §2.1-2.3 (iteration from a ≥ 1; the shifted operator F(x) + x + b, suitable iff b ≥ 1; any
+    constant n̄, suitable iff n ≥ 1; bases with inversion generating the general recursive
+    functions, and the failure without 1). Not formalized: Lemma 3.4 (recovering the
+    multi-argument functions), Section 4 (Theorems 4.4-4.6, the scheme rec₇), Section 5
+    (Theorems 5.8 and 5.9), and J. Robinson's 1950 theorem, which is a hypothesis of the §2.3
+    theorems.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: []
+  main_results:
+    - declaration: "UPRF.Theorem_6_7"
+      file: "UPRF/Thm67.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+    - declaration: "UPRF.Theorem_6_8"
+      file: "UPRF/Thm68.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+    - declaration: "UPRF.Robinson_1947_sec7_thm3"
+      file: "UPRF/Robinson.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+    - declaration: "UPRF.Ext_a_all"
+      file: "UPRF/ExtA.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+    - declaration: "UPRF.Ext_Vb_iff"
+      file: "UPRF/ExtVb.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+    - declaration: "UPRF.Ext_GR"
+      file: "UPRF/ExtGR.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+      literature_dependencies:
+        - statement: >-
+            ⟨S, E, F + G, FG, F⁻¹⟩ generates the unary general recursive functions
+            (hypothesis Robinson_1950_sec4_thm3)
+          source: "Julia Robinson, General recursive functions (1950), Section 4, Theorem 3"
+    - declaration: "UPRF.Ext_Cn_suitable"
+      file: "UPRF/ExtCn.lean"
+      sorry_count: 0
+      axioms: ["propext", "Classical.choice", "Quot.sound"]
+
+automation:
+  methods:
+    - method: "agent"
+      models: ["Claude Opus 5.5"]
+      framework: "Claude Code"
+      tool_setup: >-
+        Claude Code agent working in the local repository, building with lake and the pinned
+        Mathlib; the author directed the work and chose the statements to prove. The proofs use
+        the project's own tactic macros (clos_solve, prim_sound, simulate, inv_eq, eval) and
+        Mathlib's simp, omega, nlinarith and ring.
+      cost:
+        wall_time: "about six days (2026-10-12 to 2026-10-17)"
+        spend_usd: "not tracked"
+        hardware: "API-only models; builds on a local Mac"
+      prompting_notes: "n/a"
+  spend_usd: "not tracked"
+  notes: >-
+    The Lean development was written by Claude Code under the direction of the paper's author,
+    in parallel with the Isabelle, Mizar, Rocq and Z/EVES formalizations of the same results.
+
+fidelity:
+  divergences: >-
+    Primitive recursiveness is Mathlib's Nat.Primrec, which uses Szudzik pairing instead of
+    Cantor's; a basis is "suitable" when its closure equals Nat.Primrec. Lemma 3.3 and
+    Robinson's 1947 theorem are proved by routes different from the original ones (see
+    sources). For §2.3 the general recursive functions are not defined in Lean: the theorems
+    hold for any predicate GR satisfying J. Robinson's characterization, which is taken as the
+    hypothesis Robinson_1950_sec4_thm3.
+
+review:
+  status: "unchecked"
+  reviewers: []
+  notes: >-
+    The development builds without sorry and its main theorems depend only on propext,
+    Classical.choice and Quot.sound. No statement-by-statement audit against the paper has
+    been done yet.
+
+alignment:
+  namespace: "UPRF"
+  statements:
+    - source: "Severín 2008, Lemmas 6.2-6.6"
+      lean: "UPRF.Lemma_6_2 … UPRF.Lemma_6_6"
+      module: "UPRF.Sec6"
+      status: "proved"
+    - source: "Severín 2008, Theorem 6.7"
+      lean: "UPRF.Theorem_6_7"
+      module: "UPRF.Thm67"
+      status: "proved"
+      note: "Theorem_6_7_via_L33 follows the paper's proof through Lemma 3.3."
+    - source: "Severín 2008, Lemma 3.3"
+      lean: "UPRF.Lemma_3_3"
+      module: "UPRF.Thm67"
+      status: "proved"
+      note: "For every primitive recursive difference function."
+    - source: "Severín 2008, Theorem 6.8"
+      lean: "UPRF.Theorem_6_8"
+      module: "UPRF.Thm68"
+      status: "proved"
+    - source: "Severín 2008, Remark 6.9"
+      lean: "UPRF.Remark_6_9_I, UPRF.Remark_6_9_II, UPRF.Remark_6_9_III"
+      module: "UPRF.Rem69"
+      status: "proved"
+    - source: "R. M. Robinson 1947, Section 7, Theorem 3"
+      lean: "UPRF.Robinson_1947_sec7_thm3"
+      module: "UPRF.Robinson"
+      status: "proved"
+      note: "Proved independently, against Mathlib's Nat.Primrec."
+    - source: "README §2.1 (iteration from a ≥ 1)"
+      lean: "UPRF.Ext_a_all"
+      module: "UPRF.ExtA"
+      status: "proved"
+    - source: "README §2.2 (shifted operator F(x) + x + b)"
+      lean: "UPRF.Ext_Vb_iff"
+      module: "UPRF.ExtVb"
+      status: "proved"
+    - source: "README §2.3 (general recursive functions)"
+      lean: "UPRF.Ext_GR, UPRF.Ext_GR0, UPRF.Ext_GRS"
+      module: "UPRF.ExtGR"
+      status: "proved, assuming J. Robinson's 1950 theorem"
+    - source: "README §2.3 (shifted operator with inversion)"
+      lean: "UPRF.Ext_GRb_iff"
+      module: "UPRF.ExtGRb"
+      status: "proved, assuming J. Robinson's 1950 theorem"
+    - source: "README §2.3 (any constant n̄)"
+      lean: "UPRF.Ext_Cn_suitable, UPRF.Ext_GRCn"
+      module: "UPRF.ExtCn"
+      status: "proved; Ext_GRCn assumes J. Robinson's 1950 theorem"
+
+acknowledgements: >-
+  Mathlib (in particular Nat.Primrec and Nat.pair) and the Lean 4 toolchain.

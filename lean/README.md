@@ -57,6 +57,13 @@ a hypothesis `Robinson_1950_sec4_thm3 : ∀ F, CJR F ↔ GR F` of the theorems `
 `Ext_GRb_iff` and `Ext_GRCn`. Everything else is proved; `opInv` uses `Nat.find` with classical
 logic.
 
+## Metadata
+
+`formalization.yaml` describes this formalization in the
+[formalization.yaml](https://github.com/mathlib-initiative/formalization.yaml) standard (v0.4),
+as used by the [Palomar Registry](https://palomar-registry.org): sources, scope, automation,
+review status, and the correspondence between the paper's results and the Lean declarations.
+
 ## Proof automation (`Tactics.lean`)
 
 Three mechanisms recur in every theorem. `Tactics.lean` captures them as tactic macros.

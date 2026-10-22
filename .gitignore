@@ -21,7 +21,7 @@ mizar/fm/uprf.build.log
 mizar/fm/__pycache__/
 
 # Lean: lake build directory and downloaded packages
-lean/.lake/
+lean/.lake
 
 # Rocq: generated makefiles and compiled files
 rocq/Makefile

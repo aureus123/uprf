@@ -13,8 +13,8 @@ open questions answered in the root README (§2, including §2.3 on general recu
 ## Requirements
 
 - **elan**, the Lean toolchain manager: <https://github.com/leanprover/elan>. It installs the
-  Lean version pinned in `lean-toolchain` (Lean 4.34.1).
-- **Mathlib v4.34.1**. It is fetched automatically by `lake`, as pinned in `lakefile.toml` and
+  Lean version pinned in `lean-toolchain` (Lean 4.35.0).
+- **Mathlib v4.35.0**. It is fetched automatically by `lake`, as pinned in `lakefile.toml` and
   `lake-manifest.json`.
 - About 6 GB of disk space for the prebuilt Mathlib cache.
 

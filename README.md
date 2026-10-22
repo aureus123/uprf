@@ -592,7 +592,7 @@ Each folder has its own README with detailed instructions.
 |---|---|---|
 | [Isabelle/HOL](isabelle/README.md) | [Isabelle2025-2](https://isabelle.in.tum.de) and the AFP entry *Recursion Theory I* from the [AFP](https://www.isa-afp.org/download/) release for Isabelle2025-2 | `AFP=/path/to/afp/thys isabelle/build.sh` (or copy the entry into `isabelle/afp/`); `isabelle/jedit.sh` opens the IDE |
 | [Mizar](mizar/README.md) | [Mizar 8.1.15 with MML 5.94.1493](https://mizar.uwb.edu.pl/system/), Python 3 | run the package's `install.sh`, set `MIZFILES`, put the binaries on `PATH`; then `mizar/miz.sh uprf` |
-| [Lean 4](lean/README.md) | [elan](https://github.com/leanprover/elan) (it installs Lean 4.34.1); Mathlib v4.34.1 is fetched by `lake` | `cd lean && lake exe cache get && ./build.sh` |
+| [Lean 4](lean/README.md) | [elan](https://github.com/leanprover/elan) (it installs Lean 4.35.0); Mathlib v4.35.0 is fetched by `lake` | `cd lean && lake exe cache get && ./build.sh` |
 | [Rocq](rocq/README.md) | [Rocq 9.3](https://rocq-prover.org), MathComp 2.6 (`rocq-mathcomp-ssreflect`), mczify (`coq-mathcomp-zify`), installed with [opam](https://opam.ocaml.org) | `opam repo add rocq-released https://rocq-prover.org/opam/released`; `opam install rocq-prover rocq-mathcomp-ssreflect coq-mathcomp-zify`; `rocq/build.sh` |
 | [Z/EVES](z/README.md) | [Z/EVES 2.3](https://github.com/arandilopez/z-eves) (32-bit Linux only; on macOS inside a [Lima](https://lima-vm.io) VM) | unpack into `/opt/Z/Z-Eves`; on macOS `limactl start zeves`; then `z/zeves.sh z/uprf.tex` |
 
